@@ -14,6 +14,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, Trash2, Shield, RefreshCw, Lock } from 'lucide-react';
 
 export const RoleListPage: React.FC = () => {
@@ -114,7 +115,7 @@ export const RoleListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/roles/${row.id}`)}
+            onClick={() => navigate(`/roles/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Role & Permissions Matrix"
           >
@@ -142,9 +143,11 @@ export const RoleListPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Security Roles & Permissions</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Roles & Access Matrix
+          </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Role-based access control (RBAC) security matrix and authorization policies.
+            Define system roles and granular security permissions for user authorization.
           </p>
         </div>
 
@@ -164,7 +167,7 @@ export const RoleListPage: React.FC = () => {
               onClick={() => navigate(AppRoutes.ROLE_CREATE)}
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              Create Role
+              Add Role
             </Button>
           </PermissionGuard>
         </div>
@@ -176,7 +179,7 @@ export const RoleListPage: React.FC = () => {
           data={roles}
           isLoading={isLoading}
           emptyText="No roles configured in the authorization system."
-          onRowClick={(row) => navigate(`/roles/${row.id}`)}
+          onRowClick={(row) => navigate(`/roles/${encodeId(row.id)}`)}
         />
       </Card>
 

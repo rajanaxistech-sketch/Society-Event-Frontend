@@ -15,6 +15,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, Edit2, Trash2, Sliders, RefreshCw, LayoutDashboard, Upload, FileSpreadsheet } from 'lucide-react';
 import BulkUploadSocietyModal from './BulkUploadSocietyModal';
 
@@ -142,7 +143,7 @@ export const SocietyListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/societies/${row.id}/dashboard`)}
+            onClick={() => navigate(`/societies/${encodeId(row.id)}/dashboard`)}
             className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
             title="Society Dashboard"
           >
@@ -150,7 +151,7 @@ export const SocietyListPage: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate(`/societies/${row.id}`)}
+            onClick={() => navigate(`/societies/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Details"
           >
@@ -159,7 +160,7 @@ export const SocietyListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.SOCIETY_STRUCTURE_CONFIG}>
             <button
               type="button"
-              onClick={() => navigate(`/societies/${row.id}/structure`)}
+              onClick={() => navigate(`/societies/${encodeId(row.id)}/structure`)}
               className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
               title="Configure Structure"
             >
@@ -169,7 +170,7 @@ export const SocietyListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.SOCIETY_UPDATE}>
             <button
               type="button"
-              onClick={() => navigate(`/societies/${row.id}/edit`)}
+              onClick={() => navigate(`/societies/${encodeId(row.id)}/edit`)}
               className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Society"
             >
@@ -285,7 +286,7 @@ export const SocietyListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
-        onRowClick={(row) => navigate(`/societies/${row.id}`)}
+        onRowClick={(row) => navigate(`/societies/${encodeId(row.id)}`)}
       />
 
       {/* Pagination */}

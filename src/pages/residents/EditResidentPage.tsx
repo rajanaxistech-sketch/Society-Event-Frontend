@@ -14,6 +14,7 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Users } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 const editResidentSchema = z.object({
   full_name: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -26,7 +27,8 @@ const editResidentSchema = z.object({
 type EditResidentFormData = z.infer<typeof editResidentSchema>;
 
 export const EditResidentPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -84,7 +86,7 @@ export const EditResidentPage: React.FC = () => {
 
       if (res.success) {
         toast.success(`Resident "${data.full_name}" updated successfully.`);
-        navigate(`/residents/${id}`);
+        navigate(`/residents/${encodeId(id)}`);
       } else {
         toast.error(res.message || 'Failed to update resident');
       }
@@ -114,7 +116,7 @@ export const EditResidentPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/residents/${id}`)}
+          onClick={() => navigate(`/residents/${encodeId(id)}`)}
           leftIcon={<ArrowLeft className="w-4 h-4" />}
         >
           Cancel
@@ -187,7 +189,7 @@ export const EditResidentPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(`/residents/${id}`)}
+                onClick={() => navigate(`/residents/${encodeId(id)}`)}
                 disabled={isSubmitting}
               >
                 Cancel

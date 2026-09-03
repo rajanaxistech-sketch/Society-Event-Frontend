@@ -20,6 +20,7 @@ import CurrencyDisplay from '../../components/common/CurrencyDisplay';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate, formatCurrency } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { Plus, Edit2, Wallet, Home, Building2, RefreshCw } from 'lucide-react';
 
 interface EventCollectionsPageProps {
@@ -28,7 +29,7 @@ interface EventCollectionsPageProps {
 
 export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ eventId: propEventId }) => {
   const { id: routeEventId } = useParams<{ id: string }>();
-  const eventId = propEventId || routeEventId;
+  const eventId = decodeId(propEventId || routeEventId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -247,7 +248,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
             <Button
               size="sm"
               variant="outline"
-              onClick={() => navigate(`/payments/record?collectionId=${row.id}`)}
+              onClick={() => navigate(`/payments/record?collectionId=${encodeId(row.id)}`)}
             >
               Record Payment
             </Button>

@@ -19,6 +19,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { decodeId } from '../../utils/idObfuscator';
 import { Plus, Edit2, Trash2, Sparkles, RefreshCw } from 'lucide-react';
 
 interface EventActivitiesPageProps {
@@ -27,7 +28,7 @@ interface EventActivitiesPageProps {
 
 export const EventActivitiesPage: React.FC<EventActivitiesPageProps> = ({ eventId: propEventId }) => {
   const { id: routeEventId } = useParams<{ id: string }>();
-  const eventId = propEventId || routeEventId;
+  const eventId = decodeId(propEventId || routeEventId);
   const toast = useToast();
   const { can } = usePermission();
 

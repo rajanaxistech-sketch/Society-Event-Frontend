@@ -13,6 +13,7 @@ import ErrorState from '../../components/common/ErrorState';
 import StatusBadge from '../../components/common/StatusBadge';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import {
   ArrowLeft,
   User,
@@ -26,7 +27,8 @@ import {
 } from 'lucide-react';
 
 export const UserDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -98,7 +100,7 @@ export const UserDetailsPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate(`/users/${id}/edit`)}
+            onClick={() => navigate(`/users/${encodeId(id)}/edit`)}
             leftIcon={<Edit2 className="w-3.5 h-3.5" />}
           >
             Edit User

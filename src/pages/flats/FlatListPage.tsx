@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { flatsService } from '../../api/flatsService';
 import { floorsService } from '../../api/floorsService';
 import { FlatItem, PaginationMeta, FloorItem } from '../../types';
@@ -16,25 +16,36 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, Edit2, Trash2, RefreshCw } from 'lucide-react';
 
 export const FlatListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { can } = usePermission();
+
+  const initialFloorId = decodeId(new URLSearchParams(location.search).get('floorId') || '');
 
   const [flats, setFlats] = useState<FlatItem[]>([]);
   const [floors, setFloors] = useState<FloorItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [floorFilter, setFloorFilter] = useState('');
+  const [floorFilter, setFloorFilter] = useState(initialFloorId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [deleteTarget, setDeleteTarget] = useState<FlatItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const urlFloorId = decodeId(new URLSearchParams(location.search).get('floorId') || '');
+    if (urlFloorId !== floorFilter) {
+      setFloorFilter(urlFloorId);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     floorsService.getAll({ limit: 100 }).then((res) => {
@@ -146,7 +157,7 @@ export const FlatListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/flats/${row.id}`)}
+            onClick={() => navigate(`/flats/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Details"
           >
@@ -155,7 +166,7 @@ export const FlatListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.FLAT_UPDATE}>
             <button
               type="button"
-              onClick={() => navigate(`/flats/${row.id}/edit`)}
+              onClick={() => navigate(`/flats/${encodeId(row.id)}/edit`)}
               className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Flat"
             >
@@ -271,7 +282,7 @@ export const FlatListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
-        onRowClick={(row) => navigate(`/flats/${row.id}`)}
+        onRowClick={(row) => navigate(`/flats/${encodeId(row.id)}`)}
       />
 
       {/* Pagination */}

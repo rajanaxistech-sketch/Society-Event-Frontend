@@ -17,6 +17,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { decodeId } from '../../utils/idObfuscator';
 import { Plus, Edit2, Trash2, Shirt, RefreshCw } from 'lucide-react';
 
 interface EventDressCodesPageProps {
@@ -25,7 +26,7 @@ interface EventDressCodesPageProps {
 
 export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventId: propEventId }) => {
   const { id: routeEventId } = useParams<{ id: string }>();
-  const eventId = propEventId || routeEventId;
+  const eventId = decodeId(propEventId || routeEventId);
   const toast = useToast();
   const { can } = usePermission();
 

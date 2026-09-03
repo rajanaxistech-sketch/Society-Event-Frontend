@@ -17,6 +17,7 @@ import ErrorState from '../../components/common/ErrorState';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import {
   ArrowLeft,
   Users,
@@ -30,7 +31,8 @@ import {
 } from 'lucide-react';
 
 export const SponsorDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -120,7 +122,7 @@ export const SponsorDetailsPage: React.FC = () => {
       render: (row) => (
         <button
           type="button"
-          onClick={() => navigate(`/payments/${row.id}`)}
+          onClick={() => navigate(`/payments/${encodeId(row.id)}`)}
           className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           title="View Payment Receipt"
         >
@@ -138,7 +140,7 @@ export const SponsorDetailsPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(`/events/${sponsor.event_id}`)}
+            onClick={() => navigate(`/events/${encodeId(sponsor.event_id)}`)}
             leftIcon={<ArrowLeft className="w-4 h-4" />}
           >
             Back to Event
@@ -160,7 +162,7 @@ export const SponsorDetailsPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate(`/payments/record?sponsorId=${sponsor.id}`)}
+            onClick={() => navigate(`/payments/record?sponsorId=${encodeId(sponsor.id)}`)}
             leftIcon={<Plus className="w-4 h-4" />}
           >
             Record Sponsor Payment
@@ -236,7 +238,7 @@ export const SponsorDetailsPage: React.FC = () => {
           columns={paymentColumns}
           data={payments}
           emptyText="No payments recorded for this sponsor yet."
-          onRowClick={(row) => navigate(`/payments/${row.id}`)}
+          onRowClick={(row) => navigate(`/payments/${encodeId(row.id)}`)}
         />
       </Card>
     </div>

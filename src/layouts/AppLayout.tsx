@@ -16,11 +16,26 @@ export const AppLayout: React.FC = () => {
         <Header />
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-4">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 md:p-6 lg:p-8 flex flex-col justify-between">
+          <div className="max-w-7xl mx-auto space-y-4 w-full">
             <Breadcrumbs />
             <Outlet />
           </div>
+
+          {/* App Footer */}
+          <footer className="mt-8 pt-4 pb-2 border-t border-slate-200/80 text-center text-xs text-slate-500 max-w-7xl mx-auto w-full">
+            <p>
+              &copy; {new Date().getFullYear()} Society Event Management. Powered & Developed by{' '}
+              <a
+                href="https://anaxistech.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+              >
+                AnaxisTech
+              </a>
+            </p>
+          </footer>
         </main>
       </div>
 

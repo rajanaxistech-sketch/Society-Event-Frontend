@@ -14,6 +14,7 @@ import Select from '../../components/ui/Select';
 import Button from '../../components/ui/Button';
 import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 
 const createBungalowSchema = z.object({
   society_id: z.string().min(1, 'Please select a society'),
@@ -56,7 +57,7 @@ export const CreateBungalowPage: React.FC = () => {
       const res = await bungalowsService.create(data);
       if (res.success && res.data) {
         toast.success(`Bungalow "${data.bungalow_number}" created successfully.`);
-        navigate(`/bungalows/${res.data.id}`);
+        navigate(`/bungalows/${encodeId(res.data.id)}`);
       } else {
         toast.error(res.message || 'Failed to create bungalow');
       }

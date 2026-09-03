@@ -10,9 +10,11 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Sliders, Wallet, Utensils, Shirt, Music, Sparkles } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 export const EventConfigurationPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId || '');
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -77,7 +79,7 @@ export const EventConfigurationPage: React.FC = () => {
 
       if (res.success) {
         toast.success('Event module configuration updated.');
-        navigate(`/events/${id}`);
+        navigate(`/events/${encodeId(id)}`);
       } else {
         toast.error(res.message || 'Failed to save configuration');
       }
@@ -107,7 +109,7 @@ export const EventConfigurationPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/events/${id}`)}
+          onClick={() => navigate(`/events/${encodeId(id)}`)}
           leftIcon={<ArrowLeft className="w-4 h-4" />}
         >
           Back to Event
@@ -213,7 +215,7 @@ export const EventConfigurationPage: React.FC = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate(`/events/${id}`)}
+              onClick={() => navigate(`/events/${encodeId(id)}`)}
               disabled={isSubmitting}
             >
               Cancel

@@ -16,6 +16,7 @@ import ErrorState from '../../components/common/ErrorState';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 // Sub-module tab components
 import { EventCollectionsPage } from './EventCollectionsPage';
@@ -42,7 +43,8 @@ import {
 } from 'lucide-react';
 
 export const EventDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -198,7 +200,7 @@ export const EventDetailsPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/events/${id}/configuration`)}
+              onClick={() => navigate(`/events/${encodeId(id)}/configuration`)}
               leftIcon={<Sliders className="w-3.5 h-3.5" />}
             >
               Config Modules
@@ -209,7 +211,7 @@ export const EventDetailsPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/events/${id}/edit`)}
+              onClick={() => navigate(`/events/${encodeId(id)}/edit`)}
               leftIcon={<Edit2 className="w-3.5 h-3.5" />}
             >
               Edit Event

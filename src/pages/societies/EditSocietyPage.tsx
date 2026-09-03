@@ -14,6 +14,7 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 const editSocietySchema = z.object({
   name: z.string().min(2, 'Society name must be at least 2 characters'),
@@ -32,7 +33,8 @@ const editSocietySchema = z.object({
 type EditSocietyFormData = z.infer<typeof editSocietySchema>;
 
 export const EditSocietyPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId || '');
   const navigate = useNavigate();
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -90,7 +92,7 @@ export const EditSocietyPage: React.FC = () => {
 
       if (res.success && res.data) {
         toast.success(`Society "${res.data.name}" updated successfully.`);
-        navigate(`/societies/${id}`);
+        navigate(`/societies/${encodeId(id)}`);
       } else {
         toast.error(res.message || 'Failed to update society.');
       }
@@ -104,7 +106,7 @@ export const EditSocietyPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Spinner size="lg" label="Loading society details..." />
+        <Spinner size="lg" label="Loading society profile..." />
       </div>
     );
   }
@@ -120,7 +122,7 @@ export const EditSocietyPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/societies/${id}`)}
+          onClick={() => navigate(`/societies/${encodeId(id)}`)}
           leftIcon={<ArrowLeft className="w-4 h-4" />}
         >
           Cancel
@@ -230,7 +232,7 @@ export const EditSocietyPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(`/societies/${id}`)}
+                onClick={() => navigate(`/societies/${encodeId(id)}`)}
                 disabled={isSubmitting}
               >
                 Cancel

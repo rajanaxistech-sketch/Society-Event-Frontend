@@ -16,6 +16,7 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Layers } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { decodeId } from '../../utils/idObfuscator';
 
 const editBlockSchema = z.object({
   name: z.string().min(1, 'Block name is required'),
@@ -27,7 +28,8 @@ const editBlockSchema = z.object({
 type EditBlockFormData = z.infer<typeof editBlockSchema>;
 
 export const EditBlockPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
 

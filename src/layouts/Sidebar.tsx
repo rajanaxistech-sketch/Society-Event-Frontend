@@ -262,10 +262,16 @@ export const Sidebar: React.FC = () => {
           })}
         </div>
 
-        {/* Footer Version Tag */}
-        <div className="px-5 py-3 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between shrink-0">
-          <span>v1.0.0 Production</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500" title="API Connected" />
+        {/* Footer Version & Branding Tag */}
+        <div className="px-5 py-3 border-t border-slate-800/80 text-[11px] text-slate-400 flex flex-col gap-1 shrink-0">
+          <div className="flex items-center justify-between">
+            <span>v1.0.0 Production</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500" title="API Connected" />
+          </div>
+          <div className="text-[10px] text-slate-400">
+            Powered & Developed by{' '}
+            <span className="text-indigo-400 font-medium">AnaxisTech</span>
+          </div>
         </div>
       </aside>
     </>

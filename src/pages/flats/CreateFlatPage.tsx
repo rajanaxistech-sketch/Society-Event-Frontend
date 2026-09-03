@@ -14,6 +14,7 @@ import Select from '../../components/ui/Select';
 import Button from '../../components/ui/Button';
 import { ArrowLeft, Save, Home } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 
 const createFlatSchema = z.object({
   floor_id: z.string().min(1, 'Please select a floor'),
@@ -56,7 +57,7 @@ export const CreateFlatPage: React.FC = () => {
       const res = await flatsService.create(data);
       if (res.success && res.data) {
         toast.success(`Flat "${data.flat_number}" created successfully.`);
-        navigate(`/flats/${res.data.id}`);
+        navigate(`/flats/${encodeId(res.data.id)}`);
       } else {
         toast.error(res.message || 'Failed to create flat');
       }

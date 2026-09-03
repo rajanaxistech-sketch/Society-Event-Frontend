@@ -12,10 +12,12 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
+import { decodeId } from '../../utils/idObfuscator';
 import { ArrowLeft, Shield, CheckCircle2, Lock, Calendar } from 'lucide-react';
 
 export const RoleDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();

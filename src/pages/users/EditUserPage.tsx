@@ -17,6 +17,7 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, User, Building2 } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 const editUserSchema = z.object({
   full_name: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -30,7 +31,8 @@ const editUserSchema = z.object({
 type EditUserFormData = z.infer<typeof editUserSchema>;
 
 export const EditUserPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -110,7 +112,7 @@ export const EditUserPage: React.FC = () => {
       const res = await usersService.update(id, payload);
       if (res.success) {
         toast.success(`User "${data.full_name}" updated successfully.`);
-        navigate(`/users/${id}`);
+        navigate(`/users/${encodeId(id)}`);
       } else {
         toast.error(res.message || 'Failed to update user');
       }
@@ -140,7 +142,7 @@ export const EditUserPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/users/${id}`)}
+          onClick={() => navigate(`/users/${encodeId(id)}`)}
           leftIcon={<ArrowLeft className="w-4 h-4" />}
         >
           Cancel
@@ -263,7 +265,7 @@ export const EditUserPage: React.FC = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate(`/users/${id}`)}
+            onClick={() => navigate(`/users/${encodeId(id)}`)}
             disabled={isSubmitting}
           >
             Cancel

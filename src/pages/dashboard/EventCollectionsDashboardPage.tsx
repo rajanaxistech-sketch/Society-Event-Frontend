@@ -10,9 +10,11 @@ import Button from '../../components/ui/Button';
 import { formatCurrency } from '../../utils/formatters';
 import { ArrowLeft, RefreshCw, Wallet, CheckCircle, AlertCircle, PieChart as PieChartIcon } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 export const EventCollectionsDashboardPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const [data, setData] = useState<EventCollectionsDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,7 +69,7 @@ export const EventCollectionsDashboardPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(`/events/${id}`)}
+            onClick={() => navigate(`/events/${encodeId(id)}`)}
             leftIcon={<ArrowLeft className="w-4 h-4" />}
           >
             Back to Event
@@ -94,7 +96,7 @@ export const EventCollectionsDashboardPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate(`/events/${id}/collections`)}
+            onClick={() => navigate(`/events/${encodeId(id)}/collections`)}
           >
             View All Obligations
           </Button>

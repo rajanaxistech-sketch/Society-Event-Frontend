@@ -13,6 +13,7 @@ import ErrorState from '../../components/common/ErrorState';
 import StatusBadge from '../../components/common/StatusBadge';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import {
   ArrowLeft,
   Users,
@@ -26,7 +27,8 @@ import {
 } from 'lucide-react';
 
 export const ResidentDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -104,7 +106,7 @@ export const ResidentDetailsPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate(`/residents/${id}/edit`)}
+            onClick={() => navigate(`/residents/${encodeId(id)}/edit`)}
             leftIcon={<Edit2 className="w-3.5 h-3.5" />}
           >
             Edit Profile
@@ -156,7 +158,7 @@ export const ResidentDetailsPage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 className="w-full"
-                onClick={() => navigate(`/flats/${resident.flat?.id}`)}
+                onClick={() => navigate(`/flats/${encodeId(resident.flat?.id)}`)}
               >
                 View Flat Details
               </Button>
@@ -179,7 +181,7 @@ export const ResidentDetailsPage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 className="w-full"
-                onClick={() => navigate(`/bungalows/${resident.bungalow?.id}`)}
+                onClick={() => navigate(`/bungalows/${encodeId(resident.bungalow?.id)}`)}
               >
                 View Bungalow Details
               </Button>

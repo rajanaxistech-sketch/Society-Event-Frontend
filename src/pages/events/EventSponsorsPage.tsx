@@ -20,6 +20,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, Edit2, Trash2, Users, RefreshCw } from 'lucide-react';
 
 interface EventSponsorsPageProps {
@@ -28,7 +29,7 @@ interface EventSponsorsPageProps {
 
 export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: propEventId }) => {
   const { id: routeEventId } = useParams<{ id: string }>();
-  const eventId = propEventId || routeEventId;
+  const eventId = decodeId(propEventId || routeEventId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -221,7 +222,7 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/sponsors/${row.id}`)}
+            onClick={() => navigate(`/sponsors/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
             title="Sponsor Details & Payments"
           >
@@ -255,8 +256,8 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
   return (
     <div className="space-y-4">
       <Card
-        title="Event Sponsors"
-        subtitle="Corporate sponsors and individual patron contributions."
+        title="Event Sponsors & Brand Partners"
+        subtitle="Manage corporate sponsorships, monetary commitments, and fulfillment."
         headerAction={
           <div className="flex items-center gap-2">
             <Button
@@ -285,7 +286,7 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
           data={sponsors}
           isLoading={isLoading}
           emptyText="No sponsors registered for this event yet."
-          onRowClick={(row) => navigate(`/sponsors/${row.id}`)}
+          onRowClick={(row) => navigate(`/sponsors/${encodeId(row.id)}`)}
         />
 
         <Pagination

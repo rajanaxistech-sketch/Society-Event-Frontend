@@ -16,6 +16,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, Edit2, Trash2, Sliders, RefreshCw, LayoutDashboard, Calendar } from 'lucide-react';
 
 export const EventListPage: React.FC = () => {
@@ -25,7 +26,7 @@ export const EventListPage: React.FC = () => {
   const { can } = usePermission();
 
   // Seed society filter from URL query param (e.g. ?societyId=xxx when coming from Society Details)
-  const initialSocietyId = new URLSearchParams(location.search).get('societyId') || '';
+  const initialSocietyId = decodeId(new URLSearchParams(location.search).get('societyId') || '');
 
   const [events, setEvents] = useState<EventItem[]>([]);
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
@@ -39,6 +40,13 @@ export const EventListPage: React.FC = () => {
 
   const [deleteTarget, setDeleteTarget] = useState<EventItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const urlSocietyId = decodeId(new URLSearchParams(location.search).get('societyId') || '');
+    if (urlSocietyId !== societyFilter) {
+      setSocietyFilter(urlSocietyId);
+    }
+  }, [location.search]);
 
   // Load societies for the filter dropdown
   useEffect(() => {
@@ -142,7 +150,7 @@ export const EventListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/events/${row.id}/dashboard`)}
+            onClick={() => navigate(`/events/${encodeId(row.id)}/dashboard`)}
             className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
             title="Event Dashboard"
           >
@@ -150,7 +158,7 @@ export const EventListPage: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate(`/events/${row.id}`)}
+            onClick={() => navigate(`/events/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Details"
           >
@@ -159,7 +167,7 @@ export const EventListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.EVENT_CONFIG}>
             <button
               type="button"
-              onClick={() => navigate(`/events/${row.id}/configuration`)}
+              onClick={() => navigate(`/events/${encodeId(row.id)}/configuration`)}
               className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
               title="Configure Event Modules"
             >
@@ -169,7 +177,7 @@ export const EventListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.EVENT_UPDATE}>
             <button
               type="button"
-              onClick={() => navigate(`/events/${row.id}/edit`)}
+              onClick={() => navigate(`/events/${encodeId(row.id)}/edit`)}
               className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Event"
             >
@@ -288,7 +296,7 @@ export const EventListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
-        onRowClick={(row) => navigate(`/events/${row.id}`)}
+        onRowClick={(row) => navigate(`/events/${encodeId(row.id)}`)}
       />
 
       {/* Pagination */}

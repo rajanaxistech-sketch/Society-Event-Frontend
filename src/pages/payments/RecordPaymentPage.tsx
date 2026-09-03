@@ -18,6 +18,7 @@ import Button from '../../components/ui/Button';
 import CurrencyDisplay from '../../components/common/CurrencyDisplay';
 import { ArrowLeft, Save, CreditCard, Wallet, Home, Building2, Users } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 const recordPaymentSchema = z.object({
   payment_target_type: z.enum(['collection', 'sponsor']),
@@ -50,8 +51,8 @@ export const RecordPaymentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const toast = useToast();
 
-  const urlCollectionId = searchParams.get('collectionId');
-  const urlSponsorId = searchParams.get('sponsorId');
+  const urlCollectionId = decodeId(searchParams.get('collectionId') || '');
+  const urlSponsorId = decodeId(searchParams.get('sponsorId') || '');
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodItem[]>([]);
   const [collections, setCollections] = useState<EventCollectionItem[]>([]);
@@ -132,7 +133,7 @@ export const RecordPaymentPage: React.FC = () => {
       const res = await paymentsService.create(payload);
       if (res.success && res.data) {
         toast.success(`Payment recorded. Receipt #${res.data.receipt_number}`);
-        navigate(`/payments/${res.data.id}`);
+        navigate(`/payments/${encodeId(res.data.id)}`);
       } else {
         toast.error(res.message || 'Failed to record payment');
       }

@@ -8,10 +8,12 @@ import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { formatDate } from '../../utils/formatters';
+import { decodeId } from '../../utils/idObfuscator';
 import { ArrowLeft, Terminal, Shield, Clock, Monitor, User } from 'lucide-react';
 
 export const AuditLogDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
 
   const [log, setLog] = useState<AuditLogItem | null>(null);

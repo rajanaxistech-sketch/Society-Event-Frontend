@@ -14,6 +14,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 import { Upload, Eye, RefreshCw, FileSpreadsheet } from 'lucide-react';
 
 export const ImportListPage: React.FC = () => {
@@ -99,7 +100,7 @@ export const ImportListPage: React.FC = () => {
       render: (row) => (
         <button
           type="button"
-          onClick={() => navigate(`/imports/${row.id}`)}
+          onClick={() => navigate(`/imports/${encodeId(row.id)}`)}
           className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           title="View Import Summary"
         >
@@ -148,7 +149,7 @@ export const ImportListPage: React.FC = () => {
           data={jobs}
           isLoading={isLoading}
           emptyText="No previous import jobs recorded. Click 'Upload New File' to import batch data."
-          onRowClick={(row) => navigate(`/imports/${row.id}`)}
+          onRowClick={(row) => navigate(`/imports/${encodeId(row.id)}`)}
         />
 
         <Pagination

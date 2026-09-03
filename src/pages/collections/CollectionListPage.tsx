@@ -16,6 +16,7 @@ import Button from '../../components/ui/Button';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 import { Eye, Plus, RefreshCw, Home, Building2 } from 'lucide-react';
 
 export const CollectionListPage: React.FC = () => {
@@ -132,7 +133,7 @@ export const CollectionListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/collections/${row.id}`)}
+            onClick={() => navigate(`/collections/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Details"
           >
@@ -142,7 +143,7 @@ export const CollectionListPage: React.FC = () => {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => navigate(`/payments/record?collectionId=${row.id}`)}
+              onClick={() => navigate(`/payments/record?collectionId=${encodeId(row.id)}`)}
             >
               Pay
             </Button>
@@ -229,7 +230,7 @@ export const CollectionListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
-        onRowClick={(row) => navigate(`/collections/${row.id}`)}
+        onRowClick={(row) => navigate(`/collections/${encodeId(row.id)}`)}
       />
 
       {/* Pagination */}

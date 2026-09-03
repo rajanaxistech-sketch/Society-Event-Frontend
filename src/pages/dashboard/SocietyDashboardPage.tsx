@@ -10,9 +10,11 @@ import ErrorState from '../../components/common/ErrorState';
 import Button from '../../components/ui/Button';
 import { Building2, Layers, Home, Users, Calendar, ArrowLeft, RefreshCw } from 'lucide-react';
 import { AppRoutes } from '../../constants/routes';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 export const SocietyDashboardPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const [society, setSociety] = useState<SocietyItem | null>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -96,7 +98,7 @@ export const SocietyDashboardPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate(`/societies/${id}`)}
+            onClick={() => navigate(`/societies/${encodeId(id)}`)}
           >
             Manage Society
           </Button>

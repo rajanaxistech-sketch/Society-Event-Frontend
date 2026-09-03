@@ -12,6 +12,7 @@ import Select from '../../components/ui/Select';
 import Button from '../../components/ui/Button';
 import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 
 const createSocietySchema = z.object({
   name: z.string().min(2, 'Society name must be at least 2 characters'),
@@ -62,7 +63,7 @@ export const CreateSocietyPage: React.FC = () => {
 
       if (res.success && res.data) {
         toast.success(`Society "${res.data.name}" created successfully.`);
-        navigate(`/societies/${res.data.id}`);
+        navigate(`/societies/${encodeId(res.data.id)}`);
       } else {
         toast.error(res.message || 'Failed to create society.');
       }

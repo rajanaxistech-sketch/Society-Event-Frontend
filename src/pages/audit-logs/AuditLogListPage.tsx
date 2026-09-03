@@ -12,6 +12,7 @@ import FilterBar from '../../components/common/FilterBar';
 import Button from '../../components/ui/Button';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 import { Eye, ShieldAlert, RefreshCw, Activity, Terminal } from 'lucide-react';
 
 export const AuditLogListPage: React.FC = () => {
@@ -104,7 +105,7 @@ export const AuditLogListPage: React.FC = () => {
       render: (row) => (
         <button
           type="button"
-          onClick={() => navigate(`/audit-logs/${row.id}`)}
+          onClick={() => navigate(`/audit-logs/${encodeId(row.id)}`)}
           className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           title="Inspect Payload Diff"
         >
@@ -181,7 +182,7 @@ export const AuditLogListPage: React.FC = () => {
         data={logs}
         isLoading={isLoading}
         emptyText="No security audit events recorded matching criteria."
-        onRowClick={(row) => navigate(`/audit-logs/${row.id}`)}
+        onRowClick={(row) => navigate(`/audit-logs/${encodeId(row.id)}`)}
       />
 
       <Pagination

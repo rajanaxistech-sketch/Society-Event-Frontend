@@ -18,6 +18,7 @@ import ErrorState from '../../components/common/ErrorState';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import {
   ArrowLeft,
   Building2,
@@ -29,7 +30,8 @@ import {
 } from 'lucide-react';
 
 export const BungalowDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -173,7 +175,7 @@ export const BungalowDetailsPage: React.FC = () => {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => navigate(`/residents/${row.id}`)}
+            onClick={() => navigate(`/residents/${encodeId(row.id)}`)}
           >
             Profile
           </Button>
@@ -252,7 +254,7 @@ export const BungalowDetailsPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/bungalows/${id}/edit`)}
+              onClick={() => navigate(`/bungalows/${encodeId(id)}/edit`)}
               leftIcon={<Edit2 className="w-3.5 h-3.5" />}
             >
               Edit Bungalow

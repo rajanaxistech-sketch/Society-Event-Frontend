@@ -16,6 +16,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { Plus, Edit2, Trash2, RefreshCw, Layers } from 'lucide-react';
 
 export const BlockListPage: React.FC = () => {
@@ -25,7 +26,7 @@ export const BlockListPage: React.FC = () => {
   const { can } = usePermission();
 
   // Seed society filter from URL query param (e.g. ?societyId=xxx when coming from Society Details)
-  const initialSocietyId = new URLSearchParams(location.search).get('societyId') || '';
+  const initialSocietyId = decodeId(new URLSearchParams(location.search).get('societyId') || '');
 
   const [blocks, setBlocks] = useState<BlockItem[]>([]);
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
@@ -42,7 +43,7 @@ export const BlockListPage: React.FC = () => {
 
   // Sync URL search params if navigated with new query
   useEffect(() => {
-    const urlSocietyId = new URLSearchParams(location.search).get('societyId') || '';
+    const urlSocietyId = decodeId(new URLSearchParams(location.search).get('societyId') || '');
     if (urlSocietyId !== societyFilter) {
       setSocietyFilter(urlSocietyId);
       setMeta((prev) => ({ ...prev, page: 1 }));
@@ -134,7 +135,7 @@ export const BlockListPage: React.FC = () => {
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/floors?blockId=${row.id}&societyId=${row.society_id}`);
+              navigate(`/floors?blockId=${encodeId(row.id)}&societyId=${encodeId(row.society_id)}`);
             }}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
             title="View floors in this block"
@@ -171,7 +172,7 @@ export const BlockListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.BLOCK_UPDATE}>
             <button
               type="button"
-              onClick={() => navigate(`/blocks/${row.id}/edit`)}
+              onClick={() => navigate(`/blocks/${encodeId(row.id)}/edit`)}
               className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Block"
             >

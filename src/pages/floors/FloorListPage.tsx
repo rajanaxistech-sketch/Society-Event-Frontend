@@ -17,6 +17,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { Plus, Edit2, Trash2, RefreshCw, Home } from 'lucide-react';
 
 export const FloorListPage: React.FC = () => {
@@ -26,8 +27,8 @@ export const FloorListPage: React.FC = () => {
   const { can } = usePermission();
 
   const queryParams = new URLSearchParams(location.search);
-  const initialSocietyId = queryParams.get('societyId') || '';
-  const initialBlockId = queryParams.get('blockId') || '';
+  const initialSocietyId = decodeId(queryParams.get('societyId') || '');
+  const initialBlockId = decodeId(queryParams.get('blockId') || '');
 
   const [floors, setFloors] = useState<FloorItem[]>([]);
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
@@ -47,8 +48,8 @@ export const FloorListPage: React.FC = () => {
   // Sync URL search params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const urlSocietyId = params.get('societyId') || '';
-    const urlBlockId = params.get('blockId') || '';
+    const urlSocietyId = decodeId(params.get('societyId') || '');
+    const urlBlockId = decodeId(params.get('blockId') || '');
     if (urlSocietyId !== societyFilter) setSocietyFilter(urlSocietyId);
     if (urlBlockId !== blockFilter) setBlockFilter(urlBlockId);
   }, [location.search]);
@@ -155,7 +156,7 @@ export const FloorListPage: React.FC = () => {
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/flats?floorId=${row.id}&blockId=${row.block_id}`);
+              navigate(`/flats?floorId=${encodeId(row.id)}&blockId=${encodeId(row.block_id)}`);
             }}
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
             title="View flats on this floor"
@@ -187,7 +188,7 @@ export const FloorListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.FLOOR_UPDATE}>
             <button
               type="button"
-              onClick={() => navigate(`/floors/${row.id}/edit`)}
+              onClick={() => navigate(`/floors/${encodeId(row.id)}/edit`)}
               className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Floor"
             >

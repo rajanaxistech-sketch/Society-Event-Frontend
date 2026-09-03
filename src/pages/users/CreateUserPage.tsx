@@ -15,6 +15,7 @@ import Select from '../../components/ui/Select';
 import Button from '../../components/ui/Button';
 import { ArrowLeft, Save, UserPlus, Shield, Building2 } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 
 const createUserSchema = z.object({
   full_name: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -77,7 +78,7 @@ export const CreateUserPage: React.FC = () => {
 
       if (res.success && res.data) {
         toast.success(`User "${data.full_name}" registered successfully.`);
-        navigate(`/users/${res.data.id}`);
+        navigate(`/users/${encodeId(res.data.id)}`);
       } else {
         toast.error(res.message || 'Failed to create user');
       }

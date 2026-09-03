@@ -13,6 +13,7 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Building2 } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 const editBungalowSchema = z.object({
   bungalow_number: z.string().min(1, 'Bungalow number is required'),
@@ -23,7 +24,8 @@ const editBungalowSchema = z.object({
 type EditBungalowFormData = z.infer<typeof editBungalowSchema>;
 
 export const EditBungalowPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -73,7 +75,7 @@ export const EditBungalowPage: React.FC = () => {
       const res = await bungalowsService.update(id, data);
       if (res.success) {
         toast.success(`Bungalow "${data.bungalow_number}" updated successfully.`);
-        navigate(`/bungalows/${id}`);
+        navigate(`/bungalows/${encodeId(id)}`);
       } else {
         toast.error(res.message || 'Failed to update bungalow');
       }
@@ -103,7 +105,7 @@ export const EditBungalowPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/bungalows/${id}`)}
+          onClick={() => navigate(`/bungalows/${encodeId(id)}`)}
           leftIcon={<ArrowLeft className="w-4 h-4" />}
         >
           Cancel
@@ -154,7 +156,7 @@ export const EditBungalowPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(`/bungalows/${id}`)}
+                onClick={() => navigate(`/bungalows/${encodeId(id)}`)}
                 disabled={isSubmitting}
               >
                 Cancel

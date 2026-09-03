@@ -15,6 +15,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, Edit2, Trash2, Crown, RefreshCw, Home, Building2 } from 'lucide-react';
 
 export const ResidentListPage: React.FC = () => {
@@ -153,7 +154,7 @@ export const ResidentListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/residents/${row.id}`)}
+            onClick={() => navigate(`/residents/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Details"
           >
@@ -162,7 +163,7 @@ export const ResidentListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.PERSON_UPDATE}>
             <button
               type="button"
-              onClick={() => navigate(`/residents/${row.id}/edit`)}
+              onClick={() => navigate(`/residents/${encodeId(row.id)}/edit`)}
               className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Resident"
             >
@@ -186,12 +187,12 @@ export const ResidentListPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Residents Directory</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Residents & Members</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Registered society residents, owners, tenants, and family members.
+            Manage apartment owners, tenants, and community residents.
           </p>
         </div>
 
@@ -227,7 +228,7 @@ export const ResidentListPage: React.FC = () => {
             setTimeout(fetchResidents, 50);
           }
         }}
-        searchPlaceholder="Search by resident name, phone, or email..."
+        searchPlaceholder="Search by name, email, or mobile..."
         filters={
           <select
             value={statusFilter}
@@ -249,7 +250,7 @@ export const ResidentListPage: React.FC = () => {
         columns={columns}
         data={residents}
         isLoading={isLoading}
-        emptyText="No residents found. Click 'Add Resident' to register community members."
+        emptyText="No residents found. Click 'Add Resident' to register flat members or bungalow owners."
         sortBy={sortBy}
         sortOrder={sortOrder}
         onSort={(field) => {
@@ -260,7 +261,7 @@ export const ResidentListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
-        onRowClick={(row) => navigate(`/residents/${row.id}`)}
+        onRowClick={(row) => navigate(`/residents/${encodeId(row.id)}`)}
       />
 
       {/* Pagination */}

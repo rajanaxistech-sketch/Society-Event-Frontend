@@ -22,9 +22,11 @@ import {
   PieChart as PieChartIcon,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 export const EventDashboardPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const [event, setEvent] = useState<EventItem | null>(null);
   const [collectionsDash, setCollectionsDash] = useState<EventCollectionsDashboardData | null>(null);
@@ -89,7 +91,7 @@ export const EventDashboardPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(`/events/${id}`)}
+            onClick={() => navigate(`/events/${encodeId(id)}`)}
             leftIcon={<ArrowLeft className="w-4 h-4" />}
           >
             Back to Event
@@ -117,7 +119,7 @@ export const EventDashboardPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate(`/events/${id}`)}
+            onClick={() => navigate(`/events/${encodeId(id)}`)}
           >
             Manage Modules
           </Button>

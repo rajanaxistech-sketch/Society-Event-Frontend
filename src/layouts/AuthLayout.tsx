@@ -31,8 +31,19 @@ export const AuthLayout: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="mt-8 text-center text-xs text-slate-500 z-10">
-        &copy; {new Date().getFullYear()} Society & Community Event Management System.
+      <div className="mt-8 text-center text-xs text-slate-400 z-10 space-y-1">
+        <div>&copy; {new Date().getFullYear()} Society & Community Event Management System.</div>
+        <div className="text-slate-500">
+          Powered & Developed by{' '}
+          <a
+            href="https://anaxistech.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+          >
+            AnaxisTech
+          </a>
+        </div>
       </div>
 
       <ToastContainer />

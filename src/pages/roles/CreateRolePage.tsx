@@ -14,6 +14,7 @@ import Textarea from '../../components/ui/Textarea';
 import Button from '../../components/ui/Button';
 import { ArrowLeft, Save, Shield, CheckSquare, Square } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 
 const createRoleSchema = z.object({
   name: z.string().min(2, 'Role name must be at least 2 characters'),
@@ -89,7 +90,7 @@ export const CreateRolePage: React.FC = () => {
 
       if (res.success && res.data) {
         toast.success(`Role "${data.name}" created successfully.`);
-        navigate(`/roles/${res.data.id}`);
+        navigate(`/roles/${encodeId(res.data.id)}`);
       } else {
         toast.error(res.message || 'Failed to create role');
       }

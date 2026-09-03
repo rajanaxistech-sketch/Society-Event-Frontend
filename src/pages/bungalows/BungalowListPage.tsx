@@ -16,6 +16,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, Edit2, Trash2, RefreshCw } from 'lucide-react';
 
 export const BungalowListPage: React.FC = () => {
@@ -25,7 +26,7 @@ export const BungalowListPage: React.FC = () => {
   const { can } = usePermission();
 
   // Seed society filter from URL query param (e.g. ?societyId=xxx when coming from Society Details)
-  const initialSocietyId = new URLSearchParams(location.search).get('societyId') || '';
+  const initialSocietyId = decodeId(new URLSearchParams(location.search).get('societyId') || '');
 
   const [bungalows, setBungalows] = useState<BungalowItem[]>([]);
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
@@ -39,6 +40,13 @@ export const BungalowListPage: React.FC = () => {
 
   const [deleteTarget, setDeleteTarget] = useState<BungalowItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const urlSocietyId = decodeId(new URLSearchParams(location.search).get('societyId') || '');
+    if (urlSocietyId !== societyFilter) {
+      setSocietyFilter(urlSocietyId);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     societiesService.getAll({ limit: 100 }).then((res) => {
@@ -148,7 +156,7 @@ export const BungalowListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/bungalows/${row.id}`)}
+            onClick={() => navigate(`/bungalows/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Details"
           >
@@ -157,7 +165,7 @@ export const BungalowListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.BUNGALOW_UPDATE}>
             <button
               type="button"
-              onClick={() => navigate(`/bungalows/${row.id}/edit`)}
+              onClick={() => navigate(`/bungalows/${encodeId(row.id)}/edit`)}
               className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Bungalow"
             >
@@ -186,7 +194,7 @@ export const BungalowListPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Bungalows & Villas</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage standalone residential bungalows, row houses, and villa units.
+            Manage detached villas, bungalows, and private estate units.
           </p>
         </div>
 
@@ -222,7 +230,7 @@ export const BungalowListPage: React.FC = () => {
             setTimeout(fetchBungalows, 50);
           }
         }}
-        searchPlaceholder="Search bungalow number or type..."
+        searchPlaceholder="Search bungalow / villa number or name..."
         filters={
           <div className="flex items-center gap-2 flex-wrap">
             <select
@@ -273,7 +281,7 @@ export const BungalowListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
-        onRowClick={(row) => navigate(`/bungalows/${row.id}`)}
+        onRowClick={(row) => navigate(`/bungalows/${encodeId(row.id)}`)}
       />
 
       {/* Pagination */}

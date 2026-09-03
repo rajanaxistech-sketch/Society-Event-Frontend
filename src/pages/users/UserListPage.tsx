@@ -16,6 +16,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, Edit2, Trash2, RefreshCw, Shield, UserCheck } from 'lucide-react';
 
 export const UserListPage: React.FC = () => {
@@ -140,7 +141,7 @@ export const UserListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/users/${row.id}`)}
+            onClick={() => navigate(`/users/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Details"
           >
@@ -149,7 +150,7 @@ export const UserListPage: React.FC = () => {
           <PermissionGuard permission={Permissions.USER_UPDATE}>
             <button
               type="button"
-              onClick={() => navigate(`/users/${row.id}/edit`)}
+              onClick={() => navigate(`/users/${encodeId(row.id)}/edit`)}
               className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit User"
             >
@@ -265,7 +266,7 @@ export const UserListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
-        onRowClick={(row) => navigate(`/users/${row.id}`)}
+        onRowClick={(row) => navigate(`/users/${encodeId(row.id)}`)}
       />
 
       {/* Pagination */}

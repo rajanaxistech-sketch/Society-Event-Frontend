@@ -17,6 +17,7 @@ import CurrencyDisplay from '../../components/common/CurrencyDisplay';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { decodeId } from '../../utils/idObfuscator';
 import { Plus, Edit2, Trash2, Utensils, RefreshCw } from 'lucide-react';
 
 interface EventFoodPageProps {
@@ -25,7 +26,7 @@ interface EventFoodPageProps {
 
 export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEventId }) => {
   const { id: routeEventId } = useParams<{ id: string }>();
-  const eventId = propEventId || routeEventId;
+  const eventId = decodeId(propEventId || routeEventId);
   const toast = useToast();
   const { can } = usePermission();
 

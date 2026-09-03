@@ -17,6 +17,7 @@ import ErrorState from '../../components/common/ErrorState';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import {
   ArrowLeft,
   Wallet,
@@ -29,7 +30,8 @@ import {
 } from 'lucide-react';
 
 export const CollectionDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -119,7 +121,7 @@ export const CollectionDetailsPage: React.FC = () => {
       render: (row) => (
         <button
           type="button"
-          onClick={() => navigate(`/payments/${row.id}`)}
+          onClick={() => navigate(`/payments/${encodeId(row.id)}`)}
           className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           title="View Payment Receipt"
         >
@@ -159,7 +161,7 @@ export const CollectionDetailsPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate(`/payments/record?collectionId=${collection.id}`)}
+            onClick={() => navigate(`/payments/record?collectionId=${encodeId(collection.id)}`)}
             leftIcon={<Plus className="w-4 h-4" />}
           >
             Record Payment Installment
@@ -270,7 +272,7 @@ export const CollectionDetailsPage: React.FC = () => {
           columns={paymentColumns}
           data={payments}
           emptyText="No payments recorded for this collection obligation yet."
-          onRowClick={(row) => navigate(`/payments/${row.id}`)}
+          onRowClick={(row) => navigate(`/payments/${encodeId(row.id)}`)}
         />
       </Card>
     </div>

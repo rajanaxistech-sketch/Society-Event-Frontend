@@ -16,6 +16,7 @@ import Switch from '../../components/ui/Switch';
 import Button from '../../components/ui/Button';
 import { ArrowLeft, Save, Users, Home, Building2 } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 
 const createResidentSchema = z.object({
   unit_type: z.enum(['flat', 'bungalow']),
@@ -97,7 +98,7 @@ export const CreateResidentPage: React.FC = () => {
       const res = await personsService.create(payload);
       if (res.success && res.data) {
         toast.success(`Resident "${data.full_name}" registered successfully.`);
-        navigate(`/residents/${res.data.id}`);
+        navigate(`/residents/${encodeId(res.data.id)}`);
       } else {
         toast.error(res.message || 'Failed to register resident');
       }

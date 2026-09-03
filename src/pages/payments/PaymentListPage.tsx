@@ -16,6 +16,7 @@ import Button from '../../components/ui/Button';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId } from '../../utils/idObfuscator';
 import { Plus, Eye, RefreshCw, CreditCard, Sliders } from 'lucide-react';
 
 export const PaymentListPage: React.FC = () => {
@@ -145,7 +146,7 @@ export const PaymentListPage: React.FC = () => {
         <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => navigate(`/payments/${row.id}`)}
+            onClick={() => navigate(`/payments/${encodeId(row.id)}`)}
             className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             title="View Receipt"
           >
@@ -264,7 +265,7 @@ export const PaymentListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
-        onRowClick={(row) => navigate(`/payments/${row.id}`)}
+        onRowClick={(row) => navigate(`/payments/${encodeId(row.id)}`)}
       />
 
       {/* Pagination */}

@@ -14,6 +14,7 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Home } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 const editFlatSchema = z.object({
   flat_number: z.string().min(1, 'Flat number is required'),
@@ -24,7 +25,8 @@ const editFlatSchema = z.object({
 type EditFlatFormData = z.infer<typeof editFlatSchema>;
 
 export const EditFlatPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -74,7 +76,7 @@ export const EditFlatPage: React.FC = () => {
       const res = await flatsService.update(id, data);
       if (res.success) {
         toast.success(`Flat "${data.flat_number}" updated successfully.`);
-        navigate(`/flats/${id}`);
+        navigate(`/flats/${encodeId(id)}`);
       } else {
         toast.error(res.message || 'Failed to update flat');
       }
@@ -104,7 +106,7 @@ export const EditFlatPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/flats/${id}`)}
+          onClick={() => navigate(`/flats/${encodeId(id)}`)}
           leftIcon={<ArrowLeft className="w-4 h-4" />}
         >
           Cancel
@@ -155,7 +157,7 @@ export const EditFlatPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(`/flats/${id}`)}
+                onClick={() => navigate(`/flats/${encodeId(id)}`)}
                 disabled={isSubmitting}
               >
                 Cancel

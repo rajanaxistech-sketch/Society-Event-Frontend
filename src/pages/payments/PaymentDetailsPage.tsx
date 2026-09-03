@@ -17,6 +17,7 @@ import ErrorState from '../../components/common/ErrorState';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { decodeId } from '../../utils/idObfuscator';
 import {
   ArrowLeft,
   Receipt,
@@ -30,7 +31,8 @@ import {
 } from 'lucide-react';
 
 export const PaymentDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();

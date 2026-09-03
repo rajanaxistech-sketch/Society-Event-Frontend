@@ -13,6 +13,7 @@ import ErrorState from '../../components/common/ErrorState';
 import StatusBadge from '../../components/common/StatusBadge';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 import {
   ArrowLeft,
   Building2,
@@ -28,7 +29,8 @@ import {
 } from 'lucide-react';
 
 export const SocietyDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
   const { can } = usePermission();
@@ -120,7 +122,7 @@ export const SocietyDetailsPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/societies/${id}/structure`)}
+              onClick={() => navigate(`/societies/${encodeId(id)}/structure`)}
               leftIcon={<Sliders className="w-3.5 h-3.5" />}
             >
               Structure Config
@@ -130,7 +132,7 @@ export const SocietyDetailsPage: React.FC = () => {
             <Button
               variant="primary"
               size="sm"
-              onClick={() => navigate(`/societies/${id}/edit`)}
+              onClick={() => navigate(`/societies/${encodeId(id)}/edit`)}
               leftIcon={<Edit2 className="w-3.5 h-3.5" />}
             >
               Edit Society
@@ -168,45 +170,26 @@ export const SocietyDetailsPage: React.FC = () => {
           <Card title="Society Information">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
               <div>
-                <span className="text-slate-400 block mb-0.5">Society Name</span>
-                <span className="font-semibold text-slate-900 text-sm">{society.name}</span>
+                <span className="text-slate-400 block font-medium">Society Code</span>
+                <span className="font-semibold text-slate-800">{society.code || '—'}</span>
               </div>
               <div>
-                <span className="text-slate-400 block mb-0.5">Society Code</span>
-                <span className="font-semibold text-slate-900 text-sm">{society.code || '—'}</span>
+                <span className="text-slate-400 block font-medium">Contact Person</span>
+                <span className="font-semibold text-slate-800">{society.contact_name || '—'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block font-medium">Contact Phone</span>
+                <span className="font-semibold text-slate-800">{society.contact_phone || '—'}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block font-medium">Contact Email</span>
+                <span className="font-semibold text-slate-800">{society.contact_email || '—'}</span>
               </div>
               <div className="sm:col-span-2">
-                <span className="text-slate-400 block mb-0.5">Full Address</span>
-                <span className="text-slate-800">
-                  {[society.address_line1, society.address_line2, society.city, society.state, society.postal_code]
-                    .filter(Boolean)
-                    .join(', ') || 'No address specified.'}
+                <span className="text-slate-400 block font-medium">Address</span>
+                <span className="font-semibold text-slate-800">
+                  {[society.address_line1, society.address_line2, society.city, society.state, society.postal_code].filter(Boolean).join(', ') || '—'}
                 </span>
-              </div>
-              <div>
-                <span className="text-slate-400 block mb-0.5">City</span>
-                <span className="text-slate-800">{society.city || '—'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 block mb-0.5">State</span>
-                <span className="text-slate-800">{society.state || '—'}</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card title="Primary Contact Details">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div>
-                <span className="text-slate-400 block mb-0.5">Contact Name</span>
-                <span className="font-semibold text-slate-900">{society.contact_name || '—'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 block mb-0.5">Phone Number</span>
-                <span className="font-semibold text-slate-900">{society.contact_phone || '—'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 block mb-0.5">Email Address</span>
-                <span className="font-semibold text-slate-900">{society.contact_email || '—'}</span>
               </div>
             </div>
           </Card>
@@ -217,7 +200,7 @@ export const SocietyDetailsPage: React.FC = () => {
           <Card title="Property Units">
             <div className="space-y-3">
               <button
-                onClick={() => navigate(`/blocks?societyId=${id}`)}
+                onClick={() => navigate(`/blocks?societyId=${encodeId(id)}`)}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 transition-colors text-xs text-left group"
               >
                 <div className="flex items-center gap-2.5">
@@ -228,7 +211,7 @@ export const SocietyDetailsPage: React.FC = () => {
               </button>
 
               <button
-                onClick={() => navigate(`/bungalows?societyId=${id}`)}
+                onClick={() => navigate(`/bungalows?societyId=${encodeId(id)}`)}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-teal-50 hover:border-teal-200 transition-colors text-xs text-left group"
               >
                 <div className="flex items-center gap-2.5">
@@ -239,7 +222,7 @@ export const SocietyDetailsPage: React.FC = () => {
               </button>
 
               <button
-                onClick={() => navigate(`/events?societyId=${id}`)}
+                onClick={() => navigate(`/events?societyId=${encodeId(id)}`)}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 transition-colors text-xs text-left group"
               >
                 <div className="flex items-center gap-2.5">

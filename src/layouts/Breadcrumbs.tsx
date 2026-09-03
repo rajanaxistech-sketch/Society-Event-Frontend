@@ -22,10 +22,12 @@ export const Breadcrumbs: React.FC = () => {
       {pathnames.map((value, index) => {
         const to = `/${pathnames.slice(0, index + 1).join('/')}`;
         const isLast = index === pathnames.length - 1;
-        const formatted = value
-          .replace(/-/g, ' ')
-          .replace(/^[0-9a-fA-F-]{36}$/, 'Details')
-          .replace(/\b\w/g, (l) => l.toUpperCase());
+        const formatted =
+          value.startsWith('enc_') || /^[0-9a-fA-F-]{36}$/.test(value)
+            ? 'Details'
+            : value
+                .replace(/-/g, ' ')
+                .replace(/\b\w/g, (l) => l.toUpperCase());
 
         return (
           <React.Fragment key={to}>

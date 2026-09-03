@@ -15,6 +15,7 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Grid } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { decodeId } from '../../utils/idObfuscator';
 
 const editFloorSchema = z.object({
   floor_number: z.coerce.number().int('Floor number must be an integer'),
@@ -25,7 +26,8 @@ const editFloorSchema = z.object({
 type EditFloorFormData = z.infer<typeof editFloorSchema>;
 
 export const EditFloorPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
 

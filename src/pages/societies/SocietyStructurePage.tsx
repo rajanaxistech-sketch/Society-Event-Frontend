@@ -10,9 +10,11 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Sliders, Layers, Building2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 export const SocietyStructurePage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  const id = decodeId(rawId);
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -74,7 +76,7 @@ export const SocietyStructurePage: React.FC = () => {
 
       if (res.success) {
         toast.success('Society structure configuration saved successfully.');
-        navigate(`/societies/${id}`);
+        navigate(`/societies/${encodeId(id)}`);
       } else {
         toast.error(res.message || 'Failed to save configuration');
       }
@@ -104,7 +106,7 @@ export const SocietyStructurePage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/societies/${id}`)}
+          onClick={() => navigate(`/societies/${encodeId(id)}`)}
           leftIcon={<ArrowLeft className="w-4 h-4" />}
         >
           Cancel
@@ -206,7 +208,7 @@ export const SocietyStructurePage: React.FC = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate(`/societies/${id}`)}
+              onClick={() => navigate(`/societies/${encodeId(id)}`)}
               disabled={isSubmitting}
             >
               Cancel
