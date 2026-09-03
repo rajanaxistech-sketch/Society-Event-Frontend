@@ -2,9 +2,9 @@ import React, { useId } from "react";
 import { cn } from "../../../utils/cn";
 
 const sizeClasses = {
-  sm: "px-3 py-1.5 text-xs rounded-md",
-  md: "px-3.5 py-2 text-sm rounded-lg",
-  lg: "px-4 py-2.5 text-base rounded-lg",
+  sm: "px-3 py-1.5 text-xs rounded-card-sm",
+  md: "px-3.5 py-2 text-sm rounded-card-sm",
+  lg: "px-4 py-2.5 text-base rounded-card",
 };
 
 export const Input = React.forwardRef(function Input(
@@ -40,8 +40,8 @@ export const Input = React.forwardRef(function Input(
         <label
           htmlFor={inputId}
           className={cn(
-            "text-sm font-medium select-none text-gray-700 flex items-center gap-1",
-            disabled && "text-gray-400 cursor-not-allowed"
+            "text-sm font-semibold select-none text-navy-800 flex items-center gap-1",
+            disabled && "text-navy-400 cursor-not-allowed"
           )}
         >
           {label}
@@ -51,7 +51,7 @@ export const Input = React.forwardRef(function Input(
 
       <div className="relative flex items-center">
         {leftIcon && (
-          <div className="absolute left-3 flex items-center pointer-events-none text-gray-400">
+          <div className="absolute left-3 flex items-center pointer-events-none text-navy-400">
             {leftIcon}
           </div>
         )}
@@ -68,16 +68,16 @@ export const Input = React.forwardRef(function Input(
             hasError ? errorId : helperText ? helperId : undefined
           }
           className={cn(
-            "w-full border bg-white text-gray-900 transition-colors duration-150",
-            "focus:outline-none focus:ring-2 focus:ring-offset-0",
+            "w-full border bg-white text-navy-900 transition-all duration-150",
+            "focus:outline-none focus:ring-3 focus:ring-offset-0",
             sizeClasses[size] || sizeClasses.md,
             leftIcon && "pl-9",
             rightIcon && "pr-9",
             hasError
-              ? "border-rose-500 focus:border-rose-500 focus:ring-rose-200 text-rose-900"
-              : "border-gray-300 focus:border-blue-500 focus:ring-blue-100",
-            disabled && "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed shadow-none",
-            readOnly && "bg-gray-50 border-gray-200 cursor-default",
+              ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100 text-rose-900"
+              : "border-slate-300 focus:border-brand-500 focus:ring-brand-100/70 shadow-sm",
+            disabled && "bg-slate-100 border-slate-200 text-navy-400 cursor-not-allowed shadow-none",
+            readOnly && "bg-slate-50 border-slate-200 cursor-default",
             className
           )}
           {...props}

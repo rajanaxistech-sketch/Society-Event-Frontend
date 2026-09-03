@@ -2,23 +2,24 @@ import React from "react";
 import { cn } from "../../../utils/cn";
 
 const variantClasses = {
-  primary: "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm focus-visible:ring-blue-500",
-  secondary: "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 border border-gray-300 focus-visible:ring-gray-400",
-  success: "bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 shadow-sm focus-visible:ring-emerald-500",
-  danger: "bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 shadow-sm focus-visible:ring-rose-500",
-  warning: "bg-amber-500 text-white hover:bg-amber-600 active:bg-amber-700 shadow-sm focus-visible:ring-amber-400",
-  info: "bg-cyan-600 text-white hover:bg-cyan-700 active:bg-cyan-800 shadow-sm focus-visible:ring-cyan-500",
-  ghost: "bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200 focus-visible:ring-gray-400",
-  outline: "bg-transparent text-blue-600 border border-blue-600 hover:bg-blue-50 active:bg-blue-100 focus-visible:ring-blue-500",
-  link: "bg-transparent text-blue-600 hover:underline p-0 h-auto focus-visible:ring-blue-500",
+  primary: "bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-soft hover:shadow-md focus-visible:ring-brand-500 font-semibold",
+  secondary: "bg-slate-100 text-navy-800 hover:bg-slate-200 active:bg-slate-300 border border-slate-200 focus-visible:ring-slate-400 font-medium",
+  sky: "bg-sky-500 text-white hover:bg-sky-600 active:bg-sky-700 shadow-soft focus-visible:ring-sky-400 font-semibold",
+  success: "bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 shadow-soft focus-visible:ring-emerald-500 font-semibold",
+  danger: "bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800 shadow-soft focus-visible:ring-rose-500 font-semibold",
+  warning: "bg-amber-500 text-white hover:bg-amber-600 active:bg-amber-700 shadow-soft focus-visible:ring-amber-400 font-semibold",
+  navy: "bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 shadow-soft focus-visible:ring-navy-600 font-semibold",
+  ghost: "bg-transparent text-navy-700 hover:bg-brand-50 hover:text-brand-700 active:bg-brand-100 focus-visible:ring-brand-400 font-medium",
+  outline: "bg-white text-brand-700 border border-brand-300 hover:bg-brand-50 hover:border-brand-400 active:bg-brand-100 focus-visible:ring-brand-500 font-semibold",
+  link: "bg-transparent text-brand-600 hover:text-brand-800 hover:underline p-0 h-auto focus-visible:ring-brand-500 font-medium",
 };
 
 const sizeClasses = {
-  xs: "text-xs px-2.5 py-1 rounded-md gap-1.5",
-  sm: "text-sm px-3 py-1.5 rounded-md gap-1.5",
-  md: "text-sm px-4 py-2 rounded-lg gap-2 font-medium",
-  lg: "text-base px-5 py-2.5 rounded-lg gap-2.5 font-medium",
-  xl: "text-lg px-6 py-3.5 rounded-xl gap-3 font-semibold",
+  xs: "text-xs px-2.5 py-1 rounded-card-sm gap-1.5",
+  sm: "text-xs px-3 py-1.5 rounded-card-sm gap-1.5 font-medium",
+  md: "text-sm px-4 py-2 rounded-card-sm gap-2 font-medium",
+  lg: "text-base px-5 py-2.5 rounded-card gap-2.5 font-semibold",
+  xl: "text-lg px-6 py-3.5 rounded-card-lg gap-3 font-bold",
 };
 
 export const Button = React.forwardRef(function Button(

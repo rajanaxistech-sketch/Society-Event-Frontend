@@ -2,23 +2,27 @@ import React from "react";
 import { cn } from "../../../utils/cn";
 
 const variantClasses = {
-  primary: "bg-blue-50 text-blue-700 border border-blue-200",
-  secondary: "bg-gray-100 text-gray-700 border border-gray-200",
-  success: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  danger: "bg-rose-50 text-rose-700 border border-rose-200",
-  warning: "bg-amber-50 text-amber-800 border border-amber-200",
-  info: "bg-cyan-50 text-cyan-700 border border-cyan-200",
-  outline: "bg-transparent text-gray-700 border border-gray-300",
+  primary: "bg-brand-50 text-brand-700 border border-brand-200/80 font-semibold",
+  secondary: "bg-slate-100 text-slate-700 border border-slate-200",
+  success: "bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold",
+  danger: "bg-rose-50 text-rose-700 border border-rose-200 font-semibold",
+  warning: "bg-amber-50 text-amber-800 border border-amber-200 font-semibold",
+  info: "bg-sky-50 text-sky-700 border border-sky-200 font-semibold",
+  navy: "bg-navy-900 text-white border border-navy-800 font-semibold",
+  sky: "bg-sky-50 text-sky-700 border border-sky-200 font-semibold",
+  outline: "bg-transparent text-navy-700 border border-slate-300",
 };
 
 const dotColorClasses = {
-  primary: "bg-blue-600",
-  secondary: "bg-gray-500",
-  success: "bg-emerald-600",
-  danger: "bg-rose-600",
-  warning: "bg-amber-600",
-  info: "bg-cyan-600",
-  outline: "bg-gray-400",
+  primary: "bg-brand-600",
+  secondary: "bg-slate-500",
+  success: "bg-emerald-500",
+  danger: "bg-rose-500",
+  warning: "bg-amber-500",
+  info: "bg-sky-500",
+  navy: "bg-white",
+  sky: "bg-sky-500",
+  outline: "bg-slate-400",
 };
 
 const sizeClasses = {

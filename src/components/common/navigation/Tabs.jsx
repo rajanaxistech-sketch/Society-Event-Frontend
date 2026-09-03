@@ -41,28 +41,28 @@ export function Tabs({
 
     if (variant === "pills") {
       return cn(
-        "rounded-lg font-medium transition-all duration-150 select-none",
+        "rounded-card-sm font-semibold transition-all duration-150 select-none",
         isSelected
-          ? "bg-blue-600 text-white shadow-sm"
-          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          ? "bg-brand-600 text-white shadow-soft"
+          : "text-navy-600 hover:bg-slate-200/70 hover:text-navy-900"
       );
     }
 
     if (variant === "enclosed") {
       return cn(
-        "rounded-t-lg font-medium transition-all duration-150 border-t border-l border-r select-none -mb-px",
+        "rounded-t-card-sm font-semibold transition-all duration-150 border-t border-l border-r select-none -mb-px",
         isSelected
-          ? "bg-white text-blue-600 border-gray-300 font-semibold shadow-sm"
-          : "bg-gray-50 text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-100"
+          ? "bg-white text-brand-600 border-slate-200 font-bold shadow-soft"
+          : "bg-slate-50 text-navy-500 border-transparent hover:text-navy-800 hover:bg-slate-100"
       );
     }
 
     // Default 'line'
     return cn(
-      "font-medium border-b-2 transition-all duration-150 select-none -mb-[2px]",
+      "font-semibold border-b-2 transition-all duration-150 select-none -mb-[2px]",
       isSelected
-        ? "border-blue-600 text-blue-600 font-semibold"
-        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+        ? "border-brand-600 text-brand-700 font-bold"
+        : "border-transparent text-navy-500 hover:text-navy-800 hover:border-slate-300"
     );
   };
 
@@ -71,10 +71,10 @@ export function Tabs({
       <div
         role="tablist"
         className={cn(
-          "flex items-center gap-1 overflow-x-auto no-scrollbar",
-          variant === "line" && "border-b-2 border-gray-200",
-          variant === "enclosed" && "border-b border-gray-300",
-          variant === "pills" && "p-1 bg-gray-100 rounded-xl",
+          "flex items-center gap-1.5 overflow-x-auto no-scrollbar",
+          variant === "line" && "border-b-2 border-slate-200",
+          variant === "enclosed" && "border-b border-slate-200",
+          variant === "pills" && "p-1.5 bg-slate-100/90 rounded-card border border-slate-200/80",
           tabListClassName
         )}
       >

@@ -2,11 +2,13 @@ import React from "react";
 import { cn } from "../../../utils/cn";
 
 const variantClasses = {
-  primary: "bg-blue-600",
-  success: "bg-emerald-500",
-  warning: "bg-amber-500",
-  danger: "bg-rose-500",
-  info: "bg-cyan-500",
+  primary: "bg-gradient-to-r from-brand-700 to-brand-500",
+  sky: "bg-gradient-to-r from-sky-600 to-sky-400",
+  success: "bg-gradient-to-r from-emerald-600 to-emerald-400",
+  warning: "bg-gradient-to-r from-amber-600 to-amber-400",
+  danger: "bg-gradient-to-r from-rose-600 to-rose-400",
+  info: "bg-gradient-to-r from-sky-600 to-brand-500",
+  brand: "bg-gradient-brand",
 };
 
 const sizeClasses = {

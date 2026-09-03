@@ -4,15 +4,15 @@ import { cn } from "../../../utils/cn";
 const paddingClasses = {
   none: "p-0",
   sm: "p-4",
-  md: "p-6",
-  lg: "p-8",
+  md: "p-5 sm:p-6",
+  lg: "p-6 sm:p-8",
 };
 
 const shadowClasses = {
   none: "shadow-none",
-  sm: "shadow-sm",
-  md: "shadow-md",
-  lg: "shadow-lg",
+  sm: "shadow-soft",
+  md: "shadow-card",
+  lg: "shadow-card-hover",
 };
 
 export function Card({
@@ -22,7 +22,7 @@ export function Card({
   footer,
   hoverable = false,
   bordered = true,
-  shadow = "sm",
+  shadow = "md",
   padding = "md",
   children,
   className = "",
@@ -36,10 +36,10 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl bg-white text-gray-900 overflow-hidden transition-all duration-200",
-        bordered && "border border-gray-200",
-        shadowClasses[shadow] || shadowClasses.sm,
-        hoverable && "hover:shadow-md hover:-translate-y-0.5 hover:border-gray-300 cursor-pointer",
+        "rounded-card bg-white text-navy-900 overflow-hidden transition-all duration-200",
+        bordered && "border border-slate-200/80",
+        shadowClasses[shadow] || shadowClasses.md,
+        hoverable && "hover:shadow-card-hover hover:-translate-y-0.5 hover:border-brand-200 cursor-pointer",
         className
       )}
       {...props}
@@ -47,19 +47,19 @@ export function Card({
       {hasHeader && (
         <div
           className={cn(
-            "flex items-start justify-between border-b border-gray-100",
+            "flex items-start justify-between border-b border-slate-100",
             paddingClasses[padding] || paddingClasses.md,
             headerClassName
           )}
         >
           <div className="flex flex-col gap-0.5">
             {title && (
-              <h3 className="text-base font-semibold text-gray-900 leading-tight">
+              <h3 className="text-base font-bold text-navy-900 leading-tight tracking-tight">
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p className="text-xs text-gray-500 leading-normal">{subtitle}</p>
+              <p className="text-xs text-navy-500 leading-normal mt-0.5">{subtitle}</p>
             )}
           </div>
           {headerAction && (
@@ -82,7 +82,7 @@ export function Card({
       {footer && (
         <div
           className={cn(
-            "border-t border-gray-100 bg-gray-50/50 flex items-center justify-between",
+            "border-t border-slate-100 bg-slate-50/60 flex items-center justify-between",
             paddingClasses[padding] || paddingClasses.md,
             footerClassName
           )}
@@ -95,3 +95,4 @@ export function Card({
 }
 
 export default Card;
+
