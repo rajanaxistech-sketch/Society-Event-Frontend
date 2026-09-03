@@ -1,3 +1,5 @@
+import envConfig from '../config/env.config';
+
 /**
  * Triggers a browser download for a Blob response
  */
@@ -16,9 +18,10 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
  * Triggers a download from a remote file URL
  */
 export const downloadFileUrl = (url: string, filename?: string): void => {
+  const defaultUploadsBase = envConfig.apiUrl.replace(/\/api(\/v\d+)?\/?$/, '') + '/uploads';
   const fullUrl = url.startsWith('http')
     ? url
-    : `${process.env.REACT_APP_UPLOADS_URL || 'http://localhost:5000/uploads'}/${url.replace(/^\/+/, '')}`;
+    : `${process.env.REACT_APP_UPLOADS_URL || defaultUploadsBase}/${url.replace(/^\/+/, '')}`;
 
   const link = document.createElement('a');
   link.href = fullUrl;

@@ -2,9 +2,9 @@
  * Environment-Based API & App Configuration System
  * 
  * Supports three primary deployment targets:
- * - 'local'  -> Local development server / mock services
- * - 'stage'  -> Staging / QA pre-release environment
- * - 'live'   -> Production client-facing environment
+ * - 'local'  -> Local development server (http://localhost:6090/api/v1)
+ * - 'stage'  -> Staging / QA pre-release environment (https://api-societymgmt.anaxistech.com/api/v1)
+ * - 'live'   -> Production client-facing environment (https://api-societymgmt.anaxistech.com/api/v1)
  * 
  * Complies with Create React App (REACT_APP_*) while safely falling back to standard variables.
  */
@@ -18,9 +18,9 @@ export const ENVIRONMENTS = Object.freeze({
 
 // Default API Base URLs per environment
 const DEFAULT_API_URLS = Object.freeze({
-  [ENVIRONMENTS.LOCAL]: "http://localhost:5000/api",
-  [ENVIRONMENTS.STAGE]: "https://stage-api.societyevents.com/api",
-  [ENVIRONMENTS.LIVE]: "https://api.societyevents.com/api",
+  [ENVIRONMENTS.LOCAL]: "http://localhost:6090/api/v1",
+  [ENVIRONMENTS.STAGE]: "https://api-societymgmt.anaxistech.com/api/v1",
+  [ENVIRONMENTS.LIVE]: "https://api-societymgmt.anaxistech.com/api/v1",
 });
 
 /**
@@ -29,9 +29,13 @@ const DEFAULT_API_URLS = Object.freeze({
 function resolveEnvironment() {
   const rawEnv = (
     process.env.REACT_APP_ENV ||
+    process.env.REACT_APP_ENVIRONMENT ||
+    process.env.REACT_APP_STAGE ||
     process.env.NODE_ENV ||
     ENVIRONMENTS.LOCAL
-  ).toLowerCase().trim();
+  )
+    .toLowerCase()
+    .trim();
 
   if (rawEnv === "production" || rawEnv === "prod" || rawEnv === "live") {
     return ENVIRONMENTS.LIVE;
@@ -53,27 +57,18 @@ function resolveEnvironment() {
  * Resolves API URL with environment-safety checks
  */
 function resolveApiUrl(currentEnv) {
-  const customUrl = process.env.REACT_APP_API_URL?.trim();
+  const customUrl = (
+    process.env.REACT_APP_API_BASE_URL ||
+    process.env.REACT_APP_API_URL ||
+    ""
+  ).trim();
 
-  // If a custom URL is provided via .env, check for safety
-  const resolvedUrl = customUrl || DEFAULT_API_URLS[currentEnv];
-
-  // Safeguard: Live environment must never point to localhost
-  if (currentEnv === ENVIRONMENTS.LIVE) {
-    const isLocalhost =
-      resolvedUrl.includes("localhost") ||
-      resolvedUrl.includes("127.0.0.1") ||
-      resolvedUrl.startsWith("http://192.168.") ||
-      resolvedUrl.startsWith("http://10.");
-
-    if (isLocalhost) {
-      const errorMsg = `[CRITICAL SECURITY ALERT] Production/Live environment cannot point to a local address: "${resolvedUrl}". Please configure a valid live API URL in REACT_APP_API_URL.`;
-      console.error(errorMsg);
-      throw new Error(errorMsg);
-    }
+  // If a custom URL is provided via .env, strip trailing slash and return it
+  if (customUrl) {
+    return customUrl.replace(/\/+$/, "");
   }
 
-  return resolvedUrl;
+  return DEFAULT_API_URLS[currentEnv] || DEFAULT_API_URLS[ENVIRONMENTS.LOCAL];
 }
 
 // Current active environment
@@ -89,7 +84,7 @@ export const envConfig = Object.freeze({
   isStage: currentEnv === ENVIRONMENTS.STAGE,
   isLive: currentEnv === ENVIRONMENTS.LIVE,
   apiUrl,
-  apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT || "15000", 10),
+  apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT || "30000", 10),
   appName: process.env.REACT_APP_NAME || "Society Event Management",
   appVersion: process.env.REACT_APP_VERSION || "1.0.0",
   debug: currentEnv !== ENVIRONMENTS.LIVE,

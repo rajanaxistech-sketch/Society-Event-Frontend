@@ -1,16 +1,15 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const BASE_URL =
-  process.env.REACT_APP_API_BASE_URL ||
-  process.env.REACT_APP_API_URL ||
-  'http://localhost:5000/api/v1';
+import envConfig from '../config/env.config';
+
+export const BASE_URL = envConfig.apiUrl;
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: envConfig.apiTimeout,
 });
 
 let isRefreshing = false;

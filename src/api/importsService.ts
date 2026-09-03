@@ -19,11 +19,29 @@ export const importsService = {
     return response.data;
   },
 
-  downloadTemplate: async (): Promise<Blob> => {
-    const response = await axiosClient.get('/imports/template', {
-      responseType: 'blob',
-    });
-    return response.data;
+  getTemplateUrl: (entityType?: string, format: 'csv' | 'xlsx' = 'csv'): string => {
+    return `/templates/Sample_Society_Bulk_Upload_Template.${format}`;
+  },
+
+  downloadTemplate: async (entityType?: string, format: 'csv' | 'xlsx' = 'csv'): Promise<Blob> => {
+    try {
+      const response = await axiosClient.get('/imports/template', {
+        params: {
+          entity: entityType,
+          format,
+        },
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      // Fallback to static public template URL if backend API is not available
+      const staticUrl = `/templates/Sample_Society_Bulk_Upload_Template.${format}`;
+      const fallbackResponse = await fetch(staticUrl);
+      if (fallbackResponse.ok) {
+        return fallbackResponse.blob();
+      }
+      throw error;
+    }
   },
 
   uploadExcel: async (formData: FormData): Promise<ApiResponse<ImportBatchItem>> => {

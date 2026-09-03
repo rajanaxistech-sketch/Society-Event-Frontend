@@ -15,7 +15,8 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
-import { Plus, Eye, Edit2, Trash2, Sliders, RefreshCw, LayoutDashboard } from 'lucide-react';
+import { Plus, Eye, Edit2, Trash2, Sliders, RefreshCw, LayoutDashboard, Upload, FileSpreadsheet } from 'lucide-react';
+import BulkUploadSocietyModal from './BulkUploadSocietyModal';
 
 export const SocietyListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +30,9 @@ export const SocietyListPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Bulk upload modal state
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
   // Deletion modal state
   const [deleteTarget, setDeleteTarget] = useState<SocietyItem | null>(null);
@@ -199,6 +203,17 @@ export const SocietyListPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <PermissionGuard permission={Permissions.IMPORT_UPLOAD}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsBulkUploadOpen(true)}
+              leftIcon={<Upload className="w-3.5 h-3.5 text-indigo-600" />}
+              className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+            >
+              Bulk Upload
+            </Button>
+          </PermissionGuard>
           <Button
             variant="outline"
             size="sm"
@@ -278,6 +293,13 @@ export const SocietyListPage: React.FC = () => {
         meta={meta}
         onPageChange={(page) => setMeta((prev) => ({ ...prev, page }))}
         onLimitChange={(limit) => setMeta((prev) => ({ ...prev, limit, page: 1 }))}
+      />
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadSocietyModal
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        onSuccess={fetchSocieties}
       />
 
       {/* Delete Confirmation Modal */}
