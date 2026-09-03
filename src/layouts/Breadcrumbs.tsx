@@ -10,7 +10,7 @@ export const Breadcrumbs: React.FC = () => {
   if (pathnames.length === 0 || location.pathname === '/login') return null;
 
   return (
-    <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-4 overflow-x-auto no-scrollbar">
+    <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-3 sm:mb-4 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
       <Link
         to={AppRoutes.DASHBOARD}
         className="flex items-center gap-1 hover:text-indigo-600 transition-colors"

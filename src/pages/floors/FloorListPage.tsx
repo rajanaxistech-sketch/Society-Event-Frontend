@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { floorsService } from '../../api/floorsService';
 import { blocksService } from '../../api/blocksService';
-import { FloorItem, PaginationMeta, BlockItem } from '../../types';
+import { societiesService } from '../../api/societiesService';
+import { FloorItem, PaginationMeta, BlockItem, SocietyItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
 import { Permissions } from '../../constants/permissions';
@@ -16,19 +17,26 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
-import { Plus, Edit2, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, RefreshCw, Home } from 'lucide-react';
 
 export const FloorListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { can } = usePermission();
 
+  const queryParams = new URLSearchParams(location.search);
+  const initialSocietyId = queryParams.get('societyId') || '';
+  const initialBlockId = queryParams.get('blockId') || '';
+
   const [floors, setFloors] = useState<FloorItem[]>([]);
+  const [societies, setSocieties] = useState<SocietyItem[]>([]);
   const [blocks, setBlocks] = useState<BlockItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [blockFilter, setBlockFilter] = useState('');
+  const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
+  const [blockFilter, setBlockFilter] = useState(initialBlockId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('floor_number');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -36,11 +44,28 @@ export const FloorListPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<FloorItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Sync URL search params
   useEffect(() => {
-    blocksService.getAll({ limit: 100 }).then((res) => {
-      if (res.success && res.data) setBlocks(res.data);
+    const params = new URLSearchParams(location.search);
+    const urlSocietyId = params.get('societyId') || '';
+    const urlBlockId = params.get('blockId') || '';
+    if (urlSocietyId !== societyFilter) setSocietyFilter(urlSocietyId);
+    if (urlBlockId !== blockFilter) setBlockFilter(urlBlockId);
+  }, [location.search]);
+
+  // Load societies
+  useEffect(() => {
+    societiesService.getAll({ limit: 100 }).then((res) => {
+      if (res.success && res.data) setSocieties(res.data);
     });
   }, []);
+
+  // Load blocks (filtered by society if selected)
+  useEffect(() => {
+    blocksService.getAll({ limit: 100, societyId: societyFilter || undefined }).then((res) => {
+      if (res.success && res.data) setBlocks(res.data);
+    });
+  }, [societyFilter]);
 
   const fetchFloors = async () => {
     try {
@@ -49,6 +74,7 @@ export const FloorListPage: React.FC = () => {
         page: meta.page,
         limit: meta.limit,
         search: search || undefined,
+        societyId: societyFilter || undefined,
         blockId: blockFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
@@ -68,7 +94,7 @@ export const FloorListPage: React.FC = () => {
 
   useEffect(() => {
     fetchFloors();
-  }, [meta.page, meta.limit, blockFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, societyFilter, blockFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -108,6 +134,37 @@ export const FloorListPage: React.FC = () => {
           {row.block?.name || blocks.find((b) => b.id === row.block_id)?.name || '—'}
         </span>
       ),
+    },
+    {
+      key: 'society',
+      header: 'Society',
+      render: (row) => (
+        <span className="text-slate-600 text-xs">
+          {row.block?.society?.name || societies.find((s) => s.id === row.block?.society_id)?.name || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'flats',
+      header: 'Flats',
+      align: 'center',
+      render: (row) => {
+        const flatCount = row._count?.flats ?? row.flats?.length ?? 0;
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/flats?floorId=${row.id}&blockId=${row.block_id}`);
+            }}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+            title="View flats on this floor"
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span>{flatCount} {flatCount === 1 ? 'Flat' : 'Flats'}</span>
+          </button>
+        );
+      },
     },
     {
       key: 'status',
@@ -198,6 +255,23 @@ export const FloorListPage: React.FC = () => {
         searchPlaceholder="Search floor name..."
         filters={
           <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={societyFilter}
+              onChange={(e) => {
+                setSocietyFilter(e.target.value);
+                setBlockFilter('');
+                setMeta((prev) => ({ ...prev, page: 1 }));
+              }}
+              className="px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-xs"
+            >
+              <option value="">All Societies</option>
+              {societies.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+
             <select
               value={blockFilter}
               onChange={(e) => {

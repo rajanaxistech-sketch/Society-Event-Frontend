@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { bungalowsService } from '../../api/bungalowsService';
 import { societiesService } from '../../api/societiesService';
 import { BungalowItem, PaginationMeta, SocietyItem } from '../../types';
@@ -20,15 +20,19 @@ import { Plus, Eye, Edit2, Trash2, RefreshCw } from 'lucide-react';
 
 export const BungalowListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { can } = usePermission();
+
+  // Seed society filter from URL query param (e.g. ?societyId=xxx when coming from Society Details)
+  const initialSocietyId = new URLSearchParams(location.search).get('societyId') || '';
 
   const [bungalows, setBungalows] = useState<BungalowItem[]>([]);
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [societyFilter, setSocietyFilter] = useState('');
+  const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');

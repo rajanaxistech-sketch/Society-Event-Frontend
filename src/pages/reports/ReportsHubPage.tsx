@@ -142,7 +142,7 @@ export const ReportsHubPage: React.FC = () => {
       </div>
 
       {/* Report Categories Nav */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
         <button
           type="button"
           onClick={() => setActiveReport('event-financial')}
@@ -211,7 +211,7 @@ export const ReportsHubPage: React.FC = () => {
 
       {/* Filter Parameters */}
       <Card title="Report Filter Parameters">
-        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
           {(activeReport === 'event-financial' || activeReport === 'collection-status' || activeReport === 'sponsor-summary') && (
             <Select
               label="Select Event"

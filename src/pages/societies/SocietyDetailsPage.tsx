@@ -217,34 +217,34 @@ export const SocietyDetailsPage: React.FC = () => {
           <Card title="Property Units">
             <div className="space-y-3">
               <button
-                onClick={() => navigate(AppRoutes.BLOCKS)}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-xs text-left"
+                onClick={() => navigate(`/blocks?societyId=${id}`)}
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 transition-colors text-xs text-left group"
               >
                 <div className="flex items-center gap-2.5">
                   <Layers className="w-4 h-4 text-indigo-600" />
-                  <span className="font-medium text-slate-800">Blocks</span>
+                  <span className="font-medium text-slate-800 group-hover:text-indigo-700">Blocks</span>
                 </div>
                 <span className="font-bold text-slate-900">{counts.blocks ?? 0}</span>
               </button>
 
               <button
-                onClick={() => navigate(AppRoutes.BUNGALOWS)}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-xs text-left"
+                onClick={() => navigate(`/bungalows?societyId=${id}`)}
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-teal-50 hover:border-teal-200 transition-colors text-xs text-left group"
               >
                 <div className="flex items-center gap-2.5">
                   <Building2 className="w-4 h-4 text-teal-600" />
-                  <span className="font-medium text-slate-800">Bungalows</span>
+                  <span className="font-medium text-slate-800 group-hover:text-teal-700">Bungalows</span>
                 </div>
                 <span className="font-bold text-slate-900">{counts.bungalows ?? 0}</span>
               </button>
 
               <button
-                onClick={() => navigate(AppRoutes.EVENTS)}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors text-xs text-left"
+                onClick={() => navigate(`/events?societyId=${id}`)}
+                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 transition-colors text-xs text-left group"
               >
                 <div className="flex items-center gap-2.5">
                   <Calendar className="w-4 h-4 text-emerald-600" />
-                  <span className="font-medium text-slate-800">Events</span>
+                  <span className="font-medium text-slate-800 group-hover:text-emerald-700">Events</span>
                 </div>
                 <span className="font-bold text-slate-900">{counts.events ?? 0}</span>
               </button>

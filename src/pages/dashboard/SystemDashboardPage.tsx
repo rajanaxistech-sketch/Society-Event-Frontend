@@ -110,7 +110,7 @@ export const SystemDashboardPage: React.FC = () => {
           <Building2 className="w-4 h-4 text-indigo-600" />
           <span>Operational Overview</span>
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <KPICard
             title="Total Societies"
             value={overview.totalSocieties}

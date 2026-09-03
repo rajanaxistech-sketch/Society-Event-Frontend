@@ -48,37 +48,37 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
         onClick={onClose}
       />
 
       {/* Modal Dialog */}
       <div
         className={clsx(
-          'relative w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-10 animate-in zoom-in-95 duration-200 flex flex-col my-8 max-h-[90vh]',
+          'relative w-full max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-10 animate-in zoom-in-95 duration-200 flex flex-col my-auto max-h-[92dvh] sm:max-h-[90vh]',
           sizeClasses[size]
         )}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-4 shrink-0">
-            <div>
+          <div className="px-4 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+            <div className="min-w-0 flex-1">
               {typeof title === 'string' ? (
-                <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{title}</h3>
               ) : (
                 title
               )}
               {description && (
-                <p className="text-xs text-slate-500 mt-1">{description}</p>
+                <p className="text-xs text-slate-500 mt-0.5 sm:mt-1">{description}</p>
               )}
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -86,11 +86,11 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content Body */}
-        <div className="px-6 py-5 overflow-y-auto flex-1">{children}</div>
+        <div className="px-4 py-4 sm:px-6 sm:py-5 overflow-y-auto flex-1">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
+          <div className="px-4 py-3 sm:px-6 sm:py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5 sm:gap-3 shrink-0 flex-wrap">
             {footer}
           </div>
         )}

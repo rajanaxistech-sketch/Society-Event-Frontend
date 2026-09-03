@@ -91,6 +91,10 @@ export const Permissions = {
 
   // Dashboards
   DASHBOARD_READ: 'dashboard.read',
+  DASHBOARD_SYSTEM: 'dashboard.read',
+  DASHBOARD_SOCIETY: 'dashboard.read',
+  DASHBOARD_EVENT: 'dashboard.read',
+  DASHBOARD_COLLECTION: 'dashboard.read',
 
   // Users
   USER_READ: 'user.read',

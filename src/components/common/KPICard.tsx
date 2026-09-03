@@ -45,24 +45,24 @@ export const KPICard: React.FC<KPICardProps> = ({
   return (
     <div
       className={clsx(
-        'p-5 rounded-xl border shadow-xs flex flex-col justify-between transition-all hover:shadow-md duration-200',
+        'p-3.5 sm:p-5 rounded-xl border shadow-xs flex flex-col justify-between transition-all hover:shadow-md duration-200 min-w-0',
         variantStyles[variant],
         className
       )}
     >
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 min-w-0">
+        <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">
           {title}
         </span>
         {icon && (
-          <div className={clsx('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', iconColors[variant])}>
+          <div className={clsx('w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0', iconColors[variant])}>
             {icon}
           </div>
         )}
       </div>
 
-      <div className="flex items-baseline gap-2">
-        <div className="text-2xl font-bold tracking-tight text-slate-900">{value}</div>
+      <div className="flex items-baseline gap-2 min-w-0">
+        <div className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 truncate">{value}</div>
       </div>
 
       {(subtitle || trend) && (

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { blocksService } from '../../api/blocksService';
 import { societiesService } from '../../api/societiesService';
 import { BlockItem, PaginationMeta, SocietyItem } from '../../types';
@@ -16,25 +16,38 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
-import { Plus, Edit2, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, RefreshCw, Layers } from 'lucide-react';
 
 export const BlockListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { can } = usePermission();
+
+  // Seed society filter from URL query param (e.g. ?societyId=xxx when coming from Society Details)
+  const initialSocietyId = new URLSearchParams(location.search).get('societyId') || '';
 
   const [blocks, setBlocks] = useState<BlockItem[]>([]);
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [societyFilter, setSocietyFilter] = useState('');
+  const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [deleteTarget, setDeleteTarget] = useState<BlockItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Sync URL search params if navigated with new query
+  useEffect(() => {
+    const urlSocietyId = new URLSearchParams(location.search).get('societyId') || '';
+    if (urlSocietyId !== societyFilter) {
+      setSocietyFilter(urlSocietyId);
+      setMeta((prev) => ({ ...prev, page: 1 }));
+    }
+  }, [location.search]);
 
   useEffect(() => {
     societiesService.getAll({ limit: 100 }).then((res) => {
@@ -109,6 +122,28 @@ export const BlockListPage: React.FC = () => {
           {row.society?.name || societies.find((s) => s.id === row.society_id)?.name || '—'}
         </span>
       ),
+    },
+    {
+      key: 'floors',
+      header: 'Floors',
+      align: 'center',
+      render: (row) => {
+        const floorCount = row._count?.floors ?? row.floors?.length ?? 0;
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/floors?blockId=${row.id}&societyId=${row.society_id}`);
+            }}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+            title="View floors in this block"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{floorCount} {floorCount === 1 ? 'Floor' : 'Floors'}</span>
+          </button>
+        );
+      },
     },
     {
       key: 'description',

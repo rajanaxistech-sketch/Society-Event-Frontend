@@ -24,24 +24,24 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <div
       className={clsx(
-        'flex flex-col sm:flex-row items-center justify-between gap-4 py-3 px-2 text-xs text-slate-600',
+        'flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-1 sm:px-2 text-xs text-slate-600',
         className
       )}
     >
-      <div className="flex items-center gap-3">
-        <span>
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-start">
+        <span className="text-center sm:text-left">
           Showing <span className="font-semibold text-slate-900">{startRecord}</span> to{' '}
           <span className="font-semibold text-slate-900">{endRecord}</span> of{' '}
           <span className="font-semibold text-slate-900">{total}</span> records
         </span>
 
         {onLimitChange && (
-          <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 pl-3">
-            <span>Per page:</span>
+          <div className="flex items-center gap-1.5 border-l border-slate-200 pl-2 sm:pl-3">
+            <span className="text-[11px] sm:text-xs">Per page:</span>
             <select
               value={limit}
               onChange={(e) => onLimitChange(Number(e.target.value))}
-              className="px-2 py-1 text-xs border border-slate-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="px-1.5 py-1 text-xs border border-slate-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>

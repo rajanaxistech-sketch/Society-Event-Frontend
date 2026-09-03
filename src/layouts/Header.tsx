@@ -33,13 +33,14 @@ export const Header: React.FC = () => {
 
         {/* Active Society Scope Dropdown */}
         {societies.length > 0 && (
-          <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs">
-            <Building2 className="w-4 h-4 text-indigo-600" />
-            <span className="text-slate-500 font-medium">Society:</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 border border-slate-200 px-2 sm:px-3 py-1.5 rounded-lg text-xs max-w-[150px] xs:max-w-[200px] sm:max-w-xs">
+            <Building2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            <span className="text-slate-500 font-medium hidden md:inline shrink-0">Society:</span>
             <select
               value={selectedSocietyId || ''}
               onChange={(e) => setSelectedSocietyId(e.target.value || null)}
-              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer"
+              className="bg-transparent font-semibold text-slate-800 focus:outline-none cursor-pointer truncate w-full text-[11px] sm:text-xs"
+              title="Select Active Society"
             >
               {isSuperAdmin && <option value="">All Societies (Global)</option>}
               {societies.map((s) => (

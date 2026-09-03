@@ -6,6 +6,10 @@ export const AppRoutes = {
 
   // Dashboards
   DASHBOARD: '/dashboard',
+  DASHBOARD_SYSTEM: '/dashboard',
+  DASHBOARD_SOCIETY: '/societies/:id/dashboard',
+  DASHBOARD_EVENT: '/events/:id/dashboard',
+  DASHBOARD_EVENT_COLLECTIONS: '/events/:id/collections/dashboard',
   SOCIETY_DASHBOARD: '/societies/:id/dashboard',
   EVENT_DASHBOARD: '/events/:id/dashboard',
 
@@ -50,6 +54,7 @@ export const AppRoutes = {
   EVENT_DETAILS: '/events/:id',
   EVENT_EDIT: '/events/:id/edit',
   EVENT_CONFIG: '/events/:id/configuration',
+  EVENT_CONFIGURATION: '/events/:id/configuration',
   EVENT_COLLECTIONS: '/events/:id/collections',
   EVENT_COLLECTIONS_DASHBOARD: '/events/:id/collections/dashboard',
   EVENT_SPONSORS: '/events/:id/sponsors',
@@ -72,6 +77,7 @@ export const AppRoutes = {
 
   // Reports
   REPORTS: '/reports',
+  REPORTS_HUB: '/reports',
 
   // Imports
   IMPORTS: '/imports',

@@ -104,7 +104,7 @@ export const SocietyDashboardPage: React.FC = () => {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KPICard
           title="Total Blocks"
           value={counts.blocks ?? dashboardData?.blocksCount ?? 0}
@@ -132,7 +132,7 @@ export const SocietyDashboardPage: React.FC = () => {
       </div>
 
       {/* Society Details Card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <Card title="Society Contact & Structure Details">
           <div className="space-y-3 text-xs">
             <div className="flex justify-between py-1.5 border-b border-slate-100">
@@ -157,7 +157,7 @@ export const SocietyDashboardPage: React.FC = () => {
         </Card>
 
         <Card title="Quick Property Actions">
-          <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <button
               onClick={() => navigate(AppRoutes.BLOCKS)}
               className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 text-left transition-colors flex flex-col justify-between"

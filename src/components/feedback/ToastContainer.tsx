@@ -29,7 +29,7 @@ export const ToastContainer: React.FC = () => {
   };
 
   return (
-    <div className="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+    <div className="fixed top-4 inset-x-3 sm:inset-x-auto sm:right-5 sm:w-80 sm:max-w-sm z-50 flex flex-col gap-2.5 pointer-events-none">
       {toasts.map((toast) => {
         const config = typeConfig[toast.type];
         return (

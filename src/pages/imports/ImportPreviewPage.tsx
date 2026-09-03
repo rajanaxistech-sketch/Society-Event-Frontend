@@ -177,8 +177,8 @@ export const ImportPreviewPage: React.FC = () => {
       {/* Parsed Raw Rows Table */}
       {rawRows.length > 0 && (
         <Card title="Parsed Records Preview">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-xs text-left">
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="min-w-full min-w-[550px] divide-y divide-slate-200 text-xs text-left">
               <thead className="bg-slate-50 text-slate-500 font-semibold">
                 <tr>
                   <th className="px-3 py-2.5">#</th>

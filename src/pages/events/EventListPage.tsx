@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { eventsService } from '../../api/eventsService';
-import { EventItem, PaginationMeta } from '../../types';
+import { societiesService } from '../../api/societiesService';
+import { EventItem, PaginationMeta, SocietyItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
 import { Permissions } from '../../constants/permissions';
@@ -19,19 +20,32 @@ import { Plus, Eye, Edit2, Trash2, Sliders, RefreshCw, LayoutDashboard, Calendar
 
 export const EventListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { can } = usePermission();
 
+  // Seed society filter from URL query param (e.g. ?societyId=xxx when coming from Society Details)
+  const initialSocietyId = new URLSearchParams(location.search).get('societyId') || '';
+
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [societies, setSocieties] = useState<SocietyItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('start_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [deleteTarget, setDeleteTarget] = useState<EventItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load societies for the filter dropdown
+  useEffect(() => {
+    societiesService.getAll({ limit: 100 }).then((res) => {
+      if (res.success && res.data) setSocieties(res.data);
+    });
+  }, []);
 
   const fetchEvents = async () => {
     try {
@@ -40,6 +54,7 @@ export const EventListPage: React.FC = () => {
         page: meta.page,
         limit: meta.limit,
         search: search || undefined,
+        societyId: societyFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
         sortOrder,
@@ -58,7 +73,7 @@ export const EventListPage: React.FC = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [meta.page, meta.limit, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, societyFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -221,21 +236,39 @@ export const EventListPage: React.FC = () => {
         }}
         searchPlaceholder="Search event name, venue, or society..."
         filters={
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setMeta((prev) => ({ ...prev, page: 1 }));
-            }}
-            className="px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          >
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={societyFilter}
+              onChange={(e) => {
+                setSocietyFilter(e.target.value);
+                setMeta((prev) => ({ ...prev, page: 1 }));
+              }}
+              className="px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-xs"
+            >
+              <option value="">All Societies</option>
+              {societies.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setMeta((prev) => ({ ...prev, page: 1 }));
+              }}
+              className="px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="">All Statuses</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         }
       />
 

@@ -179,19 +179,20 @@ export const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Mobile & Tablet Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs lg:hidden transition-opacity duration-300"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar Container */}
       <aside
         className={clsx(
-          'fixed lg:static top-0 bottom-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-800 shadow-xl lg:shadow-none',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:hidden'
+          'fixed lg:static top-0 bottom-0 left-0 z-40 w-64 max-w-[80vw] sm:max-w-xs bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-800 shadow-2xl lg:shadow-none shrink-0 h-full',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:-ml-64'
         )}
       >
         {/* Brand Header */}
