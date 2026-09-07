@@ -28,6 +28,14 @@ import { Step3FloorsConfig } from './wizard/Step3FloorsConfig';
 import { Step4UnitSeries } from './wizard/Step4UnitSeries';
 import { WizardSuccessModal } from './wizard/WizardSuccessModal';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import {
+  isValidEmail,
+  isValidPhone,
+  isValidLatitude,
+  isValidLongitude,
+  isValidPostalCode,
+  isValidShortCode,
+} from '../../utils/validators';
 
 const STEPS = [
   { id: 1, title: 'Society Info & Type', desc: 'Architecture, location & contact', icon: Building2 },
@@ -98,25 +106,164 @@ export const SocietySetupWizardPage: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [step2Errors, setStep2Errors] = useState<Record<string, string>>({});
+  const [step3Errors, setStep3Errors] = useState<Record<string, string>>({});
 
   const validateStep1 = (): boolean => {
     const errs: Record<string, string> = {};
-    if (!formData.society.name.trim()) errs.name = 'Society name is required';
-    if (!formData.society.address_line1?.trim()) errs.address_line1 = 'Address line 1 is required';
-    if (!formData.society.city?.trim()) errs.city = 'City is required';
-    if (!formData.society.state?.trim()) errs.state = 'State is required';
 
-    if (formData.society.contact_email && !/\S+@\S+\.\S+/.test(formData.society.contact_email)) {
-      errs.contact_email = 'Invalid email address format';
+    // 1. Required Fields
+    if (!formData.society.name || !formData.society.name.trim()) {
+      errs.name = 'Society name is required';
+    } else if (formData.society.name.trim().length < 2) {
+      errs.name = 'Society name must be at least 2 characters';
+    }
+
+    if (!formData.society.address_line1 || !formData.society.address_line1.trim()) {
+      errs.address_line1 = 'Street address / Address line 1 is required';
+    } else if (formData.society.address_line1.trim().length < 3) {
+      errs.address_line1 = 'Address must be at least 3 characters';
+    }
+
+    if (!formData.society.city || !formData.society.city.trim()) {
+      errs.city = 'City is required';
+    }
+
+    if (!formData.society.state || !formData.society.state.trim()) {
+      errs.state = 'State is required';
+    }
+
+    // 2. Optional Fields Formats
+    if (formData.society.code && !isValidShortCode(formData.society.code)) {
+      errs.code = 'Short code must be 2-20 alphanumeric characters / hyphens';
+    }
+
+    if (formData.society.postal_code && !isValidPostalCode(formData.society.postal_code)) {
+      errs.postal_code = 'Invalid pincode/postal code format (3-10 characters)';
+    }
+
+    if (formData.society.latitude !== undefined && formData.society.latitude !== null && formData.society.latitude !== '') {
+      if (!isValidLatitude(formData.society.latitude)) {
+        errs.latitude = 'Latitude must be a valid number between -90 and 90';
+      }
+    }
+
+    if (formData.society.longitude !== undefined && formData.society.longitude !== null && formData.society.longitude !== '') {
+      if (!isValidLongitude(formData.society.longitude)) {
+        errs.longitude = 'Longitude must be a valid number between -180 and 180';
+      }
+    }
+
+    if (formData.society.contact_name && formData.society.contact_name.trim().length < 2) {
+      errs.contact_name = 'Contact person name must be at least 2 characters';
+    }
+
+    if (formData.society.contact_phone && !isValidPhone(formData.society.contact_phone)) {
+      errs.contact_phone = 'Invalid phone number format (7 to 15 digits required)';
+    }
+
+    if (formData.society.contact_email && !isValidEmail(formData.society.contact_email)) {
+      errs.contact_email = 'Invalid email address format (e.g. contact@example.com)';
     }
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
+  const validateStep2 = (): boolean => {
+    const errs: Record<string, string> = {};
+    const isFlats = structureType === 'flats' || structureType === 'hybrid';
+    const isBungalows = structureType === 'bungalows' || structureType === 'hybrid';
+
+    if (isFlats) {
+      if (!formData.blocks || formData.blocks.length === 0) {
+        errs.blocks = 'At least one apartment block or tower must be added';
+      } else {
+        const codesSet = new Set<string>();
+        formData.blocks.forEach((block, idx) => {
+          if (!block.name || !block.name.trim()) {
+            errs[`block_${idx}_name`] = 'Block name cannot be empty';
+          }
+          if (!block.code || !block.code.trim()) {
+            errs[`block_${idx}_code`] = 'Block code cannot be empty';
+          } else {
+            const upperCode = block.code.trim().toUpperCase();
+            if (codesSet.has(upperCode)) {
+              errs[`block_${idx}_code`] = 'Block code must be unique';
+            }
+            codesSet.add(upperCode);
+          }
+        });
+      }
+    }
+
+    if (isBungalows) {
+      if (!bungalowsConfig.prefix || !bungalowsConfig.prefix.trim()) {
+        errs.bungalows_prefix = 'Villa prefix pattern is required (e.g. Villa-)';
+      }
+      if (!bungalowsConfig.count || bungalowsConfig.count < 1 || bungalowsConfig.count > 500) {
+        errs.bungalows_count = 'Total count must be between 1 and 500';
+      }
+      if (bungalowsConfig.starting_number === undefined || bungalowsConfig.starting_number < 1) {
+        errs.bungalows_starting_number = 'Starting index must be 1 or higher';
+      }
+    }
+
+    setStep2Errors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const validateStep3 = (): boolean => {
+    const errs: Record<string, string> = {};
+    const isFlats = structureType === 'flats' || structureType === 'hybrid';
+
+    if (isFlats && formData.blocks) {
+      formData.blocks.forEach((block, idx) => {
+        if (!block.floors_count || block.floors_count < 1 || block.floors_count > 100) {
+          errs[`block_${idx}_floors`] = 'Floors count must be between 1 and 100';
+        }
+        if (block.has_commercial_shops) {
+          if (!block.commercial_shops_count || block.commercial_shops_count < 1 || block.commercial_shops_count > 50) {
+            errs[`block_${idx}_shops`] = 'Commercial shops count must be between 1 and 50';
+          }
+        }
+      });
+    }
+
+    setStep3Errors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const validateAllSteps = (): boolean => {
+    if (!validateStep1()) {
+      setCurrentStep(1);
+      toast.error('Please fix the validation errors in Step 1.');
+      return false;
+    }
+    if (!validateStep2()) {
+      setCurrentStep(2);
+      toast.error('Please fix the validation errors in Step 2.');
+      return false;
+    }
+    if (!validateStep3()) {
+      setCurrentStep(3);
+      toast.error('Please fix the validation errors in Step 3.');
+      return false;
+    }
+    return true;
+  };
+
   const handleNext = () => {
     if (currentStep === 1 && !validateStep1()) {
-      toast.error('Please fill in all required fields before proceeding.');
+      toast.error('Please fill in all required fields in Step 1 correctly.');
+      return;
+    }
+    if (currentStep === 2 && !validateStep2()) {
+      toast.error('Please review and fix property layout configuration.');
+      return;
+    }
+    if (currentStep === 3 && !validateStep3()) {
+      toast.error('Please review and fix floor counts.');
       return;
     }
     setCurrentStep((prev) => Math.min(STEPS.length, prev + 1));
@@ -127,9 +274,7 @@ export const SocietySetupWizardPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep1()) {
-      setCurrentStep(1);
-      toast.error('Please complete all required fields in Step 1.');
+    if (!validateAllSteps()) {
       return;
     }
 
@@ -220,8 +365,14 @@ export const SocietySetupWizardPage: React.FC = () => {
                 key={step.id}
                 type="button"
                 onClick={() => {
-                  if (step.id < currentStep) setCurrentStep(step.id);
-                  else if (step.id > currentStep && validateStep1()) setCurrentStep(step.id);
+                  if (step.id < currentStep) {
+                    setCurrentStep(step.id);
+                  } else if (step.id > currentStep) {
+                    if (currentStep === 1 && !validateStep1()) return;
+                    if (currentStep === 2 && !validateStep2()) return;
+                    if (currentStep === 3 && !validateStep3()) return;
+                    setCurrentStep(step.id);
+                  }
                 }}
                 className={`p-3 rounded-xl border text-left flex items-start gap-3 transition-all ${
                   isCurrent
@@ -263,12 +414,21 @@ export const SocietySetupWizardPage: React.FC = () => {
           <Step1SocietyInfo
             formData={formData.society}
             structureType={structureType}
-            onChange={(fields) =>
+            onChange={(fields) => {
               setFormData((prev) => ({
                 ...prev,
                 society: { ...prev.society, ...fields },
-              }))
-            }
+              }));
+              // Clear inline error when field is modified
+              const fieldKey = Object.keys(fields)[0];
+              if (fieldKey && errors[fieldKey]) {
+                setErrors((prev) => {
+                  const copy = { ...prev };
+                  delete copy[fieldKey];
+                  return copy;
+                });
+              }
+            }}
             onStructureTypeChange={(type) => {
               setStructureType(type);
               setFormData((prev) => ({
@@ -287,8 +447,15 @@ export const SocietySetupWizardPage: React.FC = () => {
             blocks={formData.blocks || []}
             bungalowsConfig={bungalowsConfig}
             enableBungalows={structureType === 'bungalows' || structureType === 'hybrid'}
-            onBlocksChange={(blocks) => setFormData((prev) => ({ ...prev, blocks }))}
-            onBungalowsConfigChange={setBungalowsConfig}
+            errors={step2Errors}
+            onBlocksChange={(blocks) => {
+              setFormData((prev) => ({ ...prev, blocks }));
+              setStep2Errors({});
+            }}
+            onBungalowsConfigChange={(cfg) => {
+              setBungalowsConfig(cfg);
+              setStep2Errors({});
+            }}
             onBungalowsChange={(enable_bungalows, bungalows_count) =>
               setFormData((prev) => ({ ...prev, enable_bungalows, bungalows_count }))
             }
@@ -300,7 +467,11 @@ export const SocietySetupWizardPage: React.FC = () => {
             structureType={structureType}
             blocks={formData.blocks || []}
             bungalowsConfig={bungalowsConfig}
-            onBlocksChange={(blocks) => setFormData((prev) => ({ ...prev, blocks }))}
+            errors={step3Errors}
+            onBlocksChange={(blocks) => {
+              setFormData((prev) => ({ ...prev, blocks }));
+              setStep3Errors({});
+            }}
             onBungalowsConfigChange={setBungalowsConfig}
           />
         )}

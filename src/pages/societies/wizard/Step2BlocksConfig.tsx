@@ -11,6 +11,7 @@ interface Step2BlocksConfigProps {
   blocks: SetupWizardBlockConfig[];
   bungalowsConfig: SetupWizardBungalowConfig;
   enableBungalows: boolean;
+  errors?: Record<string, string>;
   onBlocksChange: (blocks: SetupWizardBlockConfig[]) => void;
   onBungalowsConfigChange: (cfg: SetupWizardBungalowConfig) => void;
   onBungalowsChange: (enabled: boolean, count: number) => void;
@@ -39,6 +40,7 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
   blocks,
   bungalowsConfig,
   enableBungalows,
+  errors = {},
   onBlocksChange,
   onBungalowsConfigChange,
   onBungalowsChange,
@@ -140,7 +142,7 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
             {/* Bungalow Prefix Presets */}
             <div>
               <span className="text-xs font-bold text-slate-700 block mb-2">
-                Bungalow / Plot Prefix Format:
+                Bungalow / Plot Prefix Format: <span className="text-rose-500">*</span>
               </span>
               <div className="flex flex-wrap gap-2 mb-3">
                 {BUNGALOW_PREFIX_PRESETS.map((p) => (
@@ -160,10 +162,12 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
               </div>
               <div className="max-w-xs">
                 <Input
-                  label="Custom Prefix (Optional)"
+                  label="Prefix Pattern"
                   placeholder="e.g. Villa- or RowHouse-"
                   value={prefix}
                   onChange={(e) => onBungalowsConfigChange({ ...bungalowsConfig, prefix: e.target.value })}
+                  error={errors.bungalows_prefix}
+                  requiredIndicator
                 />
               </div>
             </div>
@@ -172,7 +176,7 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Total Bungalows / Villas Count
+                  Total Bungalows / Villas Count <span className="text-rose-500">*</span>
                 </label>
                 <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
                   <button
@@ -213,11 +217,14 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                     +5
                   </button>
                 </div>
+                {errors.bungalows_count && (
+                  <p className="text-xs text-rose-600 mt-1">{errors.bungalows_count}</p>
+                )}
               </div>
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Starting Number Index
+                  Starting Number Index <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={startNum}
@@ -233,11 +240,14 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                   <option value={101}>Start from 101 ({prefix}101 .. {prefix}{100 + count})</option>
                   <option value={1001}>Start from 1001 ({prefix}1001 .. {prefix}{1000 + count})</option>
                 </select>
+                {errors.bungalows_starting_number && (
+                  <p className="text-xs text-rose-600 mt-1">{errors.bungalows_starting_number}</p>
+                )}
               </div>
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Default Villa Property Type
+                  Default Villa Property Type <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={bType}
@@ -350,6 +360,13 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
             </div>
           </div>
 
+          {/* General Blocks Error banner if any */}
+          {errors.blocks && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">
+              {errors.blocks}
+            </div>
+          )}
+
           {/* Block Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
             {blocks.map((block, idx) => (
@@ -382,12 +399,16 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                     placeholder="e.g. Block A / Wing B"
                     value={block.name}
                     onChange={(e) => handleUpdateBlock(idx, { name: e.target.value })}
+                    error={errors[`block_${idx}_name`]}
+                    requiredIndicator
                   />
                   <Input
                     label="Block Code / Prefix"
                     placeholder="e.g. A"
                     value={block.code || ''}
                     onChange={(e) => handleUpdateBlock(idx, { code: e.target.value.toUpperCase() })}
+                    error={errors[`block_${idx}_code`]}
+                    requiredIndicator
                   />
                 </div>
               </div>
@@ -424,6 +445,8 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
               label="Bungalow Prefix"
               value={bungalowsConfig.prefix || 'Villa-'}
               onChange={(e) => onBungalowsConfigChange({ ...bungalowsConfig, prefix: e.target.value })}
+              error={errors.bungalows_prefix}
+              requiredIndicator
             />
             <Input
               label="Total Villas Count"
@@ -437,6 +460,8 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                   count: Math.max(1, parseInt(e.target.value) || 1),
                 })
               }
+              error={errors.bungalows_count}
+              requiredIndicator
             />
             <Input
               label="Starting Number"
@@ -448,6 +473,8 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                   starting_number: parseInt(e.target.value) || 1,
                 })
               }
+              error={errors.bungalows_starting_number}
+              requiredIndicator
             />
           </div>
         </Card>
@@ -455,3 +482,4 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
     </div>
   );
 };
+

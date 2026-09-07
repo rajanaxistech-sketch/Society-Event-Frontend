@@ -25,6 +25,7 @@ import { UserItem, RoleItem } from '../../../types';
 import { useToast } from '../../../hooks/useToast';
 import { extractErrorMessage } from '../../../utils/errorExtractor';
 import { formatDate } from '../../../utils/formatters';
+import { isValidEmail, isValidPhone } from '../../../utils/validators';
 
 interface SocietyUsersTabProps {
   data: SocietyHierarchyData;
@@ -50,6 +51,7 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchQuotaAndUsers = async () => {
@@ -72,9 +74,44 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
     fetchQuotaAndUsers();
   }, [society.id]);
 
+  const validateUserForm = (): boolean => {
+    const errs: Record<string, string> = {};
+
+    // 1. Full Name (Required)
+    if (!fullName.trim()) {
+      errs.fullName = 'Full name is required';
+    } else if (fullName.trim().length < 2) {
+      errs.fullName = 'Name must be at least 2 characters';
+    }
+
+    // 2. Email Address (Required)
+    if (!email.trim()) {
+      errs.email = 'Email address is required';
+    } else if (!isValidEmail(email)) {
+      errs.email = 'Invalid email address format (e.g. name@domain.com)';
+    }
+
+    // 3. Phone Number (Optional)
+    if (phone.trim() && !isValidPhone(phone)) {
+      errs.phone = 'Invalid phone number (7 to 15 digits required)';
+    }
+
+    // 4. Role Assignment (Required)
+    if (!roleId) {
+      errs.roleId = 'Please select a role for this user';
+    }
+
+    // 5. Password (Optional)
+    if (password.trim() && password.trim().length < 6) {
+      errs.password = 'Password must be at least 6 characters';
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleAddUserSubmit = async () => {
-    if (!fullName.trim() || !email.trim() || !roleId) {
-      toast.error('Please enter name, email, and select a role');
+    if (!validateUserForm()) {
       return;
     }
 
@@ -102,6 +139,7 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
         setEmail('');
         setPhone('');
         setPassword('');
+        setErrors({});
         fetchQuotaAndUsers();
       } else {
         toast.error(res.message || 'Failed to create user');
@@ -195,11 +233,11 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
 
           <div className="flex items-center gap-3">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={fetchQuotaAndUsers}
-              className="border-white/20 text-white hover:bg-white/10"
-              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+              className="bg-white/15 text-white hover:bg-white/25 hover:text-white border border-white/30 backdrop-blur-xs font-semibold shadow-xs"
+              leftIcon={<RefreshCw className="w-3.5 h-3.5 text-white" />}
             >
               Refresh
             </Button>
@@ -257,7 +295,10 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
       {/* Add Society User Modal */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setErrors({});
+        }}
         title="Add Society User / Admin"
         size="md"
       >
@@ -266,7 +307,11 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
             label="Full Name"
             placeholder="e.g. Anand Verma"
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={(e) => {
+              setFullName(e.target.value);
+              if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: '' }));
+            }}
+            error={errors.fullName}
             requiredIndicator
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -275,22 +320,34 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
               type="email"
               placeholder="e.g. anand@palmmeadows.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
+              }}
+              error={errors.email}
               requiredIndicator
             />
             <Input
               label="Phone Number"
-              placeholder="e.g. 9876543210"
+              placeholder="e.g. +91 98765 43210"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
+              }}
+              error={errors.phone}
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Role Assignment"
               value={roleId}
-              onChange={(e) => setRoleId(e.target.value)}
+              onChange={(e) => {
+                setRoleId(e.target.value);
+                if (errors.roleId) setErrors((prev) => ({ ...prev, roleId: '' }));
+              }}
               options={roles.map((r) => ({ label: r.name, value: r.id }))}
+              error={errors.roleId}
               requiredIndicator
             />
             <Input
@@ -298,12 +355,23 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
               type="password"
               placeholder="Default: Welcome@123"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
+              }}
+              error={errors.password}
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button variant="outline" size="sm" onClick={() => setIsAddModalOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setErrors({});
+              }}
+            >
               Cancel
             </Button>
             <Button

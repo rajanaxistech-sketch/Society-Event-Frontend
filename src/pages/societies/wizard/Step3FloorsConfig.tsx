@@ -9,6 +9,7 @@ interface Step3FloorsConfigProps {
   structureType: SocietyStructureType;
   blocks: SetupWizardBlockConfig[];
   bungalowsConfig: SetupWizardBungalowConfig;
+  errors?: Record<string, string>;
   onBlocksChange: (blocks: SetupWizardBlockConfig[]) => void;
   onBungalowsConfigChange: (cfg: SetupWizardBungalowConfig) => void;
 }
@@ -17,6 +18,7 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
   structureType,
   blocks,
   bungalowsConfig,
+  errors = {},
   onBlocksChange,
   onBungalowsConfigChange,
 }) => {
@@ -30,9 +32,10 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
   };
 
   const handleApplyFloorCountToAll = () => {
+    const safeCount = Math.max(1, Math.min(100, globalFloorCount));
     const updated = blocks.map((b) => ({
       ...b,
-      floors_count: globalFloorCount,
+      floors_count: safeCount,
     }));
     onBlocksChange(updated);
   };
@@ -102,9 +105,9 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
             <input
               type="number"
               min={1}
-              max={50}
+              max={100}
               value={globalFloorCount}
-              onChange={(e) => setGlobalFloorCount(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) => setGlobalFloorCount(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
               className="w-16 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-lg bg-white"
             />
           </div>
@@ -119,6 +122,13 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* General Step 3 Errors */}
+      {errors.floors && (
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">
+          {errors.floors}
+        </div>
+      )}
 
       {/* Per Block Configuration Cards */}
       <Card
@@ -149,27 +159,43 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-slate-600">Total Floors:</span>
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateBlock(idx, { floors_count: Math.max(1, block.floors_count - 1) })}
-                      className="w-7 h-7 bg-white rounded-md text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
-                    >
-                      -
-                    </button>
-                    <span className="w-8 text-center text-xs font-bold text-slate-900">
-                      {block.floors_count}
+                <div className="flex flex-col sm:items-end gap-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold text-slate-600">
+                      Total Floors: <span className="text-rose-500">*</span>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateBlock(idx, { floors_count: Math.min(50, block.floors_count + 1) })}
-                      className="w-7 h-7 bg-white rounded-md text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
-                    >
-                      +
-                    </button>
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateBlock(idx, { floors_count: Math.max(1, block.floors_count - 1) })}
+                        className="w-7 h-7 bg-white rounded-md text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={block.floors_count}
+                        onChange={(e) =>
+                          handleUpdateBlock(idx, {
+                            floors_count: Math.max(1, Math.min(100, parseInt(e.target.value) || 1)),
+                          })
+                        }
+                        className="w-12 text-center text-xs font-bold text-slate-900 bg-transparent border-0 focus:ring-0 p-0"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateBlock(idx, { floors_count: Math.min(100, block.floors_count + 1) })}
+                        className="w-7 h-7 bg-white rounded-md text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
+                  {errors[`block_${idx}_floors`] && (
+                    <p className="text-xs text-rose-600">{errors[`block_${idx}_floors`]}</p>
+                  )}
                 </div>
               </div>
 
@@ -189,34 +215,41 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <Switch
-                    checked={block.has_commercial_shops || false}
-                    onChange={(val) =>
-                      handleUpdateBlock(idx, {
-                        has_commercial_shops: val,
-                        commercial_shops_count: val ? (block.commercial_shops_count || 4) : 0,
-                      })
-                    }
-                    aria-label={`Toggle Commercial Shops for ${block.name}`}
-                  />
+                <div className="flex flex-col sm:items-end gap-1">
+                  <div className="flex items-center gap-4">
+                    <Switch
+                      checked={block.has_commercial_shops || false}
+                      onChange={(val) =>
+                        handleUpdateBlock(idx, {
+                          has_commercial_shops: val,
+                          commercial_shops_count: val ? (block.commercial_shops_count || 4) : 0,
+                        })
+                      }
+                      aria-label={`Toggle Commercial Shops for ${block.name}`}
+                    />
 
-                  {block.has_commercial_shops && (
-                    <div className="flex items-center gap-2 animate-fadeIn">
-                      <span className="text-xs text-slate-500">Shops:</span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={30}
-                        value={block.commercial_shops_count || 4}
-                        onChange={(e) =>
-                          handleUpdateBlock(idx, {
-                            commercial_shops_count: Math.max(1, parseInt(e.target.value) || 1),
-                          })
-                        }
-                        className="w-16 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-lg bg-white"
-                      />
-                    </div>
+                    {block.has_commercial_shops && (
+                      <div className="flex items-center gap-2 animate-fadeIn">
+                        <span className="text-xs text-slate-500">
+                          Shops: <span className="text-rose-500">*</span>
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={50}
+                          value={block.commercial_shops_count || 4}
+                          onChange={(e) =>
+                            handleUpdateBlock(idx, {
+                              commercial_shops_count: Math.max(1, Math.min(50, parseInt(e.target.value) || 1)),
+                            })
+                          }
+                          className="w-16 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-lg bg-white"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {errors[`block_${idx}_shops`] && (
+                    <p className="text-xs text-rose-600">{errors[`block_${idx}_shops`]}</p>
                   )}
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import clsx from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'success' | 'warning';
@@ -49,7 +50,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={clsx(baseStyles, sizeStyles[size], variantStyles[variant], className)}
+      className={twMerge(clsx(baseStyles, sizeStyles[size], variantStyles[variant], className))}
       disabled={disabled || isLoading}
       {...props}
     >

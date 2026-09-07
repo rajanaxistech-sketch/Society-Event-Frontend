@@ -28,6 +28,7 @@ import {
   SocietyStructureType,
 } from '../../../types';
 import { useToast } from '../../../hooks/useToast';
+import { isValidEmail, isValidPhone } from '../../../utils/validators';
 
 interface Step4UnitSeriesProps {
   structureType: SocietyStructureType;
@@ -69,6 +70,7 @@ export const Step4UnitSeries: React.FC<Step4UnitSeriesProps> = ({
   const [bulkOwnerPhone, setBulkOwnerPhone] = useState('');
   const [bulkOwnerEmail, setBulkOwnerEmail] = useState('');
   const [bulkRelationship, setBulkRelationship] = useState('Primary Owner');
+  const [modalErrors, setModalErrors] = useState<Record<string, string>>({});
 
   const handleUpdateBlock = (index: number, fields: Partial<SetupWizardBlockConfig>) => {
     const updated = [...blocks];
@@ -186,13 +188,30 @@ export const Step4UnitSeries: React.FC<Step4UnitSeriesProps> = ({
     setSelectedUnitIds(Array.from(new Set([...selectedUnitIds, ...currentBlockUnitIds])));
   };
 
-  // Bulk Assign Owner Execution
+  // Bulk Assign Owner Execution with full field validation
   const handleExecuteBulkAssign = () => {
+    const errs: Record<string, string> = {};
+
     if (!bulkOwnerName.trim()) {
-      toast.error('Owner Name is required');
+      errs.name = 'Owner Full Name is required';
+    } else if (bulkOwnerName.trim().length < 2) {
+      errs.name = 'Owner name must be at least 2 characters';
+    }
+
+    if (bulkOwnerPhone.trim() && !isValidPhone(bulkOwnerPhone)) {
+      errs.phone = 'Invalid phone number (7 to 15 digits required)';
+    }
+
+    if (bulkOwnerEmail.trim() && !isValidEmail(bulkOwnerEmail)) {
+      errs.email = 'Invalid email address format (e.g. name@domain.com)';
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setModalErrors(errs);
       return;
     }
 
+    setModalErrors({});
     const updated = [...mappedOwners];
     selectedUnitIds.forEach((uId) => {
       const unitObj = allGeneratedUnits.find((u) => u.id === uId);
@@ -222,6 +241,7 @@ export const Step4UnitSeries: React.FC<Step4UnitSeriesProps> = ({
     setBulkOwnerName('');
     setBulkOwnerPhone('');
     setBulkOwnerEmail('');
+    setModalErrors({});
     setSelectedUnitIds([]);
   };
 
@@ -266,20 +286,28 @@ export const Step4UnitSeries: React.FC<Step4UnitSeriesProps> = ({
       }
 
       const newMappedOwners: SetupWizardOwnerMapping[] = [];
+      let formatWarningsCount = 0;
+
       // Skip header line
       for (let i = 1; i < lines.length; i++) {
         const parts = lines[i].split(',').map((p) => p.replace(/^"|"$/g, '').trim());
         if (parts.length >= 5) {
           const [uIdentifier, blockName, uNumber, uType, ownerName, phone, email, relationship] = parts;
           if (ownerName && ownerName.length > 0) {
+            const validPh = phone && isValidPhone(phone) ? phone : undefined;
+            const validEm = email && isValidEmail(email) ? email : undefined;
+            if ((phone && !validPh) || (email && !validEm)) {
+              formatWarningsCount++;
+            }
+
             newMappedOwners.push({
               unit_identifier: uIdentifier || `${blockName || ''}-${uNumber || ''}`.replace(/^-/, ''),
               unit_number: uNumber || uIdentifier,
               block_name: blockName || undefined,
               unit_type: uType || undefined,
               full_name: ownerName,
-              phone: phone || undefined,
-              email: email || undefined,
+              phone: validPh,
+              email: validEm,
               relationship_to_owner: relationship || 'Primary Owner',
               is_primary_owner: true,
             });
@@ -289,14 +317,21 @@ export const Step4UnitSeries: React.FC<Step4UnitSeriesProps> = ({
 
       if (newMappedOwners.length > 0) {
         onMappedOwnersChange([...mappedOwners, ...newMappedOwners]);
-        toast.success(`Successfully mapped ${newMappedOwners.length} owners from CSV!`);
+        if (formatWarningsCount > 0) {
+          toast.warning(
+            `Mapped ${newMappedOwners.length} owners (${formatWarningsCount} records had invalid email/phone formatted and were omitted for safety).`
+          );
+        } else {
+          toast.success(`Successfully mapped ${newMappedOwners.length} owners from CSV!`);
+        }
       } else {
-        toast.error('No owner names found in CSV.');
+        toast.error('No valid owner names found in CSV.');
       }
     };
     reader.readAsText(file);
     e.target.value = '';
   };
+
 
   // Calculations
   const residentialUnitsCount = allGeneratedUnits.filter((u) => !u.isShop && !u.isBungalow).length;
@@ -648,7 +683,11 @@ export const Step4UnitSeries: React.FC<Step4UnitSeriesProps> = ({
             label="Owner / Resident Full Name"
             placeholder="e.g. Sunil Gavaskar"
             value={bulkOwnerName}
-            onChange={(e) => setBulkOwnerName(e.target.value)}
+            onChange={(e) => {
+              setBulkOwnerName(e.target.value);
+              if (modalErrors.name) setModalErrors((prev) => ({ ...prev, name: '' }));
+            }}
+            error={modalErrors.name}
             requiredIndicator
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -656,14 +695,22 @@ export const Step4UnitSeries: React.FC<Step4UnitSeriesProps> = ({
               label="Phone Number (Optional)"
               placeholder="e.g. 9876543210"
               value={bulkOwnerPhone}
-              onChange={(e) => setBulkOwnerPhone(e.target.value)}
+              onChange={(e) => {
+                setBulkOwnerPhone(e.target.value);
+                if (modalErrors.phone) setModalErrors((prev) => ({ ...prev, phone: '' }));
+              }}
+              error={modalErrors.phone}
             />
             <Input
               label="Email Address (Optional)"
               type="email"
               placeholder="e.g. owner@example.com"
               value={bulkOwnerEmail}
-              onChange={(e) => setBulkOwnerEmail(e.target.value)}
+              onChange={(e) => {
+                setBulkOwnerEmail(e.target.value);
+                if (modalErrors.email) setModalErrors((prev) => ({ ...prev, email: '' }));
+              }}
+              error={modalErrors.email}
             />
           </div>
           <Select

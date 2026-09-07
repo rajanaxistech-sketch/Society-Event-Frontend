@@ -23,6 +23,7 @@ import { flatsService } from '../../../api/flatsService';
 import { PersonItem } from '../../../types';
 import { useToast } from '../../../hooks/useToast';
 import { extractErrorMessage } from '../../../utils/errorExtractor';
+import { isValidEmail, isValidPhone } from '../../../utils/validators';
 
 interface SocietyResidentsTabProps {
   data: SocietyHierarchyData;
@@ -49,6 +50,7 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
   const [newRelationship, setNewRelationship] = useState('Primary Owner');
   const [newIsPrimary, setNewIsPrimary] = useState(true);
   const [newTargetFlatId, setNewTargetFlatId] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Flatten flats list for the dropdown
@@ -103,9 +105,37 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
     }
   };
 
+  const validateResidentForm = (): boolean => {
+    const errs: Record<string, string> = {};
+
+    // 1. Assigned Property / Flat (Required)
+    if (!newTargetFlatId) {
+      errs.flatId = 'Please select an assigned flat / unit';
+    }
+
+    // 2. Full Name (Required)
+    if (!newFullName.trim()) {
+      errs.fullName = 'Full name is required';
+    } else if (newFullName.trim().length < 2) {
+      errs.fullName = 'Name must be at least 2 characters';
+    }
+
+    // 3. Phone Number (Optional)
+    if (newPhone.trim() && !isValidPhone(newPhone)) {
+      errs.phone = 'Invalid phone number (7 to 15 digits required)';
+    }
+
+    // 4. Email Address (Optional)
+    if (newEmail.trim() && !isValidEmail(newEmail)) {
+      errs.email = 'Invalid email address format (e.g. resident@example.com)';
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleAddResident = async () => {
-    if (!newFullName.trim() || !newTargetFlatId) {
-      toast.error('Full name and target flat are required');
+    if (!validateResidentForm()) {
       return;
     }
 
@@ -126,6 +156,7 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
         setNewFullName('');
         setNewPhone('');
         setNewEmail('');
+        setErrors({});
         fetchResidents();
         onRefresh();
       } else {
@@ -292,7 +323,10 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
       {/* Register Resident Modal */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setErrors({});
+        }}
         title="Register New Resident"
         size="md"
       >
@@ -300,30 +334,46 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
           <Select
             label="Assigned Property / Flat"
             value={newTargetFlatId}
-            onChange={(e) => setNewTargetFlatId(e.target.value)}
+            onChange={(e) => {
+              setNewTargetFlatId(e.target.value);
+              if (errors.flatId) setErrors((prev) => ({ ...prev, flatId: '' }));
+            }}
             options={allFlatsDropdown}
+            error={errors.flatId}
             requiredIndicator
           />
           <Input
             label="Full Name"
             placeholder="e.g. Ramesh Chandra"
             value={newFullName}
-            onChange={(e) => setNewFullName(e.target.value)}
+            onChange={(e) => {
+              setNewFullName(e.target.value);
+              if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: '' }));
+            }}
+            error={errors.fullName}
             requiredIndicator
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Phone Number"
-              placeholder="e.g. 9876543210"
+              placeholder="e.g. +91 98765 43210"
               value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
+              onChange={(e) => {
+                setNewPhone(e.target.value);
+                if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
+              }}
+              error={errors.phone}
             />
             <Input
               label="Email Address"
               type="email"
               placeholder="e.g. ramesh@example.com"
               value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
+              onChange={(e) => {
+                setNewEmail(e.target.value);
+                if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
+              }}
+              error={errors.email}
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -353,7 +403,14 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button variant="outline" size="sm" onClick={() => setIsAddModalOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setErrors({});
+              }}
+            >
               Cancel
             </Button>
             <Button
