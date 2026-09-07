@@ -1,0 +1,229 @@
+import React, { useState } from 'react';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Switch from '../../../components/ui/Switch';
+import { Grid, Store, Copy, Sparkles, Home, CheckCircle2 } from 'lucide-react';
+import { SetupWizardBlockConfig, SetupWizardBungalowConfig, SocietyStructureType } from '../../../types';
+
+interface Step3FloorsConfigProps {
+  structureType: SocietyStructureType;
+  blocks: SetupWizardBlockConfig[];
+  bungalowsConfig: SetupWizardBungalowConfig;
+  onBlocksChange: (blocks: SetupWizardBlockConfig[]) => void;
+  onBungalowsConfigChange: (cfg: SetupWizardBungalowConfig) => void;
+}
+
+export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
+  structureType,
+  blocks,
+  bungalowsConfig,
+  onBlocksChange,
+  onBungalowsConfigChange,
+}) => {
+  const [globalFloorCount, setGlobalFloorCount] = useState(5);
+  const isBungalowOnly = structureType === 'bungalows';
+
+  const handleUpdateBlock = (index: number, fields: Partial<SetupWizardBlockConfig>) => {
+    const updated = [...blocks];
+    updated[index] = { ...updated[index], ...fields };
+    onBlocksChange(updated);
+  };
+
+  const handleApplyFloorCountToAll = () => {
+    const updated = blocks.map((b) => ({
+      ...b,
+      floors_count: globalFloorCount,
+    }));
+    onBlocksChange(updated);
+  };
+
+  if (isBungalowOnly) {
+    const prefix = bungalowsConfig.prefix || 'Villa-';
+    const count = bungalowsConfig.count || 20;
+    const startNum = bungalowsConfig.starting_number || 1;
+    const bType = bungalowsConfig.bungalow_type || '3 BHK Villa';
+
+    return (
+      <div className="space-y-6 animate-fadeIn">
+        <Card
+          title={
+            <div className="flex items-center gap-2">
+              <Home className="w-5 h-5 text-amber-600" />
+              <span className="font-bold text-slate-900">Bungalows & Villa Enclave Review</span>
+            </div>
+          }
+          subtitle="Review and confirm the villa property allocations before setting up the unit matrix."
+        >
+          <div className="space-y-4">
+            <div className="p-5 rounded-2xl bg-amber-50/60 border border-amber-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-3 bg-white rounded-xl border border-amber-100">
+                <span className="text-xs text-amber-800 font-semibold block">Total Standalone Units</span>
+                <span className="text-2xl font-black text-amber-950 mt-1 block">{count} Villas</span>
+              </div>
+              <div className="p-3 bg-white rounded-xl border border-amber-100">
+                <span className="text-xs text-amber-800 font-semibold block">Naming Range</span>
+                <span className="text-xl font-bold text-amber-950 mt-1 block">
+                  {prefix}{startNum} &rarr; {prefix}{startNum + count - 1}
+                </span>
+              </div>
+              <div className="p-3 bg-white rounded-xl border border-amber-100">
+                <span className="text-xs text-amber-800 font-semibold block">Property Specification</span>
+                <span className="text-sm font-bold text-amber-950 mt-1 block truncate">{bType}</span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <p className="text-xs text-slate-600">
+                Since this society consists exclusively of standalone bungalows, multi-floor specifications are bypassed. You can proceed directly to the Unit Matrix and Owner Mapping.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fadeIn">
+      {/* Global Quick Actions */}
+      <div className="p-4 bg-gradient-to-r from-indigo-50/80 to-blue-50/80 border border-indigo-100 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2.5">
+          <Sparkles className="w-5 h-5 text-indigo-600 shrink-0" />
+          <div>
+            <h4 className="text-sm font-bold text-slate-900">Bulk Floor Setup</h4>
+            <p className="text-xs text-slate-600">Quickly apply standard floor heights across all blocks.</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 font-medium">Floors:</span>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={globalFloorCount}
+              onChange={(e) => setGlobalFloorCount(Math.max(1, parseInt(e.target.value) || 1))}
+              className="w-16 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-lg bg-white"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleApplyFloorCountToAll}
+            leftIcon={<Copy className="w-3.5 h-3.5" />}
+          >
+            Apply to All
+          </Button>
+        </div>
+      </div>
+
+      {/* Per Block Configuration Cards */}
+      <Card
+        title={
+          <div className="flex items-center gap-2">
+            <Grid className="w-5 h-5 text-indigo-600" />
+            <span className="font-bold text-slate-900">Floors & Commercial Shops Configuration</span>
+          </div>
+        }
+        subtitle="Configure the number of residential floors and ground floor retail/commercial spaces for each block."
+      >
+        <div className="space-y-4">
+          {blocks.map((block, idx) => (
+            <div
+              key={idx}
+              className="p-5 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-sm">
+                    {block.code || block.name.slice(0, 2)}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">{block.name}</h4>
+                    <span className="text-xs text-slate-400">
+                      Code: {block.code || 'N/A'} &bull; {block.floors_count} Residential Floors
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-slate-600">Total Floors:</span>
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateBlock(idx, { floors_count: Math.max(1, block.floors_count - 1) })}
+                      className="w-7 h-7 bg-white rounded-md text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
+                    >
+                      -
+                    </button>
+                    <span className="w-8 text-center text-xs font-bold text-slate-900">
+                      {block.floors_count}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateBlock(idx, { floors_count: Math.min(50, block.floors_count + 1) })}
+                      className="w-7 h-7 bg-white rounded-md text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Commercial Shops Section for this Block */}
+              <div className="pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Store className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block">
+                      Ground Floor Commercial Shops
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      Has retail shops/commercial units on ground floor?
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <Switch
+                    checked={block.has_commercial_shops || false}
+                    onChange={(val) =>
+                      handleUpdateBlock(idx, {
+                        has_commercial_shops: val,
+                        commercial_shops_count: val ? (block.commercial_shops_count || 4) : 0,
+                      })
+                    }
+                    aria-label={`Toggle Commercial Shops for ${block.name}`}
+                  />
+
+                  {block.has_commercial_shops && (
+                    <div className="flex items-center gap-2 animate-fadeIn">
+                      <span className="text-xs text-slate-500">Shops:</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={block.commercial_shops_count || 4}
+                        onChange={(e) =>
+                          handleUpdateBlock(idx, {
+                            commercial_shops_count: Math.max(1, parseInt(e.target.value) || 1),
+                          })
+                        }
+                        className="w-16 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-lg bg-white"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+};

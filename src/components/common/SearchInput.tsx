@@ -17,7 +17,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 }) => {
   return (
     <div className={clsx('relative flex items-center', className)}>
-      <div className="absolute left-3 text-slate-400 pointer-events-none flex items-center justify-center">
+      <div className="absolute left-3.5 text-slate-400 pointer-events-none flex items-center justify-center">
         <Search className="w-4 h-4" />
       </div>
       <input
@@ -25,13 +25,13 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-9 pr-8 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder:text-slate-400"
+        className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-white border border-[#CBD5E1] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 focus:border-[#6366F1] transition-all placeholder:text-slate-400 shadow-2xs hover:border-slate-400 text-[#1E293B]"
       />
       {value && (
         <button
           type="button"
           onClick={() => onChange('')}
-          className="absolute right-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 transition-colors"
+          className="absolute right-2.5 text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-[#EEF2FF] transition-colors"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -41,3 +41,4 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 };
 
 export default SearchInput;
+

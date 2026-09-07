@@ -23,6 +23,8 @@ import EventCollectionsDashboardPage from '../pages/dashboard/EventCollectionsDa
 // Societies
 import SocietyListPage from '../pages/societies/SocietyListPage';
 import CreateSocietyPage from '../pages/societies/CreateSocietyPage';
+import SocietySetupWizardPage from '../pages/societies/SocietySetupWizardPage';
+import SocietyDetailPage from '../pages/societies/SocietyDetailPage';
 import SocietyDetailsPage from '../pages/societies/SocietyDetailsPage';
 import EditSocietyPage from '../pages/societies/EditSocietyPage';
 import SocietyStructurePage from '../pages/societies/SocietyStructurePage';
@@ -142,7 +144,7 @@ export const AppRoutes: React.FC = () => {
             }
           />
 
-          {/* Societies Module */}
+          {/* Unified Society & Property Structure Module */}
           <Route
             path={Paths.SOCIETIES}
             element={
@@ -152,10 +154,18 @@ export const AppRoutes: React.FC = () => {
             }
           />
           <Route
+            path={Paths.SOCIETY_SETUP_WIZARD}
+            element={
+              <PermissionRoute permission={Permissions.SOCIETY_CREATE}>
+                <SocietySetupWizardPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
             path={Paths.SOCIETY_CREATE}
             element={
               <PermissionRoute permission={Permissions.SOCIETY_CREATE}>
-                <CreateSocietyPage />
+                <SocietySetupWizardPage />
               </PermissionRoute>
             }
           />
@@ -163,7 +173,7 @@ export const AppRoutes: React.FC = () => {
             path={Paths.SOCIETY_DETAILS}
             element={
               <PermissionRoute permission={Permissions.SOCIETY_READ}>
-                <SocietyDetailsPage />
+                <SocietyDetailPage />
               </PermissionRoute>
             }
           />

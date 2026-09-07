@@ -107,7 +107,7 @@ export const SystemDashboardPage: React.FC = () => {
       {/* 1. Overview KPIs (8 cards) */}
       <div>
         <h3 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
-          <Building2 className="w-4 h-4 text-indigo-600" />
+          <Building2 className="w-4 h-4 text-[#6366F1]" />
           <span>Operational Overview</span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -133,7 +133,7 @@ export const SystemDashboardPage: React.FC = () => {
             title="Total Bungalows"
             value={overview.totalBungalows}
             icon={<Building2 className="w-5 h-5" />}
-            variant="default"
+            variant="teal"
           />
           <KPICard
             title="Residential Units"
@@ -147,25 +147,25 @@ export const SystemDashboardPage: React.FC = () => {
             value={overview.totalResidents}
             subtitle="Registered persons"
             icon={<Users className="w-5 h-5" />}
-            variant="emerald"
+            variant="teal"
           />
           <KPICard
             title="Total Events"
             value={overview.totalEvents}
             icon={<Calendar className="w-5 h-5" />}
-            variant="default"
+            variant="purple"
           />
           <KPICard
             title="Active Events"
             value={overview.activeEvents}
             subtitle="Ongoing / published"
             icon={<Sparkles className="w-5 h-5" />}
-            variant="amber"
+            variant="purple"
           />
         </div>
       </div>
 
-      {/* 2. Financial KPIs (9 cards) */}
+      {/* 2. Financial KPIs (6 cards) */}
       <div>
         <h3 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
           <TrendingUp className="w-4 h-4 text-emerald-600" />
@@ -197,19 +197,19 @@ export const SystemDashboardPage: React.FC = () => {
             title="Flat Collected"
             value={formatCurrency(financials.flatCollectionPaid)}
             subtitle={`Pending: ${formatCurrency(financials.flatCollectionPending)}`}
-            variant="default"
+            variant="indigo"
           />
           <KPICard
             title="Bungalow Collected"
             value={formatCurrency(financials.bungalowCollectionPaid)}
             subtitle={`Pending: ${formatCurrency(financials.bungalowCollectionPending)}`}
-            variant="default"
+            variant="teal"
           />
           <KPICard
             title="Sponsorship Collected"
             value={formatCurrency(financials.totalSponsorshipCollected)}
             subtitle="Corporate & individual sponsors"
-            variant="teal"
+            variant="amber"
           />
         </div>
       </div>

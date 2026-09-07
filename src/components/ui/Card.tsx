@@ -22,16 +22,16 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       className={clsx(
-        'bg-white border border-slate-200/80 rounded-xl shadow-sm overflow-hidden flex flex-col',
+        'bg-white border border-[#E2E8F0] rounded-2xl shadow-card overflow-hidden flex flex-col transition-all duration-200',
         className
       )}
       {...props}
     >
       {(title || headerAction) && (
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+        <div className="px-5 sm:px-6 py-3.5 sm:py-4 bg-[#F8F7FC]/70 border-b border-[#E2E8F0] flex items-center justify-between gap-4">
           <div>
             {typeof title === 'string' ? (
-              <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">{title}</h3>
             ) : (
               title
             )}
@@ -42,9 +42,9 @@ export const Card: React.FC<CardProps> = ({
           {headerAction && <div>{headerAction}</div>}
         </div>
       )}
-      <div className={clsx('flex-1', !noPadding && 'p-6')}>{children}</div>
+      <div className={clsx('flex-1', !noPadding && 'p-5 sm:p-6')}>{children}</div>
       {footer && (
-        <div className="px-6 py-3 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+        <div className="px-5 sm:px-6 py-3 bg-[#F8F7FC]/70 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-slate-600">
           {footer}
         </div>
       )}
@@ -53,3 +53,4 @@ export const Card: React.FC<CardProps> = ({
 };
 
 export default Card;
+

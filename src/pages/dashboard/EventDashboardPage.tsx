@@ -171,21 +171,21 @@ export const EventDashboardPage: React.FC = () => {
           <Card title="Event Collection KPIs" subtitle="Unit payment status breakdown">
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  <span className="text-[11px] text-slate-500 font-semibold uppercase">Total Units</span>
-                  <p className="text-xl font-bold text-slate-900">{collectionsDash.totalFlats}</p>
+                <div className="p-3 bg-[#EEF2FF] rounded-2xl border border-indigo-100 shadow-2xs">
+                  <span className="text-[11px] text-indigo-700 font-bold uppercase">Total Units</span>
+                  <p className="text-xl font-extrabold text-[#1E293B]">{collectionsDash.totalFlats}</p>
                 </div>
-                <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                  <span className="text-[11px] text-emerald-700 font-semibold uppercase">Paid Units</span>
-                  <p className="text-xl font-bold text-emerald-700">{collectionsDash.paidFlats}</p>
+                <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-2xs">
+                  <span className="text-[11px] text-emerald-700 font-bold uppercase">Paid Units</span>
+                  <p className="text-xl font-extrabold text-emerald-700">{collectionsDash.paidFlats}</p>
                 </div>
-                <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
-                  <span className="text-[11px] text-amber-800 font-semibold uppercase">Pending Units</span>
-                  <p className="text-xl font-bold text-amber-800">{collectionsDash.pendingFlats}</p>
+                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100 shadow-2xs">
+                  <span className="text-[11px] text-amber-800 font-bold uppercase">Pending Units</span>
+                  <p className="text-xl font-extrabold text-amber-800">{collectionsDash.pendingFlats}</p>
                 </div>
-                <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                  <span className="text-[11px] text-indigo-700 font-semibold uppercase">Completion</span>
-                  <p className="text-xl font-bold text-indigo-700">{Number(collectionsDash.collectionPercentage || 0).toFixed(1)}%</p>
+                <div className="p-3 bg-[#FAF5FF] rounded-2xl border border-purple-100 shadow-2xs">
+                  <span className="text-[11px] text-purple-700 font-bold uppercase">Completion</span>
+                  <p className="text-xl font-extrabold text-[#7C3AED]">{Number(collectionsDash.collectionPercentage || 0).toFixed(1)}%</p>
                 </div>
               </div>
 

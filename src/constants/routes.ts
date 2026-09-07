@@ -16,6 +16,7 @@ export const AppRoutes = {
   // Societies
   SOCIETIES: '/societies',
   SOCIETY_CREATE: '/societies/create',
+  SOCIETY_SETUP_WIZARD: '/societies/setup-wizard',
   SOCIETY_DETAILS: '/societies/:id',
   SOCIETY_EDIT: '/societies/:id/edit',
   SOCIETY_STRUCTURE: '/societies/:id/structure',

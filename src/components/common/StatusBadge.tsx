@@ -16,43 +16,42 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
   let variant: BadgeProps['variant'] = 'gray';
 
   switch (normalized) {
-    // Active / Success states
+    // Active / Ongoing states -> Soft Teal
     case 'active':
-    case 'paid':
-    case 'cleared':
-    case 'confirmed':
-    case 'imported':
-    case 'completed':
-      variant = 'green';
-      break;
-
-    // Published / Ongoing / Planned / Blue states
-    case 'published':
-    case 'planned':
-    case 'validating':
-      variant = 'blue';
-      break;
-
     case 'ongoing':
     case 'previewed':
       variant = 'teal';
       break;
 
-    // Warning / Pending / Partial states
+    // Paid / Cleared / Completed states -> Soft Green
+    case 'paid':
+    case 'cleared':
+    case 'confirmed':
+    case 'imported':
+    case 'completed':
+    case 'success':
+      variant = 'green';
+      break;
+
+    // Approved / Published / Planned states -> Soft Indigo
+    case 'approved':
+    case 'published':
+    case 'planned':
+    case 'validating':
+      variant = 'indigo';
+      break;
+
+    // Warning / Pending / Partial states -> Soft Amber
     case 'pending':
     case 'partially_paid':
     case 'partial':
     case 'importing':
     case 'queued':
-      variant = 'yellow';
+      variant = 'amber';
       break;
 
-    // Danger / Inactive / Failed / Cancelled / Overdue states
-    case 'inactive':
-    case 'draft':
-      variant = 'gray';
-      break;
-
+    // Rejected / Inactive / Failed / Cancelled / Overdue states -> Soft Red
+    case 'rejected':
     case 'cancelled':
     case 'overdue':
     case 'bounced':
@@ -62,6 +61,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
       variant = 'red';
       break;
 
+    case 'inactive':
+    case 'draft':
     default:
       variant = 'gray';
   }
@@ -74,3 +75,4 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
 };
 
 export default StatusBadge;
+

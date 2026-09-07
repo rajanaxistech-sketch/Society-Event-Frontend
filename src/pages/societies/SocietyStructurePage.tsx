@@ -133,9 +133,9 @@ export const SocietyStructurePage: React.FC = () => {
       >
         <div className="space-y-6">
           {/* Flat Hierarchy Option */}
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-start justify-between gap-4">
+          <div className="p-4 rounded-2xl border border-indigo-100 bg-[#EEF2FF]/60 flex items-start justify-between gap-4 shadow-2xs">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 mt-0.5">
+              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-[#6366F1] shrink-0 mt-0.5">
                 <Layers className="w-5 h-5" />
               </div>
               <div>
@@ -158,9 +158,9 @@ export const SocietyStructurePage: React.FC = () => {
           </div>
 
           {/* Bungalow Hierarchy Option */}
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-start justify-between gap-4">
+          <div className="p-4 rounded-2xl border border-teal-100 bg-teal-50/50 flex items-start justify-between gap-4 shadow-2xs">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center text-teal-700 shrink-0 mt-0.5">
+              <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center text-[#14B8A6] shrink-0 mt-0.5">
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
@@ -184,7 +184,7 @@ export const SocietyStructurePage: React.FC = () => {
 
           {/* Setup Completion Flag */}
           <div className="pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white">
+            <div className="flex items-center justify-between p-4 rounded-2xl border border-indigo-100/70 bg-[#F8F7FC] shadow-2xs">
               <div>
                 <h4 className="text-sm font-semibold text-slate-900">Mark Structure Setup as Completed</h4>
                 <p className="text-xs text-slate-500 mt-0.5">

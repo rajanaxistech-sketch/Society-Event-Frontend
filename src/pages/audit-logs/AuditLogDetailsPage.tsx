@@ -122,13 +122,13 @@ export const AuditLogDetailsPage: React.FC = () => {
         <Card
           title={
             <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-rose-500" />
+              <Terminal className="w-4 h-4 text-red-500" />
               <span>Prior State (Old Values)</span>
             </div>
           }
         >
           {oldValues ? (
-            <pre className="bg-slate-900 text-emerald-400 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-96">
+            <pre className="bg-slate-50 border border-slate-200 text-slate-800 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-96 shadow-2xs">
               {JSON.stringify(oldValues, null, 2)}
             </pre>
           ) : (
@@ -139,13 +139,13 @@ export const AuditLogDetailsPage: React.FC = () => {
         <Card
           title={
             <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-emerald-500" />
+              <Terminal className="w-4 h-4 text-emerald-600" />
               <span>Mutated State (New Values)</span>
             </div>
           }
         >
           {newValues ? (
-            <pre className="bg-slate-900 text-emerald-400 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-96">
+            <pre className="bg-slate-50 border border-slate-200 text-slate-800 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-96 shadow-2xs">
               {JSON.stringify(newValues, null, 2)}
             </pre>
           ) : (

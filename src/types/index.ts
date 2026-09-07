@@ -148,6 +148,8 @@ export interface SocietyItem {
   city?: string | null;
   state?: string | null;
   postal_code?: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   contact_name?: string | null;
   contact_phone?: string | null;
   contact_email?: string | null;
@@ -159,7 +161,68 @@ export interface SocietyItem {
     blocks?: number;
     bungalows?: number;
     events?: number;
+    floors?: number;
+    flats?: number;
+    shops?: number;
+    persons?: number;
   };
+}
+
+export type SocietyStructureType = 'flats' | 'bungalows' | 'hybrid';
+
+export interface SetupWizardBlockConfig {
+  name: string;
+  code?: string;
+  floors_count: number;
+  has_commercial_shops?: boolean;
+  commercial_shops_count?: number;
+  flats_per_floor: number;
+  series_start?: number;
+  flat_type?: string;
+}
+
+export interface SetupWizardBungalowConfig {
+  prefix?: string;
+  count: number;
+  starting_number?: number;
+  bungalow_type?: string;
+  custom_names?: string[];
+}
+
+export interface SetupWizardOwnerMapping {
+  unit_identifier: string; // e.g. "Block A-101" or "Villa-1"
+  unit_number: string;
+  block_name?: string;
+  unit_type?: string;
+  full_name: string;
+  phone?: string;
+  email?: string;
+  relationship_to_owner?: string;
+  is_primary_owner?: boolean;
+}
+
+export interface SetupWizardPayload {
+  structure_type?: SocietyStructureType;
+  society: {
+    name: string;
+    code?: string;
+    address_line1?: string;
+    address_line2?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
+    contact_name?: string;
+    contact_phone?: string;
+    contact_email?: string;
+    status: string;
+  };
+  blocks?: SetupWizardBlockConfig[];
+  bungalows_config?: SetupWizardBungalowConfig;
+  enable_bungalows?: boolean;
+  bungalows_count?: number;
+  mapped_owners?: SetupWizardOwnerMapping[];
 }
 
 // Property Structure: Blocks, Floors, Flats, Bungalows

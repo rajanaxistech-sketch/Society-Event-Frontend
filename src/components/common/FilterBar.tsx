@@ -22,7 +22,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   return (
     <div
       className={clsx(
-        'flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 sm:p-4 bg-white border border-slate-200/80 rounded-xl shadow-2xs mb-4',
+        'flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white border border-[#E2E8F0] rounded-2xl shadow-card mb-4',
         className
       )}
     >
@@ -45,3 +45,4 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 };
 
 export default FilterBar;
+

@@ -18,7 +18,7 @@ export interface TabsProps {
 
 export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className = '' }) => {
   return (
-    <div className={clsx('border-b border-slate-200 flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth w-full', className)}>
+    <div className={clsx('border-b border-[#E2E8F0] flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar scroll-smooth w-full', className)}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -28,10 +28,10 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
             disabled={tab.disabled}
             onClick={() => onChange(tab.id)}
             className={clsx(
-              'flex items-center gap-1.5 sm:gap-2 px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-all duration-150 whitespace-nowrap outline-none shrink-0',
+              'flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all duration-150 whitespace-nowrap outline-none shrink-0 cursor-pointer rounded-t-xl',
               isActive
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300',
+                ? 'border-[#6366F1] text-[#6366F1] bg-[#EEF2FF]/50'
+                : 'border-transparent text-slate-500 hover:text-[#6366F1] hover:bg-[#EEF2FF]/40 hover:border-slate-300',
               tab.disabled && 'opacity-40 cursor-not-allowed'
             )}
           >
@@ -40,8 +40,8 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
             {tab.count !== undefined && (
               <span
                 className={clsx(
-                  'px-2 py-0.5 text-xs font-semibold rounded-full',
-                  isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                  'px-2 py-0.5 text-[11px] font-bold rounded-full',
+                  isActive ? 'bg-[#EEF2FF] text-[#6366F1]' : 'bg-slate-100 text-slate-600'
                 )}
               >
                 {tab.count}
@@ -55,3 +55,4 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
 };
 
 export default Tabs;
+

@@ -17,6 +17,7 @@ import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
+import { getEventTheme } from '../../utils/eventTheme';
 
 // Sub-module tab components
 import { EventCollectionsPage } from './EventCollectionsPage';
@@ -113,6 +114,7 @@ export const EventDetailsPage: React.FC = () => {
 
   const config = event.event_configuration;
   const counts = event._count || {};
+  const eventTheme = getEventTheme(event.name, event.description);
 
   // Construct dynamic tabs based on enabled configuration flags
   const tabs: TabItem[] = [{ id: 'overview', label: 'Event Overview', icon: <Calendar className="w-4 h-4" /> }];
@@ -173,16 +175,24 @@ export const EventDetailsPage: React.FC = () => {
             onClick={() => navigate(AppRoutes.EVENTS)}
             leftIcon={<ArrowLeft className="w-4 h-4" />}
           >
-            Back to Events
+            Back
           </Button>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{event.name}</h1>
-              <StatusBadge status={event.status} />
+          <div className="flex items-center gap-3">
+            <div className={`w-11 h-11 rounded-2xl ${eventTheme.iconBgClass} flex items-center justify-center font-bold text-sm shadow-2xs shrink-0`}>
+              <Calendar className="w-5 h-5" />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {event.society?.name || 'Society'} &bull; Date: {formatDate(event.start_date)} {event.start_time ? `@ ${event.start_time}` : ''}
-            </p>
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight">{event.name}</h1>
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${eventTheme.badgeClass}`}>
+                  {eventTheme.label}
+                </span>
+                <StatusBadge status={event.status} />
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {event.society?.name || 'Society'} &bull; Date: {formatDate(event.start_date)} {event.start_time ? `@ ${event.start_time}` : ''}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -190,7 +200,7 @@ export const EventDetailsPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(`/events/${id}/dashboard`)}
+            onClick={() => navigate(`/events/${encodeId(id)}/dashboard`)}
             leftIcon={<LayoutDashboard className="w-3.5 h-3.5" />}
           >
             Event Dashboard

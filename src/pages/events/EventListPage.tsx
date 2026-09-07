@@ -17,6 +17,7 @@ import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
+import { getEventTheme } from '../../utils/eventTheme';
 import { Plus, Eye, Edit2, Trash2, Sliders, RefreshCw, LayoutDashboard, Calendar } from 'lucide-react';
 
 export const EventListPage: React.FC = () => {
@@ -107,20 +108,33 @@ export const EventListPage: React.FC = () => {
       key: 'name',
       header: 'Event Name',
       sortable: true,
-      render: (row) => (
-        <div>
-          <span className="font-bold text-slate-900 block hover:text-indigo-600 transition-colors">
-            {row.name}
-          </span>
-          <span className="text-xs text-slate-400 truncate max-w-xs block">{row.venue || 'Clubhouse Lawn'}</span>
-        </div>
-      ),
+      render: (row) => {
+        const theme = getEventTheme(row.name, row.description);
+        return (
+          <div className="flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-xl ${theme.iconBgClass} flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs`}>
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-900 block hover:text-indigo-600 transition-colors">
+                  {row.name}
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${theme.badgeClass}`}>
+                  {theme.label}
+                </span>
+              </div>
+              <span className="text-xs text-slate-400 truncate max-w-xs block mt-0.5">{row.venue || 'Clubhouse Lawn'}</span>
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: 'society',
       header: 'Society',
       render: (row) => (
-        <span className="text-slate-800 text-xs font-medium">{row.society?.name || '—'}</span>
+        <span className="text-slate-800 text-xs font-semibold">{row.society?.name || '—'}</span>
       ),
     },
     {
@@ -129,7 +143,7 @@ export const EventListPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div className="text-xs">
-          <span className="font-semibold text-slate-900 block">{formatDate(row.start_date)}</span>
+          <span className="font-bold text-slate-900 block">{formatDate(row.start_date)}</span>
           {row.end_date && row.end_date !== row.start_date && (
             <span className="text-slate-400">to {formatDate(row.end_date)}</span>
           )}
@@ -151,7 +165,7 @@ export const EventListPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(`/events/${encodeId(row.id)}/dashboard`)}
-            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
             title="Event Dashboard"
           >
             <LayoutDashboard className="w-4 h-4" />
@@ -159,7 +173,7 @@ export const EventListPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(`/events/${encodeId(row.id)}`)}
-            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
             title="View Details"
           >
             <Eye className="w-4 h-4" />
@@ -168,7 +182,7 @@ export const EventListPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate(`/events/${encodeId(row.id)}/configuration`)}
-              className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+              className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors"
               title="Configure Event Modules"
             >
               <Sliders className="w-4 h-4" />
@@ -178,7 +192,7 @@ export const EventListPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate(`/events/${encodeId(row.id)}/edit`)}
-              className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
               title="Edit Event"
             >
               <Edit2 className="w-4 h-4" />
@@ -188,7 +202,7 @@ export const EventListPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setDeleteTarget(row)}
-              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
               title="Delete Event"
             >
               <Trash2 className="w-4 h-4" />

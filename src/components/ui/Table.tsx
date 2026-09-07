@@ -37,10 +37,10 @@ export function Table<T extends Record<string, any>>({
   className = '',
 }: TableProps<T>) {
   return (
-    <div className={clsx('w-full overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-2xs no-scrollbar', className)}>
+    <div className={clsx('w-full overflow-x-auto border border-[#E2E8F0] rounded-2xl bg-white shadow-card no-scrollbar', className)}>
       <table className="w-full min-w-[600px] text-left border-collapse text-xs sm:text-sm">
         <thead>
-          <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider">
+          <tr className="bg-[#F1F5F9] border-b border-[#E2E8F0] text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
             {columns.map((col) => {
               const isSorted = sortBy === col.key;
               return (
@@ -48,9 +48,9 @@ export function Table<T extends Record<string, any>>({
                   key={col.key}
                   style={{ width: col.width }}
                   className={clsx(
-                    'px-3 py-2.5 sm:px-4 sm:py-3.5 select-none',
+                    'px-4 py-3.5 select-none',
                     col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
-                    col.sortable && 'cursor-pointer hover:bg-slate-100/80 transition-colors',
+                    col.sortable && 'cursor-pointer hover:bg-[#EEF2FF]/80 transition-colors',
                     col.className
                   )}
                   onClick={() => col.sortable && onSort?.(col.key)}
@@ -67,12 +67,12 @@ export function Table<T extends Record<string, any>>({
                       <span className="text-slate-400">
                         {isSorted ? (
                           sortOrder === 'asc' ? (
-                            <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                            <ChevronUp className="w-3.5 h-3.5 text-[#6366F1]" />
                           ) : (
-                            <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                            <ChevronDown className="w-3.5 h-3.5 text-[#6366F1]" />
                           )
                         ) : (
-                          <div className="w-3.5 h-3.5 opacity-40">↕</div>
+                          <span className="opacity-40 text-[10px]">↕</span>
                         )}
                       </span>
                     )}
@@ -82,12 +82,12 @@ export function Table<T extends Record<string, any>>({
             })}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 text-slate-800">
+        <tbody className="divide-y divide-[#E2E8F0]/70 text-[#1E293B]">
           {isLoading ? (
             Array.from({ length: 5 }).map((_, rIdx) => (
               <tr key={rIdx} className="animate-pulse">
                 {columns.map((col, cIdx) => (
-                  <td key={cIdx} className="px-3 py-3 sm:px-4 sm:py-4">
+                  <td key={cIdx} className="px-4 py-4">
                     <Skeleton className="h-4 w-full max-w-[140px]" />
                   </td>
                 ))}
@@ -105,7 +105,7 @@ export function Table<T extends Record<string, any>>({
                 key={row.id || idx}
                 onClick={() => onRowClick?.(row)}
                 className={clsx(
-                  'transition-colors duration-100 hover:bg-slate-50/70',
+                  'transition-colors duration-150 hover:bg-[#EEF2FF]',
                   onRowClick && 'cursor-pointer'
                 )}
               >
@@ -113,7 +113,7 @@ export function Table<T extends Record<string, any>>({
                   <td
                     key={col.key}
                     className={clsx(
-                      'px-3 py-2.5 sm:px-4 sm:py-3.5 whitespace-nowrap',
+                      'px-4 py-3.5 whitespace-nowrap',
                       col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
                       col.className
                     )}
@@ -131,3 +131,4 @@ export function Table<T extends Record<string, any>>({
 }
 
 export default Table;
+

@@ -33,8 +33,8 @@ export const Switch: React.FC<SwitchProps> = ({
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
         className={clsx(
-          'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-          checked ? 'bg-indigo-600' : 'bg-slate-300'
+          'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30 focus:ring-offset-2',
+          checked ? 'bg-[#6366F1]' : 'bg-[#CBD5E1]'
         )}
       >
         <span
@@ -46,7 +46,7 @@ export const Switch: React.FC<SwitchProps> = ({
       </button>
       {(label || description) && (
         <div className="flex flex-col text-left">
-          {label && <span className="text-sm font-medium text-slate-900">{label}</span>}
+          {label && <span className="text-sm font-semibold text-[#1E293B]">{label}</span>}
           {description && <span className="text-xs text-slate-500">{description}</span>}
         </div>
       )}

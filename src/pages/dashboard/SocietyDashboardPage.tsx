@@ -117,7 +117,7 @@ export const SocietyDashboardPage: React.FC = () => {
           title="Total Flats"
           value={counts.flats ?? dashboardData?.flatsCount ?? 0}
           icon={<Home className="w-5 h-5" />}
-          variant="default"
+          variant="indigo"
         />
         <KPICard
           title="Total Bungalows"
@@ -129,7 +129,7 @@ export const SocietyDashboardPage: React.FC = () => {
           title="Events Held"
           value={counts.events ?? dashboardData?.eventsCount ?? 0}
           icon={<Calendar className="w-5 h-5" />}
-          variant="emerald"
+          variant="purple"
         />
       </div>
 
@@ -162,41 +162,49 @@ export const SocietyDashboardPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <button
               onClick={() => navigate(AppRoutes.BLOCKS)}
-              className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 text-left transition-colors flex flex-col justify-between"
+              className="p-4 border border-[#E2E8F0] rounded-2xl hover:bg-[#EEF2FF] hover:border-indigo-200 text-left transition-all duration-200 flex flex-col justify-between shadow-2xs group"
             >
-              <Layers className="w-5 h-5 text-indigo-600 mb-2" />
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#6366F1] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <Layers className="w-4 h-4" />
+              </div>
               <div>
-                <p className="font-semibold text-slate-900">View Blocks</p>
+                <p className="font-bold text-[#1E293B]">View Blocks</p>
                 <p className="text-[11px] text-slate-500">Manage towers & wings</p>
               </div>
             </button>
             <button
               onClick={() => navigate(AppRoutes.FLATS)}
-              className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 text-left transition-colors flex flex-col justify-between"
+              className="p-4 border border-[#E2E8F0] rounded-2xl hover:bg-[#EEF2FF] hover:border-indigo-200 text-left transition-all duration-200 flex flex-col justify-between shadow-2xs group"
             >
-              <Home className="w-5 h-5 text-indigo-600 mb-2" />
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-[#6366F1] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <Home className="w-4 h-4" />
+              </div>
               <div>
-                <p className="font-semibold text-slate-900">View Flats</p>
+                <p className="font-bold text-[#1E293B]">View Flats</p>
                 <p className="text-[11px] text-slate-500">Unit resident mappings</p>
               </div>
             </button>
             <button
               onClick={() => navigate(AppRoutes.BUNGALOWS)}
-              className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 text-left transition-colors flex flex-col justify-between"
+              className="p-4 border border-[#E2E8F0] rounded-2xl hover:bg-teal-50 hover:border-teal-200 text-left transition-all duration-200 flex flex-col justify-between shadow-2xs group"
             >
-              <Building2 className="w-5 h-5 text-teal-600 mb-2" />
+              <div className="w-8 h-8 rounded-xl bg-teal-50 text-[#14B8A6] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <Building2 className="w-4 h-4" />
+              </div>
               <div>
-                <p className="font-semibold text-slate-900">View Bungalows</p>
+                <p className="font-bold text-[#1E293B]">View Bungalows</p>
                 <p className="text-[11px] text-slate-500">Independent villa units</p>
               </div>
             </button>
             <button
               onClick={() => navigate(AppRoutes.RESIDENTS)}
-              className="p-4 border border-slate-200 rounded-xl hover:bg-slate-50 text-left transition-colors flex flex-col justify-between"
+              className="p-4 border border-[#E2E8F0] rounded-2xl hover:bg-emerald-50 hover:border-emerald-200 text-left transition-all duration-200 flex flex-col justify-between shadow-2xs group"
             >
-              <Users className="w-5 h-5 text-emerald-600 mb-2" />
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                <Users className="w-4 h-4" />
+              </div>
               <div>
-                <p className="font-semibold text-slate-900">View Residents</p>
+                <p className="font-bold text-[#1E293B]">View Residents</p>
                 <p className="text-[11px] text-slate-500">Directory & primary owners</p>
               </div>
             </button>
