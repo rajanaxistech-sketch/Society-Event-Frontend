@@ -85,12 +85,12 @@ export const SystemDashboardPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Dashboard</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">System Dashboard</h1>
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Global overview of registered societies, property structures, events, and collections.
           </p>
         </div>
@@ -106,11 +106,11 @@ export const SystemDashboardPage: React.FC = () => {
 
       {/* 1. Overview KPIs (8 cards) */}
       <div>
-        <h3 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
-          <Building2 className="w-4 h-4 text-[#6366F1]" />
+        <h3 className="text-[11px] font-bold text-slate-500 tracking-wider uppercase mb-2 flex items-center gap-1.5">
+          <Building2 className="w-3.5 h-3.5 text-[#6366F1]" />
           <span>Operational Overview</span>
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           <KPICard
             title="Total Societies"
             value={overview.totalSocieties}
@@ -167,11 +167,11 @@ export const SystemDashboardPage: React.FC = () => {
 
       {/* 2. Financial KPIs (6 cards) */}
       <div>
-        <h3 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-3 flex items-center gap-1.5">
-          <TrendingUp className="w-4 h-4 text-emerald-600" />
+        <h3 className="text-[11px] font-bold text-slate-500 tracking-wider uppercase mb-2 flex items-center gap-1.5">
+          <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
           <span>Financial Collections & Sponsorships</span>
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
           <KPICard
             title="Expected Collection"
             value={formatCurrency(financials.totalExpectedCollection)}
@@ -215,11 +215,11 @@ export const SystemDashboardPage: React.FC = () => {
       </div>
 
       {/* 3. Progress Gauge & Visual Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
         {/* Collection Efficiency Gauge Card */}
         <Card title="Collection Completion Rate" subtitle="Percentage of total expected revenue realized">
-          <div className="flex flex-col items-center justify-center py-6">
-            <div className="relative w-40 h-40 flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center py-3">
+            <div className="relative w-32 h-32 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                 <path
                   className="text-slate-100"
@@ -239,12 +239,12 @@ export const SystemDashboardPage: React.FC = () => {
                 />
               </svg>
               <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-3xl font-extrabold text-slate-900">{collectionPercent.toFixed(1)}%</span>
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Collected</span>
+                <span className="text-2xl font-extrabold text-slate-900">{collectionPercent.toFixed(1)}%</span>
+                <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Collected</span>
               </div>
             </div>
 
-            <div className="w-full mt-6 space-y-2 text-xs">
+            <div className="w-full mt-3 space-y-1.5 text-xs">
               <div className="flex justify-between text-slate-600">
                 <span>Total Expected:</span>
                 <span className="font-semibold text-slate-900">{formatCurrency(financials.totalExpectedCollection)}</span>

@@ -100,22 +100,22 @@ export const SocietyStructurePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(`/societies/${encodeId(id)}`)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
             Structure Configuration
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Configure unit hierarchy and architectural layout for <strong>{society.name}</strong>.
           </p>
         </div>
@@ -125,22 +125,22 @@ export const SocietyStructurePage: React.FC = () => {
       <Card
         title={
           <div className="flex items-center gap-2">
-            <Sliders className="w-5 h-5 text-indigo-600" />
+            <Sliders className="w-4 h-4 text-indigo-600" />
             <span>Unit Hierarchy Toggles</span>
           </div>
         }
         subtitle="Specify which types of properties exist within this community."
       >
-        <div className="space-y-6">
+        <div className="space-y-3.5">
           {/* Flat Hierarchy Option */}
-          <div className="p-4 rounded-2xl border border-indigo-100 bg-[#EEF2FF]/60 flex items-start justify-between gap-4 shadow-2xs">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-[#6366F1] shrink-0 mt-0.5">
-                <Layers className="w-5 h-5" />
+          <div className="p-3 rounded-xl border border-indigo-100 bg-[#EEF2FF]/60 flex items-start justify-between gap-3 shadow-2xs">
+            <div className="flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-[#6366F1] shrink-0 mt-0.5">
+                <Layers className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-900">Apartments / Flats Hierarchy</h4>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h4 className="text-xs font-bold text-slate-900">Apartments / Flats Hierarchy</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
                   Enables multi-tier apartment structure: <strong>Society &rarr; Blocks &rarr; Floors &rarr; Flats &rarr; Residents</strong>.
                 </p>
               </div>
@@ -158,14 +158,14 @@ export const SocietyStructurePage: React.FC = () => {
           </div>
 
           {/* Bungalow Hierarchy Option */}
-          <div className="p-4 rounded-2xl border border-teal-100 bg-teal-50/50 flex items-start justify-between gap-4 shadow-2xs">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center text-[#14B8A6] shrink-0 mt-0.5">
-                <Building2 className="w-5 h-5" />
+          <div className="p-3 rounded-xl border border-teal-100 bg-teal-50/50 flex items-start justify-between gap-3 shadow-2xs">
+            <div className="flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-[#14B8A6] shrink-0 mt-0.5">
+                <Building2 className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-900">Bungalows / Villas Hierarchy</h4>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h4 className="text-xs font-bold text-slate-900">Bungalows / Villas Hierarchy</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
                   Enables independent residential units: <strong>Society &rarr; Bungalows &rarr; Residents</strong>.
                 </p>
               </div>

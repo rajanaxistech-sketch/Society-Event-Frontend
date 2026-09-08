@@ -22,29 +22,29 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       className={clsx(
-        'bg-white border border-[#E2E8F0] rounded-2xl shadow-card overflow-hidden flex flex-col transition-all duration-200',
+        'bg-white border border-[#E2E8F0] rounded-xl shadow-card overflow-hidden flex flex-col transition-all duration-200',
         className
       )}
       {...props}
     >
       {(title || headerAction) && (
-        <div className="px-5 sm:px-6 py-3.5 sm:py-4 bg-[#F8F7FC]/70 border-b border-[#E2E8F0] flex items-center justify-between gap-4">
+        <div className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#F8F7FC]/70 border-b border-[#E2E8F0] flex items-center justify-between gap-3">
           <div>
             {typeof title === 'string' ? (
-              <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">{title}</h3>
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">{title}</h3>
             ) : (
               title
             )}
             {subtitle && (
-              <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">{subtitle}</p>
             )}
           </div>
           {headerAction && <div>{headerAction}</div>}
         </div>
       )}
-      <div className={clsx('flex-1', !noPadding && 'p-5 sm:p-6')}>{children}</div>
+      <div className={clsx('flex-1', !noPadding && 'p-3 sm:p-4')}>{children}</div>
       {footer && (
-        <div className="px-5 sm:px-6 py-3 bg-[#F8F7FC]/70 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-slate-600">
+        <div className="px-3.5 sm:px-4 py-2 bg-[#F8F7FC]/70 border-t border-[#E2E8F0] flex items-center justify-between text-[11px] text-slate-600">
           {footer}
         </div>
       )}

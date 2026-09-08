@@ -8,6 +8,7 @@ export * from './flatsService';
 export * from './bungalowsService';
 export * from './personsService';
 export * from './eventsService';
+export * from './circularsService';
 export * from './collectionsService';
 export * from './paymentsService';
 export * from './paymentMethodsService';

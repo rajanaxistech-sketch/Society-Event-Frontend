@@ -62,34 +62,34 @@ export const EventCollectionsDashboardPage: React.FC = () => {
   ].filter((item) => item.value > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(`/events/${encodeId(id)}`)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
             Back to Event
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
               Event Collections Dashboard
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500">
               Comprehensive financial recovery, flat compliance, and payment channel distribution.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchData}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<RefreshCw className="w-3 h-3" />}
           >
             Refresh
           </Button>
@@ -104,56 +104,56 @@ export const EventCollectionsDashboardPage: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <KPICard
           title="Total Target Units"
           value={data.totalFlats}
-          icon={<Wallet className="w-5 h-5" />}
+          icon={<Wallet className="w-4 h-4" />}
           variant="default"
         />
         <KPICard
           title="Fully Paid Units"
           value={data.paidFlats}
-          icon={<CheckCircle className="w-5 h-5" />}
+          icon={<CheckCircle className="w-4 h-4" />}
           variant="emerald"
         />
         <KPICard
           title="Pending / Overdue Units"
           value={data.pendingFlats}
-          icon={<AlertCircle className="w-5 h-5" />}
+          icon={<AlertCircle className="w-4 h-4" />}
           variant="amber"
         />
         <KPICard
           title="Collection Rate"
           value={`${Number(data.collectionPercentage || 0).toFixed(1)}%`}
-          icon={<PieChartIcon className="w-5 h-5" />}
+          icon={<PieChartIcon className="w-4 h-4" />}
           variant="indigo"
         />
       </div>
 
       {/* Financial Breakdown Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-3.5">
         <Card title="Financial Overview">
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between py-2 border-b border-slate-100">
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between py-1.5 border-b border-slate-100">
               <span className="text-slate-500">Expected Total:</span>
-              <span className="font-bold text-slate-900 text-sm">
+              <span className="font-bold text-slate-900 text-xs">
                 {formatCurrency(data.totalExpectedCollection)}
               </span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
+            <div className="flex justify-between py-1.5 border-b border-slate-100">
               <span className="text-slate-500">Total Collected:</span>
-              <span className="font-bold text-emerald-600 text-sm">
+              <span className="font-bold text-emerald-600 text-xs">
                 {formatCurrency(data.totalCollected)}
               </span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
+            <div className="flex justify-between py-1.5 border-b border-slate-100">
               <span className="text-slate-500">Total Pending:</span>
-              <span className="font-bold text-rose-600 text-sm">
+              <span className="font-bold text-rose-600 text-xs">
                 {formatCurrency(data.totalPending)}
               </span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
+            <div className="flex justify-between py-1.5 border-b border-slate-100">
               <span className="text-slate-500">Partially Paid Amount:</span>
               <span className="font-semibold text-amber-700">
                 {formatCurrency(data.partiallyPaidAmount)}
@@ -164,7 +164,7 @@ export const EventCollectionsDashboardPage: React.FC = () => {
 
         <Card title="Payment Method Distribution" subtitle="Cash vs QR vs Cheque collection" className="lg:col-span-2">
           {chartData.length > 0 ? (
-            <div className="h-64 w-full">
+            <div className="h-52 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -173,8 +173,8 @@ export const EventCollectionsDashboardPage: React.FC = () => {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={45}
+                    outerRadius={65}
+                    innerRadius={36}
                     paddingAngle={4}
                     label={({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}
                   >
@@ -188,8 +188,8 @@ export const EventCollectionsDashboardPage: React.FC = () => {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs">
-              <PieChartIcon className="w-8 h-8 mb-2 opacity-50" />
+            <div className="h-52 flex flex-col items-center justify-center text-slate-400 text-xs">
+              <PieChartIcon className="w-6 h-6 mb-1.5 opacity-50" />
               No payment distribution data available.
             </div>
           )}

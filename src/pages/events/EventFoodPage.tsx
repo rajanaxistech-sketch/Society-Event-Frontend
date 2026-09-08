@@ -197,23 +197,23 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       header: 'Actions',
       align: 'right',
       render: (row) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <PermissionGuard permission={Permissions.FOOD_MANAGE}>
             <button
               type="button"
               onClick={() => handleOpenEditModal(row)}
-              className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Item"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setDeleteTarget(row)}
-              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete Item"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
         </div>
@@ -222,12 +222,12 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       <Card
-        title="Food & Catering Menu"
-        subtitle="Dinner, buffet, snack counters, and estimated catering expenses."
+        title="Event Catering & Food Menu"
+        subtitle="Manage food courses, catering vendors, and expense estimates."
         headerAction={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
@@ -241,7 +241,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
                 variant="primary"
                 size="sm"
                 onClick={handleOpenCreateModal}
-                leftIcon={<Plus className="w-4 h-4" />}
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
               >
                 Add Food Item
               </Button>

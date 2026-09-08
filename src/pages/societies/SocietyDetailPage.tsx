@@ -112,31 +112,31 @@ export const SocietyDetailPage: React.FC = () => {
   const { society } = data;
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-3.5 pb-6">
       {/* Top Banner & Header */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center gap-3">
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-start sm:items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.SOCIETIES)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
             Societies
           </Button>
 
-          <div className="flex items-start sm:items-center gap-3 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-700 text-white flex items-center justify-center font-black text-lg shadow-sm shrink-0">
+          <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-700 text-white flex items-center justify-center font-black text-base shadow-xs shrink-0">
               {society.name?.charAt(0) || 'S'}
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight truncate">
                   {society.name}
                 </h1>
-                <StatusBadge status={society.status} />
+                <StatusBadge status={society.status} size="sm" />
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 Code: <strong className="text-slate-700">{society.code || 'N/A'}</strong> &bull; Registered on {formatDate(society.created_at)}
               </p>
             </div>
@@ -144,7 +144,7 @@ export const SocietyDetailPage: React.FC = () => {
         </div>
 
         {/* Global Action Links */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
@@ -166,7 +166,7 @@ export const SocietyDetailPage: React.FC = () => {
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="bg-white px-3 py-2 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-1.5 overflow-x-auto">
+      <div className="bg-white p-1 rounded-xl border border-slate-200 shadow-xs flex items-center gap-1 overflow-x-auto">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -176,13 +176,13 @@ export const SocietyDetailPage: React.FC = () => {
               key={tab.id}
               type="button"
               onClick={() => handleTabChange(tab.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-all cursor-pointer ${
                 isActive
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
             </button>
           );

@@ -361,6 +361,38 @@ export interface EventItem {
     food_items?: number;
     dress_codes?: number;
     event_activities?: number;
+    circulars?: number;
+  };
+}
+
+// Circulars
+export interface CircularItem {
+  id: string;
+  society_id: string;
+  event_id?: string | null;
+  title: string;
+  description: string;
+  file_name?: string | null;
+  file_url?: string | null;
+  file_type?: string | null;
+  file_size?: number | null;
+  status: 'draft' | 'published' | 'unpublished' | string;
+  created_by?: string | null;
+  updated_by?: string | null;
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  society?: SocietyItem;
+  event?: EventItem;
+  creator?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
+  updater?: {
+    id: string;
+    full_name: string;
+    email: string;
   };
 }
 

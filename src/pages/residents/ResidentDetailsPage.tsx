@@ -72,31 +72,31 @@ export const ResidentDetailsPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.RESIDENTS)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
-            Back to Residents
+            Back
           </Button>
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                 {resident.full_name}
               </h1>
               {resident.is_primary_owner && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                  <Crown className="w-3.5 h-3.5 text-amber-600" /> Primary Owner
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                  <Crown className="w-3 h-3 text-amber-600" /> Primary Owner
                 </span>
               )}
-              <StatusBadge status={resident.status} />
+              <StatusBadge status={resident.status} size="sm" />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Registered on {formatDate(resident.created_at)}
             </p>
           </div>
@@ -115,23 +115,23 @@ export const ResidentDetailsPage: React.FC = () => {
       </div>
 
       {/* Profile & Unit Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {/* Contact Info Card */}
         <Card title="Personal & Contact Information">
-          <div className="space-y-4 text-xs">
-            <div className="flex justify-between py-2 border-b border-slate-100">
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Full Name:</span>
               <span className="font-semibold text-slate-900">{resident.full_name}</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Relation to Owner:</span>
               <span className="font-semibold text-slate-900">{resident.relationship_to_owner || 'Self / Owner'}</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Phone Number:</span>
               <span className="font-semibold text-slate-900">{resident.phone || '—'}</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Email Address:</span>
               <span className="font-semibold text-slate-900">{resident.email || '—'}</span>
             </div>

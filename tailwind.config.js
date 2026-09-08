@@ -66,16 +66,16 @@ module.exports = {
         "card-border": "#E2E8F0",
       },
       borderRadius: {
-        card: "14px",
-        "card-sm": "10px",
-        "card-lg": "16px",
+        card: "10px",
+        "card-sm": "8px",
+        "card-lg": "12px",
       },
       boxShadow: {
         "2xs": "0 1px 2px 0 rgba(99, 102, 241, 0.04)",
         xs: "0 1px 2px 0 rgba(15, 23, 42, 0.05)",
-        soft: "0 2px 8px -2px rgba(99, 102, 241, 0.06), 0 1px 3px 0 rgba(15, 23, 42, 0.04)",
-        card: "0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(99, 102, 241, 0.03)",
-        "card-hover": "0 6px 16px -2px rgba(99, 102, 241, 0.09), 0 2px 4px -2px rgba(15, 23, 42, 0.04)",
+        soft: "0 2px 6px -2px rgba(99, 102, 241, 0.05), 0 1px 2px 0 rgba(15, 23, 42, 0.03)",
+        card: "0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(99, 102, 241, 0.02)",
+        "card-hover": "0 4px 12px -2px rgba(99, 102, 241, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.03)",
       },
       fontFamily: {
         sans: [

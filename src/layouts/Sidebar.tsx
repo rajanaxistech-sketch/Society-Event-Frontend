@@ -12,6 +12,7 @@ import {
   Wallet,
   CreditCard,
   FileText,
+  ScrollText,
   UploadCloud,
   UserCheck,
   Shield,
@@ -69,6 +70,12 @@ export const Sidebar: React.FC = () => {
           to: AppRoutes.RESIDENTS,
           icon: <Users className="w-4 h-4" />,
           permission: Permissions.PERSON_READ,
+        },
+        {
+          label: 'Circulars',
+          to: AppRoutes.CIRCULARS,
+          icon: <ScrollText className="w-4 h-4" />,
+          permission: Permissions.CIRCULAR_READ,
         },
       ],
     },
@@ -163,21 +170,21 @@ export const Sidebar: React.FC = () => {
       {/* Sidebar Container */}
       <aside
         className={clsx(
-          'fixed lg:static top-0 bottom-0 left-0 z-40 w-64 max-w-[80vw] sm:max-w-xs bg-[#EEF2FF] text-slate-700 flex flex-col transition-all duration-300 ease-in-out border-r border-[#E2E8F0] shadow-sm lg:shadow-none shrink-0 h-full',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:-ml-64'
+          'fixed lg:static top-0 bottom-0 left-0 z-40 w-56 max-w-[80vw] sm:max-w-xs bg-[#EEF2FF] text-slate-700 flex flex-col transition-all duration-300 ease-in-out border-r border-[#E2E8F0] shadow-sm lg:shadow-none shrink-0 h-full',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:-ml-56'
         )}
       >
         {/* Brand Header */}
-        <div className="h-16 px-5 flex items-center justify-between border-b border-indigo-100/70 bg-[#EEF2FF] shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold shadow-soft">
-              <Sparkles className="w-5 h-5" />
+        <div className="h-12 px-3.5 flex items-center justify-between border-b border-indigo-100/70 bg-[#EEF2FF] shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold shadow-soft">
+              <Sparkles className="w-3.5 h-3.5" />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-sm text-slate-900 tracking-tight leading-tight">
+              <span className="font-extrabold text-xs text-slate-900 tracking-tight leading-tight">
                 SocietyEvent
               </span>
-              <span className="text-[10px] text-indigo-600 font-bold tracking-wider uppercase">
+              <span className="text-[9px] text-indigo-600 font-bold tracking-wider uppercase">
                 Community Hub
               </span>
             </div>
@@ -186,14 +193,14 @@ export const Sidebar: React.FC = () => {
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-white/60 lg:hidden"
+            className="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-white/60 lg:hidden"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Navigation Items List */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        <div className="flex-1 overflow-y-auto px-2 py-2.5 space-y-3">
           {navSections.map((section, sIdx) => {
             const visibleItems = section.items.filter(
               (item) => isSuperAdmin || !item.permission || can(item.permission)
@@ -202,9 +209,9 @@ export const Sidebar: React.FC = () => {
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={sIdx} className="space-y-1">
+              <div key={sIdx} className="space-y-0.5">
                 {section.title && (
-                  <p className="px-3 text-[10px] font-bold text-indigo-900/60 tracking-wider uppercase mb-1.5">
+                  <p className="px-2.5 text-[9px] font-bold text-indigo-900/60 tracking-wider uppercase mb-1">
                     {section.title}
                   </p>
                 )}
@@ -218,7 +225,7 @@ export const Sidebar: React.FC = () => {
                     }}
                     className={({ isActive }) =>
                       clsx(
-                        'flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150',
+                        'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150',
                         isActive
                           ? 'bg-[#E0E7FF] text-[#6366F1] shadow-2xs border border-indigo-200/60'
                           : 'text-[#475569] hover:text-[#1E293B] hover:bg-white/60'
@@ -229,13 +236,13 @@ export const Sidebar: React.FC = () => {
                       <>
                         <span
                           className={clsx(
-                            'shrink-0 p-1 rounded-lg transition-colors',
-                            isActive ? 'text-[#6366F1] bg-white/80 shadow-2xs' : 'text-indigo-500/70 group-hover:text-indigo-600'
+                            'shrink-0 p-0.5 rounded transition-colors',
+                            isActive ? 'text-[#6366F1]' : 'text-indigo-500/70 group-hover:text-indigo-600'
                           )}
                         >
                           {item.icon}
                         </span>
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate text-[12px]">{item.label}</span>
                       </>
                     )}
                   </NavLink>
@@ -246,15 +253,15 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Footer Version & Branding Tag */}
-        <div className="px-5 py-3.5 border-t border-indigo-100/70 bg-indigo-50/50 text-[11px] text-slate-500 flex flex-col gap-1 shrink-0">
+        <div className="px-3.5 py-2 border-t border-indigo-100/70 bg-indigo-50/50 text-[10px] text-slate-500 flex flex-col gap-0.5 shrink-0">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-slate-600">v1.0.0 Production</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
-              <span className="text-[10px] text-slate-500 font-medium">Live</span>
+            <div className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
+              <span className="text-[9px] text-slate-500 font-medium">Live</span>
             </div>
           </div>
-          <div className="text-[10px] text-slate-400">
+          <div className="text-[9px] text-slate-400">
             Powered by <span className="text-[#6366F1] font-semibold">AnaxisTech</span>
           </div>
         </div>

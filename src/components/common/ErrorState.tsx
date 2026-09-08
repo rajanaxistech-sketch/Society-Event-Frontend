@@ -16,14 +16,14 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`p-8 text-center bg-red-50/50 rounded-xl border border-red-200 flex flex-col items-center justify-center ${className}`}>
-      <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 mb-3">
-        <AlertTriangle className="w-6 h-6" />
+    <div className={`p-5 sm:p-6 text-center bg-rose-50/50 rounded-xl border border-rose-200 flex flex-col items-center justify-center ${className}`}>
+      <div className="w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600 mb-2">
+        <AlertTriangle className="w-4 h-4" />
       </div>
-      <h4 className="text-sm font-semibold text-red-900">{title}</h4>
-      <p className="text-xs text-red-600 mt-1 mb-4 max-w-md">{message}</p>
+      <h4 className="text-xs sm:text-sm font-bold text-rose-900">{title}</h4>
+      <p className="text-xs text-rose-600 mt-0.5 mb-3 max-w-md">{message}</p>
       {onRetry && (
-        <Button size="sm" variant="outline" onClick={onRetry} leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>
+        <Button size="sm" variant="outline" onClick={onRetry} leftIcon={<RefreshCw className="w-3 h-3" />}>
           Try Again
         </Button>
       )}

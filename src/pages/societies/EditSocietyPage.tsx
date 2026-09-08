@@ -116,20 +116,20 @@ export const EditSocietyPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(`/societies/${encodeId(id)}`)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Edit Society</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Edit Society</h1>
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Update society profile, contact information, and address records.
           </p>
         </div>
@@ -139,14 +139,14 @@ export const EditSocietyPage: React.FC = () => {
         <Card
           title={
             <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-indigo-600" />
+              <Building2 className="w-4 h-4 text-indigo-600" />
               <span>Society Profile & Address Details</span>
             </div>
           }
         >
-          <div className="space-y-6">
+          <div className="space-y-3.5">
             {/* Primary Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input
                 label="Society Name"
                 error={errors.name?.message}

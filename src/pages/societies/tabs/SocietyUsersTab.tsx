@@ -208,30 +208,30 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
   ];
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-3.5 animate-fadeIn">
       {/* User Quota Meter Visual Card */}
-      <div className="p-5 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl shadow-md border border-slate-800">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-xs text-indigo-300">
-              <Gauge className="w-6 h-6" />
+      <div className="p-3.5 sm:p-4 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-xl shadow-xs border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-xs text-indigo-300">
+              <Gauge className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white tracking-tight">
+                <h3 className="text-sm font-bold text-white tracking-tight">
                   Society User Quota Meter
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
                   {quotaData.activeUsers} / {quotaData.maxUsers} Users
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
+              <p className="text-[11px] text-slate-300 mt-0.5">
                 Maximum 20 administrative and staff accounts can be allocated per housing society.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -251,20 +251,20 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
               disabled={quotaData.activeUsers >= quotaData.maxUsers}
               leftIcon={<UserPlus className="w-3.5 h-3.5" />}
             >
-              Add Society User
+              Add User
             </Button>
           </div>
         </div>
 
         {/* Visual Meter Bar */}
-        <div className="mt-5 pt-4 border-t border-white/10 space-y-2">
-          <div className="flex justify-between text-xs text-slate-300">
+        <div className="mt-3 pt-2.5 border-t border-white/10 space-y-1.5">
+          <div className="flex justify-between text-[11px] text-slate-300">
             <span>Quota Utilization</span>
             <span className="font-bold text-white">
               {quotaData.usagePercentage}% Used ({quotaData.maxUsers - quotaData.activeUsers} Available)
             </span>
           </div>
-          <div className="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
+          <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${getQuotaColor(quotaData.usagePercentage)}`}
               style={{ width: `${Math.min(100, Math.max(5, quotaData.usagePercentage))}%` }}

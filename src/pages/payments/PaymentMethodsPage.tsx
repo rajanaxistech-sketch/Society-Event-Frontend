@@ -156,10 +156,10 @@ export const PaymentMethodsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => handleOpenEdit(row)}
-            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
             title="Edit Mode"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-3.5 h-3.5" />
           </button>
         </PermissionGuard>
       ),
@@ -167,27 +167,27 @@ export const PaymentMethodsPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto">
+    <div className="space-y-3.5 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.PAYMENTS)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
-            Back to Payments
+            Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Payment Modes</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Payment Modes</h1>
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Configure supported payment channels (Cash, UPI / QR, Cheque, Bank Transfer).
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
@@ -201,9 +201,9 @@ export const PaymentMethodsPage: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={handleOpenCreate}
-              leftIcon={<Plus className="w-4 h-4" />}
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
             >
-              Add Payment Mode
+              Add Mode
             </Button>
           </PermissionGuard>
         </div>

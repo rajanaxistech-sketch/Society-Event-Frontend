@@ -186,29 +186,28 @@ export const EventActivitiesPage: React.FC<EventActivitiesPageProps> = ({ eventI
       header: 'Status',
       align: 'center',
       render: (row) => <StatusBadge status={row.status} size="sm" />,
-    },
-    {
+    },    {
       key: 'actions',
       header: 'Actions',
       align: 'right',
       render: (row) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <PermissionGuard permission={Permissions.ACTIVITY_MANAGE}>
             <button
               type="button"
               onClick={() => handleOpenEditModal(row)}
-              className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Activity"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setDeleteTarget(row)}
-              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete Activity"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
         </div>
@@ -217,12 +216,12 @@ export const EventActivitiesPage: React.FC<EventActivitiesPageProps> = ({ eventI
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       <Card
-        title="Event Activities & Stage Performances"
-        subtitle="Dhol, Live Band, DJ, dance lineups, cultural performances, and games."
+        title="Event Activities & Live Performances"
+        subtitle="Band performances, dhol tasha troupes, stage games, and resident cultural programs."
         headerAction={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
@@ -236,7 +235,7 @@ export const EventActivitiesPage: React.FC<EventActivitiesPageProps> = ({ eventI
                 variant="primary"
                 size="sm"
                 onClick={handleOpenCreateModal}
-                leftIcon={<Plus className="w-4 h-4" />}
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
               >
                 Add Activity
               </Button>

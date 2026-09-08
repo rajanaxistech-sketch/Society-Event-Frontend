@@ -68,6 +68,13 @@ import EventSponsorsPage from '../pages/events/EventSponsorsPage';
 import EventFoodPage from '../pages/events/EventFoodPage';
 import EventDressCodesPage from '../pages/events/EventDressCodesPage';
 import EventActivitiesPage from '../pages/events/EventActivitiesPage';
+import EventCircularsPage from '../pages/events/EventCircularsPage';
+
+// Circulars
+import CircularListPage from '../pages/circulars/CircularListPage';
+import CreateCircularPage from '../pages/circulars/CreateCircularPage';
+import CircularDetailsPage from '../pages/circulars/CircularDetailsPage';
+import EditCircularPage from '../pages/circulars/EditCircularPage';
 
 // Collections & Payments
 import CollectionListPage from '../pages/collections/CollectionListPage';
@@ -426,6 +433,48 @@ export const AppRoutes: React.FC = () => {
             element={
               <PermissionRoute permission={Permissions.ACTIVITY_READ}>
                 <EventActivitiesPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.EVENT_CIRCULARS}
+            element={
+              <PermissionRoute permission={Permissions.CIRCULAR_READ}>
+                <EventCircularsPage />
+              </PermissionRoute>
+            }
+          />
+
+          {/* Circulars Module */}
+          <Route
+            path={Paths.CIRCULARS}
+            element={
+              <PermissionRoute permission={Permissions.CIRCULAR_READ}>
+                <CircularListPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.CIRCULAR_CREATE}
+            element={
+              <PermissionRoute permission={Permissions.CIRCULAR_CREATE}>
+                <CreateCircularPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.CIRCULAR_DETAILS}
+            element={
+              <PermissionRoute permission={Permissions.CIRCULAR_READ}>
+                <CircularDetailsPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.CIRCULAR_EDIT}
+            element={
+              <PermissionRoute permission={Permissions.CIRCULAR_UPDATE}>
+                <EditCircularPage />
               </PermissionRoute>
             }
           />

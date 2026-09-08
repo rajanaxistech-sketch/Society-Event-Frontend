@@ -37,10 +37,10 @@ export function Table<T extends Record<string, any>>({
   className = '',
 }: TableProps<T>) {
   return (
-    <div className={clsx('w-full overflow-x-auto border border-[#E2E8F0] rounded-2xl bg-white shadow-card no-scrollbar', className)}>
-      <table className="w-full min-w-[600px] text-left border-collapse text-xs sm:text-sm">
+    <div className={clsx('w-full overflow-x-auto border border-[#E2E8F0] rounded-xl bg-white shadow-card no-scrollbar', className)}>
+      <table className="w-full min-w-[600px] text-left border-collapse text-xs">
         <thead>
-          <tr className="bg-[#F1F5F9] border-b border-[#E2E8F0] text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
+          <tr className="bg-[#F8F7FC] border-b border-[#E2E8F0] text-[11px] font-bold text-slate-500 uppercase tracking-wider">
             {columns.map((col) => {
               const isSorted = sortBy === col.key;
               return (
@@ -48,7 +48,7 @@ export function Table<T extends Record<string, any>>({
                   key={col.key}
                   style={{ width: col.width }}
                   className={clsx(
-                    'px-4 py-3.5 select-none',
+                    'px-3 py-2 sm:py-2.5 select-none font-bold',
                     col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
                     col.sortable && 'cursor-pointer hover:bg-[#EEF2FF]/80 transition-colors',
                     col.className
@@ -87,15 +87,15 @@ export function Table<T extends Record<string, any>>({
             Array.from({ length: 5 }).map((_, rIdx) => (
               <tr key={rIdx} className="animate-pulse">
                 {columns.map((col, cIdx) => (
-                  <td key={cIdx} className="px-4 py-4">
-                    <Skeleton className="h-4 w-full max-w-[140px]" />
+                  <td key={cIdx} className="px-3 py-2">
+                    <Skeleton className="h-3.5 w-full max-w-[120px]" />
                   </td>
                 ))}
               </tr>
             ))
           ) : data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-12 text-center text-slate-400 text-xs sm:text-sm">
+              <td colSpan={columns.length} className="px-3 py-8 text-center text-slate-400 text-xs">
                 {emptyText}
               </td>
             </tr>
@@ -105,7 +105,7 @@ export function Table<T extends Record<string, any>>({
                 key={row.id || idx}
                 onClick={() => onRowClick?.(row)}
                 className={clsx(
-                  'transition-colors duration-150 hover:bg-[#EEF2FF]',
+                  'transition-colors duration-150 hover:bg-[#EEF2FF]/60',
                   onRowClick && 'cursor-pointer'
                 )}
               >
@@ -113,7 +113,7 @@ export function Table<T extends Record<string, any>>({
                   <td
                     key={col.key}
                     className={clsx(
-                      'px-4 py-3.5 whitespace-nowrap',
+                      'px-3 py-1.5 sm:py-2 whitespace-nowrap text-xs text-slate-700',
                       col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
                       col.className
                     )}

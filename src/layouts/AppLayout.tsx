@@ -16,14 +16,14 @@ export const AppLayout: React.FC = () => {
         <Header />
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col justify-between bg-[#F3F4FA]">
-          <div className="max-w-7xl mx-auto space-y-5 w-full">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-5 flex flex-col justify-between bg-[#F3F4FA]">
+          <div className="max-w-[1600px] mx-auto space-y-3.5 w-full">
             <Breadcrumbs />
             <Outlet />
           </div>
 
           {/* App Footer */}
-          <footer className="mt-8 pt-4 pb-2 border-t border-slate-200/80 text-center text-xs text-slate-500 max-w-7xl mx-auto w-full">
+          <footer className="mt-4 pt-2.5 pb-1 border-t border-slate-200/80 text-center text-[11px] text-slate-400 max-w-[1600px] mx-auto w-full">
             <p>
               &copy; {new Date().getFullYear()} Society Event Management. Powered & Developed by{' '}
               <a

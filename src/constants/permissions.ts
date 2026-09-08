@@ -109,6 +109,13 @@ export const Permissions = {
   ROLE_UPDATE: 'role.manage',
   ROLE_DELETE: 'role.manage',
 
+  // Circulars
+  CIRCULAR_READ: 'circular.read',
+  CIRCULAR_CREATE: 'circular.create',
+  CIRCULAR_UPDATE: 'circular.update',
+  CIRCULAR_DELETE: 'circular.delete',
+  CIRCULAR_PUBLISH: 'circular.publish',
+
   // System Settings
   SETTING_READ: 'setting.read',
   SETTING_UPDATE: 'setting.update',

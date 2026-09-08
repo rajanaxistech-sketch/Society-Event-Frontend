@@ -174,49 +174,49 @@ export const SocietyListPage: React.FC = () => {
       header: 'Actions',
       align: 'right',
       render: (row) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={() => navigate(`/societies/${encodeId(row.id)}?tab=structure`)}
-            className="p-1.5 text-indigo-600 hover:text-white hover:bg-indigo-600 rounded-lg transition-colors border border-indigo-200"
+            className="p-1 text-indigo-600 hover:text-white hover:bg-indigo-600 rounded transition-colors border border-indigo-200"
             title="Explore Structure (Blocks, Floors & Units)"
           >
-            <Layers className="w-4 h-4" />
+            <Layers className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => navigate(`/societies/${encodeId(row.id)}/dashboard`)}
-            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors"
             title="Society Dashboard"
           >
-            <LayoutDashboard className="w-4 h-4" />
+            <LayoutDashboard className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => navigate(`/societies/${encodeId(row.id)}`)}
-            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
             title="Society Hub"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5" />
           </button>
           <PermissionGuard permission={Permissions.SOCIETY_UPDATE}>
             <button
               type="button"
               onClick={() => navigate(`/societies/${encodeId(row.id)}/edit`)}
-              className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
               title="Edit Society"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
           <PermissionGuard permission={Permissions.SOCIETY_DELETE}>
             <button
               type="button"
               onClick={() => setDeleteTarget(row)}
-              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
               title="Delete Society"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
         </div>
@@ -225,21 +225,21 @@ export const SocietyListPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12">
+    <div className="space-y-3.5 animate-fadeIn pb-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">
               Societies & Property Structure
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-500">
             Manage housing societies, buildings, unit hierarchies, and resident databases in one unified hub.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <PermissionGuard permission={Permissions.IMPORT_UPLOAD}>
             <Button
               variant="outline"
@@ -266,7 +266,7 @@ export const SocietyListPage: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={() => navigate(AppRoutes.SOCIETY_SETUP_WIZARD || '/societies/setup-wizard')}
-              leftIcon={<Sparkles className="w-4 h-4" />}
+              leftIcon={<Sparkles className="w-3.5 h-3.5" />}
             >
               Onboard New Society (Setup Wizard)
             </Button>
@@ -275,41 +275,41 @@ export const SocietyListPage: React.FC = () => {
       </div>
 
       {/* Top Metric KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-indigo-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Societies</span>
-            <Building2 className="w-4 h-4" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-indigo-600 mb-1">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Societies</span>
+            <Building2 className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{totalSocietiesCount}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Managed communities</span>
+          <span className="text-lg sm:text-xl font-extrabold text-slate-900 block">{totalSocietiesCount}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Managed communities</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-blue-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Blocks</span>
-            <Layers className="w-4 h-4" />
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-blue-600 mb-1">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Blocks</span>
+            <Layers className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{totalBlocksCount || '—'}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Wings & towers</span>
+          <span className="text-lg sm:text-xl font-extrabold text-slate-900 block">{totalBlocksCount || '—'}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Wings & towers</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-emerald-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Flats & Units</span>
-            <Home className="w-4 h-4" />
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-emerald-600 mb-1">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Flats & Units</span>
+            <Home className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{totalFlatsCount || '—'}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Residential units</span>
+          <span className="text-lg sm:text-xl font-extrabold text-slate-900 block">{totalFlatsCount || '—'}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Residential units</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-amber-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Commercial</span>
-            <Store className="w-4 h-4" />
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-amber-600 mb-1">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Commercial</span>
+            <Store className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{totalShopsCount || '—'}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Ground retail shops</span>
+          <span className="text-lg sm:text-xl font-extrabold text-slate-900 block">{totalShopsCount || '—'}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Ground retail shops</span>
         </div>
       </div>
 

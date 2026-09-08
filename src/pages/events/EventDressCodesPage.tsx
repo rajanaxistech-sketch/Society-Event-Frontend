@@ -172,23 +172,23 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
       header: 'Actions',
       align: 'right',
       render: (row) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <PermissionGuard permission={Permissions.DRESS_CODE_MANAGE}>
             <button
               type="button"
               onClick={() => handleOpenEditModal(row)}
-              className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Dress Code"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setDeleteTarget(row)}
-              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete Dress Code"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
         </div>
@@ -197,12 +197,12 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       <Card
         title="Event Dress Codes"
         subtitle="Theme colors, traditional dress categories, and attire guidance for residents."
         headerAction={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
@@ -216,7 +216,7 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
                 variant="primary"
                 size="sm"
                 onClick={handleOpenCreateModal}
-                leftIcon={<Plus className="w-4 h-4" />}
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
               >
                 Add Dress Code
               </Button>

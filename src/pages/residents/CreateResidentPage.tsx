@@ -110,20 +110,20 @@ export const CreateResidentPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(AppRoutes.RESIDENTS)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Register Resident</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Register Resident</h1>
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Link a person to either a Flat or Bungalow unit in the community.
           </p>
         </div>
@@ -133,18 +133,18 @@ export const CreateResidentPage: React.FC = () => {
         <Card
           title={
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-600" />
+              <Users className="w-4 h-4 text-indigo-600" />
               <span>Resident Profile & Unit Assignment</span>
             </div>
           }
         >
-          <div className="space-y-6">
-            {/* Unit Assignment Type Switcher */}
+          <div className="space-y-3.5">
+            {/* Unit Type Selection */}
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-2">
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5">
                 Property Unit Type <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -152,16 +152,16 @@ export const CreateResidentPage: React.FC = () => {
                     setValue('unit_type', 'flat');
                     setValue('bungalow_id', '');
                   }}
-                  className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all text-left ${
+                  className={`p-2.5 rounded-lg border flex items-center gap-2.5 transition-all text-left ${
                     unitType === 'flat'
-                      ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20'
+                      ? 'border-indigo-600 bg-indigo-50/60 ring-1 ring-indigo-500/20'
                       : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <Home className={`w-5 h-5 ${unitType === 'flat' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                  <Home className={`w-4 h-4 ${unitType === 'flat' ? 'text-indigo-600' : 'text-slate-400'}`} />
                   <div>
                     <span className="font-semibold text-xs text-slate-900 block">Apartment Flat</span>
-                    <span className="text-[11px] text-slate-500">Block &rarr; Floor &rarr; Flat</span>
+                    <span className="text-[10px] text-slate-500">Tower / Block unit</span>
                   </div>
                 </button>
 
@@ -172,16 +172,16 @@ export const CreateResidentPage: React.FC = () => {
                     setValue('unit_type', 'bungalow');
                     setValue('flat_id', '');
                   }}
-                  className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all text-left ${
+                  className={`p-2.5 rounded-lg border flex items-center gap-2.5 transition-all text-left ${
                     unitType === 'bungalow'
-                      ? 'border-teal-600 bg-teal-50/60 ring-2 ring-teal-500/20'
+                      ? 'border-teal-600 bg-teal-50/60 ring-1 ring-teal-500/20'
                       : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <Building2 className={`w-5 h-5 ${unitType === 'bungalow' ? 'text-teal-600' : 'text-slate-400'}`} />
+                  <Building2 className={`w-4 h-4 ${unitType === 'bungalow' ? 'text-teal-600' : 'text-slate-400'}`} />
                   <div>
                     <span className="font-semibold text-xs text-slate-900 block">Bungalow / Villa</span>
-                    <span className="text-[11px] text-slate-500">Direct standalone unit</span>
+                    <span className="text-[10px] text-slate-500">Independent house</span>
                   </div>
                 </button>
               </div>

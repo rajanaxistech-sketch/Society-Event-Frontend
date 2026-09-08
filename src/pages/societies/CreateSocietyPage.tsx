@@ -75,20 +75,20 @@ export const CreateSocietyPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(AppRoutes.SOCIETIES)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create New Society</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Create New Society</h1>
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Register a new residential society or gated community into the system.
           </p>
         </div>
@@ -98,14 +98,14 @@ export const CreateSocietyPage: React.FC = () => {
         <Card
           title={
             <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-indigo-600" />
+              <Building2 className="w-4 h-4 text-indigo-600" />
               <span>Society Profile & Address Details</span>
             </div>
           }
         >
-          <div className="space-y-6">
+          <div className="space-y-3.5">
             {/* Primary Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input
                 label="Society Name"
                 placeholder="e.g. Green Valley Housing Society"
@@ -123,11 +123,11 @@ export const CreateSocietyPage: React.FC = () => {
             </div>
 
             {/* Address */}
-            <div className="pt-4 border-t border-slate-100">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+            <div className="pt-3 border-t border-slate-100">
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Address Information
               </h4>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <Input
                   label="Address Line 1"
                   placeholder="Street address, landmark"
@@ -140,7 +140,7 @@ export const CreateSocietyPage: React.FC = () => {
                   error={errors.address_line2?.message}
                   {...register('address_line2')}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Input
                     label="City"
                     placeholder="e.g. Mumbai"

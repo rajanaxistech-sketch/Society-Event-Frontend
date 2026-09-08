@@ -62,6 +62,13 @@ export const AppRoutes = {
   EVENT_FOOD: '/events/:id/food',
   EVENT_DRESS_CODES: '/events/:id/dress-codes',
   EVENT_ACTIVITIES: '/events/:id/activities',
+  EVENT_CIRCULARS: '/events/:id/circulars',
+
+  // Circulars
+  CIRCULARS: '/circulars',
+  CIRCULAR_CREATE: '/circulars/create',
+  CIRCULAR_DETAILS: '/circulars/:id',
+  CIRCULAR_EDIT: '/circulars/:id/edit',
 
   // Collections
   COLLECTIONS: '/collections',

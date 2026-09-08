@@ -111,20 +111,28 @@ export const EventListPage: React.FC = () => {
       render: (row) => {
         const theme = getEventTheme(row.name, row.description);
         return (
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-xl ${theme.iconBgClass} flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs`}>
-              <Calendar className="w-4 h-4" />
+  const columns: Column<EventItem>[] = [
+    {
+      key: 'name',
+      header: 'Event Name',
+      sortable: true,
+      render: (row) => {
+        const theme = getEventTheme(row.name, row.description);
+        return (
+          <div className="flex items-center gap-2.5 py-0.5">
+            <div className={`w-7 h-7 rounded-lg ${theme.iconBgClass} flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs`}>
+              <Calendar className="w-3.5 h-3.5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900 block hover:text-indigo-600 transition-colors">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-slate-900 block hover:text-indigo-600 transition-colors text-xs sm:text-[13px]">
                   {row.name}
                 </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${theme.badgeClass}`}>
+                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${theme.badgeClass}`}>
                   {theme.label}
                 </span>
               </div>
-              <span className="text-xs text-slate-400 truncate max-w-xs block mt-0.5">{row.venue || 'Clubhouse Lawn'}</span>
+              <span className="text-[11px] text-slate-400 truncate max-w-xs block mt-0.5">{row.venue || 'Clubhouse Lawn'}</span>
             </div>
           </div>
         );
@@ -134,7 +142,7 @@ export const EventListPage: React.FC = () => {
       key: 'society',
       header: 'Society',
       render: (row) => (
-        <span className="text-slate-800 text-xs font-semibold">{row.society?.name || '—'}</span>
+        <span className="text-slate-700 text-xs font-medium truncate block max-w-[180px]">{row.society?.name || '—'}</span>
       ),
     },
     {
@@ -142,8 +150,8 @@ export const EventListPage: React.FC = () => {
       header: 'Event Date(s)',
       sortable: true,
       render: (row) => (
-        <div className="text-xs">
-          <span className="font-bold text-slate-900 block">{formatDate(row.start_date)}</span>
+        <div className="text-[11px]">
+          <span className="font-bold text-slate-800 block">{formatDate(row.start_date)}</span>
           {row.end_date && row.end_date !== row.start_date && (
             <span className="text-slate-400">to {formatDate(row.end_date)}</span>
           )}
@@ -161,51 +169,51 @@ export const EventListPage: React.FC = () => {
       header: 'Actions',
       align: 'right',
       render: (row) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={() => navigate(`/events/${encodeId(row.id)}/dashboard`)}
-            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+            className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
             title="Event Dashboard"
           >
-            <LayoutDashboard className="w-4 h-4" />
+            <LayoutDashboard className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => navigate(`/events/${encodeId(row.id)}`)}
-            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
+            className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
             title="View Details"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5" />
           </button>
           <PermissionGuard permission={Permissions.EVENT_CONFIG}>
             <button
               type="button"
               onClick={() => navigate(`/events/${encodeId(row.id)}/configuration`)}
-              className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-colors"
+              className="p-1 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
               title="Configure Event Modules"
             >
-              <Sliders className="w-4 h-4" />
+              <Sliders className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
           <PermissionGuard permission={Permissions.EVENT_UPDATE}>
             <button
               type="button"
               onClick={() => navigate(`/events/${encodeId(row.id)}/edit`)}
-              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+              className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
               title="Edit Event"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
           <PermissionGuard permission={Permissions.EVENT_DELETE}>
             <button
               type="button"
               onClick={() => setDeleteTarget(row)}
-              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+              className="p-1 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
               title="Delete Event"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
         </div>
@@ -214,17 +222,17 @@ export const EventListPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Events Management</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">Events Management</h1>
+          <p className="text-[11px] text-slate-500">
             Plan, configure, publish, and oversee society cultural and festival events.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -238,7 +246,7 @@ export const EventListPage: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={() => navigate(AppRoutes.EVENT_CREATE)}
-              leftIcon={<Plus className="w-4 h-4" />}
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
             >
               Create Event
             </Button>
@@ -258,14 +266,14 @@ export const EventListPage: React.FC = () => {
         }}
         searchPlaceholder="Search event name, venue, or society..."
         filters={
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <select
               value={societyFilter}
               onChange={(e) => {
                 setSocietyFilter(e.target.value);
                 setMeta((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-xs"
+              className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-xs h-8 sm:h-9 text-slate-800 font-medium"
             >
               <option value="">All Societies</option>
               {societies.map((s) => (
@@ -281,7 +289,7 @@ export const EventListPage: React.FC = () => {
                 setStatusFilter(e.target.value);
                 setMeta((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="px-2.5 py-1 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 h-8 sm:h-9 text-slate-800 font-medium"
             >
               <option value="">All Statuses</option>
               <option value="draft">Draft</option>

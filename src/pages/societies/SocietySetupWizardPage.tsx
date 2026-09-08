@@ -324,28 +324,28 @@ export const SocietySetupWizardPage: React.FC = () => {
   const totalBungalowsCount = isBungalows ? bungalowsConfig.count || 20 : 0;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+    <div className="max-w-5xl mx-auto space-y-3.5 pb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.SOCIETIES)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
-            Back to Societies
+            Back
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                 Society Setup Wizard
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-200 capitalize">
+              <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold border border-indigo-200 capitalize">
                 {structureType} Architecture
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Build your housing society architecture, configure unit numbering, and map owners in 4 easy steps.
             </p>
           </div>
@@ -353,8 +353,8 @@ export const SocietySetupWizardPage: React.FC = () => {
       </div>
 
       {/* Stepper Progress Indicator */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
           {STEPS.map((step) => {
             const Icon = step.icon;
             const isCompleted = currentStep > step.id;
@@ -374,16 +374,16 @@ export const SocietySetupWizardPage: React.FC = () => {
                     setCurrentStep(step.id);
                   }
                 }}
-                className={`p-3 rounded-xl border text-left flex items-start gap-3 transition-all ${
+                className={`p-2 rounded-lg border text-left flex items-start gap-2 transition-all ${
                   isCurrent
-                    ? 'border-indigo-600 bg-indigo-50/40 ring-2 ring-indigo-500/20'
+                    ? 'border-indigo-600 bg-indigo-50/40 ring-1 ring-indigo-500/20'
                     : isCompleted
                     ? 'border-emerald-200 bg-emerald-50/20 hover:border-emerald-300'
                     : 'border-slate-200 bg-slate-50/50 opacity-60 hover:opacity-80'
                 }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                  className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
                     isCurrent
                       ? 'bg-indigo-600 text-white'
                       : isCompleted
@@ -391,16 +391,16 @@ export const SocietySetupWizardPage: React.FC = () => {
                       : 'bg-slate-200 text-slate-600'
                   }`}
                 >
-                  {isCompleted ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
+                  {isCompleted ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                       Step {step.id}
                     </span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-900 truncate">{step.title}</h4>
-                  <p className="text-[11px] text-slate-500 truncate hidden sm:block">{step.desc}</p>
+                  <p className="text-[10px] text-slate-500 truncate hidden sm:block">{step.desc}</p>
                 </div>
               </button>
             );
@@ -409,7 +409,7 @@ export const SocietySetupWizardPage: React.FC = () => {
       </div>
 
       {/* Step Content */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs min-h-[400px]">
+      <div className="bg-white rounded-xl border border-slate-200 p-3.5 sm:p-5 shadow-2xs min-h-[360px]">
         {currentStep === 1 && (
           <Step1SocietyInfo
             formData={formData.society}

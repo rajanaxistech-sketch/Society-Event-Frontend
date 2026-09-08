@@ -84,35 +84,35 @@ export const EventDashboardPage: React.FC = () => {
   ].filter((p) => p.value > 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(`/events/${encodeId(id)}`)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
             Back to Event
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{event.name}</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">{event.name}</h1>
               <StatusBadge status={event.status} />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500">
               Date: <span className="font-semibold">{formatDate(event.start_date)}</span> &bull; Venue: {event.venue || 'Clubhouse'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchDashboard}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<RefreshCw className="w-3 h-3" />}
           >
             Refresh
           </Button>
@@ -127,69 +127,69 @@ export const EventDashboardPage: React.FC = () => {
       </div>
 
       {/* Module Overview Cards */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
         <KPICard
           title="Collections"
           value={counts.event_collections ?? 0}
           subtitle={config?.collection_enabled ? 'Module Enabled' : 'Disabled'}
-          icon={<Wallet className="w-5 h-5" />}
+          icon={<Wallet className="w-4 h-4" />}
           variant={config?.collection_enabled ? 'indigo' : 'default'}
         />
         <KPICard
           title="Sponsors"
           value={counts.sponsors ?? 0}
           subtitle={config?.sponsorship_enabled ? 'Module Enabled' : 'Disabled'}
-          icon={<Users className="w-5 h-5" />}
+          icon={<Users className="w-4 h-4" />}
           variant={config?.sponsorship_enabled ? 'emerald' : 'default'}
         />
         <KPICard
           title="Food Items"
           value={counts.food_items ?? 0}
           subtitle={config?.food_enabled ? 'Module Enabled' : 'Disabled'}
-          icon={<Utensils className="w-5 h-5" />}
+          icon={<Utensils className="w-4 h-4" />}
           variant="default"
         />
         <KPICard
           title="Dress Codes"
           value={counts.dress_codes ?? 0}
           subtitle={config?.dress_code_enabled ? 'Module Enabled' : 'Disabled'}
-          icon={<Shirt className="w-5 h-5" />}
+          icon={<Shirt className="w-4 h-4" />}
           variant="default"
         />
         <KPICard
           title="Activities"
           value={counts.event_activities ?? 0}
           subtitle={config?.activities_enabled ? 'Module Enabled' : 'Disabled'}
-          icon={<Sparkles className="w-5 h-5" />}
+          icon={<Sparkles className="w-4 h-4" />}
           variant="teal"
         />
       </div>
 
       {/* Financial Collections Progress (if available) */}
       {collectionsDash && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-3.5">
           <Card title="Event Collection KPIs" subtitle="Unit payment status breakdown">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#EEF2FF] rounded-2xl border border-indigo-100 shadow-2xs">
-                  <span className="text-[11px] text-indigo-700 font-bold uppercase">Total Units</span>
-                  <p className="text-xl font-extrabold text-[#1E293B]">{collectionsDash.totalFlats}</p>
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2 bg-[#EEF2FF] rounded-xl border border-indigo-100 shadow-2xs">
+                  <span className="text-[10px] text-indigo-700 font-bold uppercase">Total Units</span>
+                  <p className="text-base font-extrabold text-[#1E293B]">{collectionsDash.totalFlats}</p>
                 </div>
-                <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-2xs">
-                  <span className="text-[11px] text-emerald-700 font-bold uppercase">Paid Units</span>
-                  <p className="text-xl font-extrabold text-emerald-700">{collectionsDash.paidFlats}</p>
+                <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-100 shadow-2xs">
+                  <span className="text-[10px] text-emerald-700 font-bold uppercase">Paid Units</span>
+                  <p className="text-base font-extrabold text-emerald-700">{collectionsDash.paidFlats}</p>
                 </div>
-                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100 shadow-2xs">
-                  <span className="text-[11px] text-amber-800 font-bold uppercase">Pending Units</span>
-                  <p className="text-xl font-extrabold text-amber-800">{collectionsDash.pendingFlats}</p>
+                <div className="p-2 bg-amber-50 rounded-xl border border-amber-100 shadow-2xs">
+                  <span className="text-[10px] text-amber-800 font-bold uppercase">Pending Units</span>
+                  <p className="text-base font-extrabold text-amber-800">{collectionsDash.pendingFlats}</p>
                 </div>
-                <div className="p-3 bg-[#FAF5FF] rounded-2xl border border-purple-100 shadow-2xs">
-                  <span className="text-[11px] text-purple-700 font-bold uppercase">Completion</span>
-                  <p className="text-xl font-extrabold text-[#7C3AED]">{Number(collectionsDash.collectionPercentage || 0).toFixed(1)}%</p>
+                <div className="p-2 bg-[#FAF5FF] rounded-xl border border-purple-100 shadow-2xs">
+                  <span className="text-[10px] text-purple-700 font-bold uppercase">Completion</span>
+                  <p className="text-base font-extrabold text-[#7C3AED]">{Number(collectionsDash.collectionPercentage || 0).toFixed(1)}%</p>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 space-y-2 text-xs">
+              <div className="pt-1.5 border-t border-slate-100 space-y-1 text-xs">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Expected Total:</span>
                   <span className="font-semibold text-slate-900">{formatCurrency(collectionsDash.totalExpectedCollection)}</span>
@@ -208,7 +208,7 @@ export const EventDashboardPage: React.FC = () => {
 
           <Card title="Payment Method Breakdown" subtitle="Distribution across payment channels" className="lg:col-span-2">
             {pieData.length > 0 ? (
-              <div className="h-64 w-full">
+              <div className="h-52 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -217,8 +217,8 @@ export const EventDashboardPage: React.FC = () => {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
-                      innerRadius={45}
+                      outerRadius={65}
+                      innerRadius={36}
                       paddingAngle={3}
                       label={({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}
                     >
@@ -232,8 +232,8 @@ export const EventDashboardPage: React.FC = () => {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-xs">
-                <PieChartIcon className="w-8 h-8 mb-2 opacity-50" />
+              <div className="h-52 flex flex-col items-center justify-center text-slate-400 text-xs">
+                <PieChartIcon className="w-6 h-6 mb-1.5 opacity-50" />
                 No payment transactions recorded yet.
               </div>
             )}

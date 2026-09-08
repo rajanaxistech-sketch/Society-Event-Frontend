@@ -230,7 +230,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       header: 'Actions',
       align: 'right',
       render: (row) => (
-        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <PermissionGuard permission={Permissions.COLLECTION_UPDATE}>
             <button
               type="button"
@@ -238,10 +238,10 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 setEditTarget(row);
                 setEditCustomAmount(row.custom_amount ? String(row.custom_amount) : '');
               }}
-              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
               title="Adjust Amount"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGuard>
           <PermissionGuard permission={Permissions.PAYMENT_CREATE}>
@@ -250,7 +250,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
               variant="outline"
               onClick={() => navigate(`/payments/record?collectionId=${encodeId(row.id)}`)}
             >
-              Record Payment
+              Pay
             </Button>
           </PermissionGuard>
         </div>
@@ -259,13 +259,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Header */}
       <Card
         title="Event Collections Directory"
         subtitle="Individual unit collection obligations and payment tracking."
         headerAction={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
@@ -279,7 +279,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 variant="primary"
                 size="sm"
                 onClick={() => setCreateModalOpen(true)}
-                leftIcon={<Plus className="w-4 h-4" />}
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
               >
                 Create Obligation
               </Button>
@@ -295,7 +295,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 setStatusFilter(e.target.value);
                 setMeta((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="h-8 sm:h-9 px-2.5 py-1 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               <option value="">All Payment Statuses</option>
               <option value="pending">Pending</option>

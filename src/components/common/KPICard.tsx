@@ -47,28 +47,28 @@ export const KPICard: React.FC<KPICardProps> = ({
   return (
     <div
       className={clsx(
-        'p-4 sm:p-5 rounded-2xl bg-white border shadow-card flex flex-col justify-between transition-all duration-200 hover:shadow-card-hover min-w-0',
+        'p-3 sm:p-3.5 rounded-xl bg-white border shadow-card flex flex-col justify-between transition-all duration-200 hover:shadow-card-hover min-w-0',
         accentBorders[variant],
         className
       )}
     >
-      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2.5 min-w-0">
-        <span className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
+      <div className="flex items-start justify-between gap-2 mb-1.5 min-w-0">
+        <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">
           {title}
         </span>
         {icon && (
-          <div className={clsx('w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs', iconColors[variant])}>
+          <div className={clsx('w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 shadow-2xs', iconColors[variant])}>
             {icon}
           </div>
         )}
       </div>
 
       <div className="flex items-baseline gap-2 min-w-0">
-        <div className="text-xl sm:text-2xl font-black tracking-tight text-[#1E293B] truncate">{value}</div>
+        <div className="text-lg sm:text-xl font-extrabold tracking-tight text-[#1E293B] truncate">{value}</div>
       </div>
 
       {(subtitle || trend) && (
-        <div className="mt-2.5 pt-2 border-t border-slate-100 text-xs flex items-center gap-1.5 text-slate-500">
+        <div className="mt-1.5 pt-1.5 border-t border-slate-100 text-[11px] flex items-center gap-1.5 text-slate-500">
           {trend && (
             <span
               className={clsx(

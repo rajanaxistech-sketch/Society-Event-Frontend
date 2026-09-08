@@ -145,20 +145,20 @@ export const RecordPaymentPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(AppRoutes.PAYMENTS)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Record Payment</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Record Payment</h1>
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Issue an official transaction receipt for resident contribution or sponsor funds.
           </p>
         </div>
@@ -168,18 +168,18 @@ export const RecordPaymentPage: React.FC = () => {
         <Card
           title={
             <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-indigo-600" />
+              <CreditCard className="w-4 h-4 text-indigo-600" />
               <span>Payment Allocation & Transaction Details</span>
             </div>
           }
         >
-          <div className="space-y-6">
+          <div className="space-y-3.5">
             {/* Target Type Selector */}
             <div>
-              <label className="text-xs font-semibold text-slate-700 block mb-2">
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5">
                 Allocate Payment To <span className="text-red-500">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -187,16 +187,16 @@ export const RecordPaymentPage: React.FC = () => {
                     setValue('payment_target_type', 'collection');
                     setValue('sponsor_id', '');
                   }}
-                  className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all text-left ${
+                  className={`p-2.5 rounded-lg border flex items-center gap-2.5 transition-all text-left ${
                     targetType === 'collection'
                       ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20'
                       : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <Home className={`w-5 h-5 ${targetType === 'collection' ? 'text-indigo-600' : 'text-slate-400'}`} />
+                  <Home className={`w-4 h-4 ${targetType === 'collection' ? 'text-indigo-600' : 'text-slate-400'}`} />
                   <div>
                     <span className="font-semibold text-xs text-slate-900 block">Flat / Unit Obligation</span>
-                    <span className="text-[11px] text-slate-500">Resident event contribution</span>
+                    <span className="text-[10px] text-slate-500">Resident event contribution</span>
                   </div>
                 </button>
 
@@ -207,16 +207,16 @@ export const RecordPaymentPage: React.FC = () => {
                     setValue('payment_target_type', 'sponsor');
                     setValue('event_collection_id', '');
                   }}
-                  className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all text-left ${
+                  className={`p-2.5 rounded-lg border flex items-center gap-2.5 transition-all text-left ${
                     targetType === 'sponsor'
                       ? 'border-teal-600 bg-teal-50/60 ring-2 ring-teal-500/20'
                       : 'border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  <Users className={`w-5 h-5 ${targetType === 'sponsor' ? 'text-teal-600' : 'text-slate-400'}`} />
+                  <Users className={`w-4 h-4 ${targetType === 'sponsor' ? 'text-teal-600' : 'text-slate-400'}`} />
                   <div>
                     <span className="font-semibold text-xs text-slate-900 block">Corporate / Patron Sponsor</span>
-                    <span className="text-[11px] text-slate-500">Sponsorship pledge installment</span>
+                    <span className="text-[10px] text-slate-500">Sponsorship pledge installment</span>
                   </div>
                 </button>
               </div>

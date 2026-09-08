@@ -10,12 +10,12 @@ export const Breadcrumbs: React.FC = () => {
   if (pathnames.length === 0 || location.pathname === '/login') return null;
 
   return (
-    <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-2 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
+    <nav className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-1 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
       <Link
         to={AppRoutes.DASHBOARD}
         className="flex items-center gap-1 hover:text-[#6366F1] transition-colors font-medium"
       >
-        <Home className="w-3.5 h-3.5 text-slate-400" />
+        <Home className="w-3 h-3 text-slate-400" />
         <span>Home</span>
       </Link>
 
@@ -31,7 +31,7 @@ export const Breadcrumbs: React.FC = () => {
 
         return (
           <React.Fragment key={to}>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+            <ChevronRight className="w-3 h-3 text-slate-300 shrink-0" />
             {isLast ? (
               <span className="font-bold text-[#1E293B] shrink-0">{formatted}</span>
             ) : (

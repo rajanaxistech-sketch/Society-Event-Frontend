@@ -122,36 +122,36 @@ export const CollectionDetailsPage: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate(`/payments/${encodeId(row.id)}`)}
-          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
           title="View Payment Receipt"
         >
-          <Eye className="w-4 h-4" />
+          <Eye className="w-3.5 h-3.5" />
         </button>
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.COLLECTIONS)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
-            Back to Collections
+            Back
           </Button>
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                 Collection Obligation
               </h1>
-              <StatusBadge status={collection.status} />
+              <StatusBadge status={collection.status} size="sm" />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Created on {formatDate(collection.created_at)}
             </p>
           </div>
@@ -162,47 +162,47 @@ export const CollectionDetailsPage: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={() => navigate(`/payments/record?collectionId=${encodeId(collection.id)}`)}
-            leftIcon={<Plus className="w-4 h-4" />}
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
           >
-            Record Payment Installment
+            Record Payment
           </Button>
         </PermissionGuard>
       </div>
 
       {/* Financial Status Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+        <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
             Expected Fee
           </span>
           <CurrencyDisplay
             amount={collection.expected_amount}
-            className="text-2xl font-bold text-slate-900 mt-1 block"
+            className="text-xl font-bold text-slate-900 mt-0.5 block"
           />
           {collection.custom_amount && (
-            <span className="text-[11px] text-amber-600 block mt-0.5">
+            <span className="text-[10px] text-amber-600 block mt-0.5">
               Base: {formatDate(collection.default_amount as any)} (Custom Override Applied)
             </span>
           )}
         </div>
 
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+        <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
             Total Paid
           </span>
           <CurrencyDisplay
             amount={collection.amount_paid}
-            className="text-2xl font-bold text-emerald-600 mt-1 block"
+            className="text-xl font-bold text-emerald-600 mt-0.5 block"
           />
         </div>
 
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+        <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
             Remaining Balance
           </span>
           <CurrencyDisplay
             amount={collection.pending_amount}
-            className={`text-2xl font-bold mt-1 block ${
+            className={`text-xl font-bold mt-0.5 block ${
               Number(collection.pending_amount) > 0 ? 'text-rose-600' : 'text-slate-400'
             }`}
           />
@@ -210,19 +210,19 @@ export const CollectionDetailsPage: React.FC = () => {
       </div>
 
       {/* Unit & Event Context Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         <Card title="Residential Property Unit">
           {collection.flat ? (
-            <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Unit Type:</span>
                 <span className="font-semibold text-slate-900">Apartment Flat</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Flat Number:</span>
                 <span className="font-semibold text-slate-900">Flat {collection.flat.flat_number}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Block & Floor:</span>
                 <span className="font-semibold text-slate-900">
                   {collection.flat.floor?.block?.name || 'Block'} &bull; Floor {collection.flat.floor?.floor_number ?? '—'}
@@ -230,12 +230,12 @@ export const CollectionDetailsPage: React.FC = () => {
               </div>
             </div>
           ) : collection.bungalow ? (
-            <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Unit Type:</span>
                 <span className="font-semibold text-slate-900">Bungalow / Villa</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Bungalow Number:</span>
                 <span className="font-semibold text-slate-900">Bungalow {collection.bungalow.bungalow_number}</span>
               </div>
@@ -246,16 +246,16 @@ export const CollectionDetailsPage: React.FC = () => {
         </Card>
 
         <Card title="Associated Event">
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Event Name:</span>
               <span className="font-semibold text-slate-900">{collection.event?.name || '—'}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Event Date:</span>
               <span className="font-semibold text-slate-900">{formatDate(collection.event?.start_date)}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Event Status:</span>
               <StatusBadge status={collection.event?.status || 'draft'} size="sm" />
             </div>

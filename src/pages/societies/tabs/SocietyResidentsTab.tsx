@@ -270,23 +270,23 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
   ];
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-3.5 animate-fadeIn">
       {/* Top Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2.5 sm:p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search resident by name, phone, or email..."
+              placeholder="Search resident by name, phone or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs font-medium border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full h-8 sm:h-9 pl-8 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-white"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
@@ -299,19 +299,25 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
           <Button
             variant="primary"
             size="sm"
-            onClick={() => {
-              if (allFlatsDropdown.length > 0) setNewTargetFlatId(allFlatsDropdown[0].value);
-              setIsAddModalOpen(true);
-            }}
+            onClick={() => setIsAddModalOpen(true)}
             leftIcon={<Plus className="w-3.5 h-3.5" />}
           >
-            Register Resident
+            Add Resident
           </Button>
         </div>
       </div>
 
-      {/* Residents Table */}
-      <Card>
+      {/* Resident Directory Card */}
+      <Card
+        title={
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-indigo-600" />
+            <span className="font-bold text-slate-900">
+              Resident Directory ({filteredResidents.length} Residents)
+            </span>
+          </div>
+        }
+      >
         <Table
           columns={columns}
           data={filteredResidents}

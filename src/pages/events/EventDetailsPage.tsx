@@ -25,6 +25,7 @@ import { EventSponsorsPage } from './EventSponsorsPage';
 import { EventFoodPage } from './EventFoodPage';
 import { EventDressCodesPage } from './EventDressCodesPage';
 import { EventActivitiesPage } from './EventActivitiesPage';
+import { EventCircularsPage } from './EventCircularsPage';
 
 import {
   ArrowLeft,
@@ -34,6 +35,7 @@ import {
   Utensils,
   Shirt,
   Sparkles,
+  ScrollText,
   Sliders,
   Edit2,
   Send,
@@ -164,46 +166,54 @@ export const EventDetailsPage: React.FC = () => {
     });
   }
 
+  // Circulars tab is always available for event-level notices & announcements
+  tabs.push({
+    id: 'circulars',
+    label: 'Circulars & Notices',
+    icon: <ScrollText className="w-4 h-4" />,
+    count: counts.circulars,
+  });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.EVENTS)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
             Back
           </Button>
-          <div className="flex items-center gap-3">
-            <div className={`w-11 h-11 rounded-2xl ${eventTheme.iconBgClass} flex items-center justify-center font-bold text-sm shadow-2xs shrink-0`}>
-              <Calendar className="w-5 h-5" />
+          <div className="flex items-center gap-2.5">
+            <div className={`w-9 h-9 rounded-xl ${eventTheme.iconBgClass} flex items-center justify-center font-bold text-xs shadow-2xs shrink-0`}>
+              <Calendar className="w-4 h-4" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight">{event.name}</h1>
-                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${eventTheme.badgeClass}`}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">{event.name}</h1>
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${eventTheme.badgeClass}`}>
                   {eventTheme.label}
                 </span>
-                <StatusBadge status={event.status} />
+                <StatusBadge status={event.status} size="sm" />
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 {event.society?.name || 'Society'} &bull; Date: {formatDate(event.start_date)} {event.start_time ? `@ ${event.start_time}` : ''}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate(`/events/${encodeId(id)}/dashboard`)}
             leftIcon={<LayoutDashboard className="w-3.5 h-3.5" />}
           >
-            Event Dashboard
+            Dashboard
           </Button>
 
           <PermissionGuard permission={Permissions.EVENT_CONFIG}>
@@ -213,7 +223,7 @@ export const EventDetailsPage: React.FC = () => {
               onClick={() => navigate(`/events/${encodeId(id)}/configuration`)}
               leftIcon={<Sliders className="w-3.5 h-3.5" />}
             >
-              Config Modules
+              Config
             </Button>
           </PermissionGuard>
 
@@ -224,7 +234,7 @@ export const EventDetailsPage: React.FC = () => {
               onClick={() => navigate(`/events/${encodeId(id)}/edit`)}
               leftIcon={<Edit2 className="w-3.5 h-3.5" />}
             >
-              Edit Event
+              Edit
             </Button>
           </PermissionGuard>
 
@@ -337,6 +347,9 @@ export const EventDetailsPage: React.FC = () => {
       {activeTab === 'food' && <EventFoodPage eventId={id!} />}
       {activeTab === 'dress-codes' && <EventDressCodesPage eventId={id!} />}
       {activeTab === 'activities' && <EventActivitiesPage eventId={id!} />}
+      {activeTab === 'circulars' && (
+        <EventCircularsPage eventId={id!} societyId={event.society_id} />
+      )}
 
       {/* Publish Event Confirmation Dialog */}
       <ConfirmDialog

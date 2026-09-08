@@ -24,11 +24,11 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <div
       className={clsx(
-        'flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-1 sm:px-2 text-xs text-slate-500',
+        'flex flex-col sm:flex-row items-center justify-between gap-2 py-1.5 px-1 text-[11px] sm:text-xs text-slate-500',
         className
       )}
     >
-      <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-start">
+      <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
         <span className="text-center sm:text-left">
           Showing <span className="font-bold text-slate-900">{startRecord}</span> to{' '}
           <span className="font-bold text-slate-900">{endRecord}</span> of{' '}
@@ -36,12 +36,12 @@ export const Pagination: React.FC<PaginationProps> = ({
         </span>
 
         {onLimitChange && (
-          <div className="flex items-center gap-1.5 border-l border-[#E2E8F0] pl-2 sm:pl-3">
-            <span className="text-[11px] sm:text-xs text-slate-500 font-medium">Per page:</span>
+          <div className="flex items-center gap-1.5 border-l border-[#E2E8F0] pl-2">
+            <span className="text-[11px] text-slate-400 font-medium">Per page:</span>
             <select
               value={limit}
               onChange={(e) => onLimitChange(Number(e.target.value))}
-              className="px-2 py-1 text-xs border border-[#CBD5E1] rounded-lg bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20"
+              className="px-1.5 py-0.5 text-[11px] border border-[#CBD5E1] rounded-md bg-white text-slate-800 font-bold focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -52,18 +52,18 @@ export const Pagination: React.FC<PaginationProps> = ({
         )}
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="p-1.5 rounded-xl border border-[#E2E8F0] text-slate-600 bg-white hover:bg-[#EEF2FF] hover:text-[#6366F1] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+          className="p-1 rounded-lg border border-[#E2E8F0] text-slate-600 bg-white hover:bg-[#EEF2FF] hover:text-[#6366F1] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
           title="Previous Page"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-3.5 h-3.5" />
         </button>
 
-        <div className="px-3 py-1 font-bold text-slate-700 bg-white border border-[#E2E8F0] rounded-xl shadow-2xs">
+        <div className="px-2 py-0.5 font-bold text-[11px] text-slate-700 bg-white border border-[#E2E8F0] rounded-lg shadow-2xs">
           Page {page} of {Math.max(totalPages, 1)}
         </div>
 
@@ -71,10 +71,10 @@ export const Pagination: React.FC<PaginationProps> = ({
           type="button"
           disabled={page >= totalPages || totalPages === 0}
           onClick={() => onPageChange(page + 1)}
-          className="p-1.5 rounded-xl border border-[#E2E8F0] text-slate-600 bg-white hover:bg-[#EEF2FF] hover:text-[#6366F1] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+          className="p-1 rounded-lg border border-[#E2E8F0] text-slate-600 bg-white hover:bg-[#EEF2FF] hover:text-[#6366F1] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
           title="Next Page"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

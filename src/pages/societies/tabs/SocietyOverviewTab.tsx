@@ -52,63 +52,63 @@ export const SocietyOverviewTab: React.FC<SocietyOverviewTabProps> = ({
       )}`;
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-3.5 animate-fadeIn">
       {/* Top Metric KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-indigo-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Blocks</span>
-            <Layers className="w-4 h-4" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-indigo-600 mb-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Blocks</span>
+            <Layers className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{blocks.length}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">{totalFloors} total floors</span>
+          <span className="text-xl font-extrabold text-slate-900 block">{blocks.length}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">{totalFloors} total floors</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-blue-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Flats</span>
-            <Home className="w-4 h-4" />
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-blue-600 mb-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Flats</span>
+            <Home className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{totalFlats}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Residential units</span>
+          <span className="text-xl font-extrabold text-slate-900 block">{totalFlats}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Residential units</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-emerald-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Shops</span>
-            <Store className="w-4 h-4" />
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-emerald-600 mb-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Shops</span>
+            <Store className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{totalShops}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Commercial ground</span>
+          <span className="text-xl font-extrabold text-slate-900 block">{totalShops}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Commercial ground</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-amber-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Villas</span>
-            <Building2 className="w-4 h-4" />
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-amber-600 mb-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Villas</span>
+            <Building2 className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{totalBungalows}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Independent houses</span>
+          <span className="text-xl font-extrabold text-slate-900 block">{totalBungalows}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Independent houses</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-purple-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Residents</span>
-            <Users className="w-4 h-4" />
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-purple-600 mb-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Residents</span>
+            <Users className="w-3.5 h-3.5" />
           </div>
-          <span className="text-2xl font-black text-slate-900 block">{totalResidents}</span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">Owners & tenants</span>
+          <span className="text-xl font-extrabold text-slate-900 block">{totalResidents}</span>
+          <span className="text-[10px] text-slate-400 mt-0.5 block">Owners & tenants</span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-indigo-300 transition-all">
-          <div className="flex items-center justify-between gap-1 text-rose-600 mb-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Occupancy</span>
-            <Percent className="w-4 h-4" />
+        <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-indigo-300 transition-all">
+          <div className="flex items-center justify-between gap-1 text-rose-600 mb-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Occupancy</span>
+            <Percent className="w-3.5 h-3.5" />
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-slate-900">{occupancyRate}%</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl font-extrabold text-slate-900">{occupancyRate}%</span>
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+          <div className="w-full bg-slate-100 rounded-full h-1 mt-1.5 overflow-hidden">
             <div
               className="bg-indigo-600 h-full rounded-full transition-all"
               style={{ width: `${Math.min(100, Math.max(0, occupancyRate))}%` }}
@@ -118,70 +118,70 @@ export const SocietyOverviewTab: React.FC<SocietyOverviewTabProps> = ({
       </div>
 
       {/* Main Details Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
         {/* Society Profile Details */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-3.5">
           <Card
             title={
               <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-indigo-600" />
+                <Building2 className="w-4 h-4 text-indigo-600" />
                 <span className="font-bold text-slate-900">Society Profile & Registration Details</span>
               </div>
             }
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-xs text-slate-400 font-semibold block">Full Registered Name</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-semibold block">Full Registered Name</span>
                 <span className="font-bold text-slate-900 mt-0.5 block">{society.name}</span>
               </div>
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-xs text-slate-400 font-semibold block">Society Short Code</span>
+              <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-semibold block">Society Short Code</span>
                 <span className="font-bold text-indigo-600 mt-0.5 block">{society.code || 'N/A'}</span>
               </div>
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-xs text-slate-400 font-semibold block">Registration Date</span>
+              <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-semibold block">Registration Date</span>
                 <span className="font-medium text-slate-800 mt-0.5 block">
                   {formatDate(society.created_at)}
                 </span>
               </div>
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-xs text-slate-400 font-semibold block">Status</span>
-                <div className="mt-1">
-                  <StatusBadge status={society.status} />
+              <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-semibold block">Status</span>
+                <div className="mt-0.5">
+                  <StatusBadge status={society.status} size="sm" />
                 </div>
               </div>
             </div>
 
             {/* Secretary / Primary Contact */}
-            <div className="pt-4 border-t border-slate-100">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+            <div className="pt-3 border-t border-slate-100">
+              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                 Administrative Contact
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <UserCheck className="w-4 h-4 text-slate-400 shrink-0" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <UserCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <div className="min-w-0">
-                    <span className="text-[11px] text-slate-400 font-medium block">Contact Person</span>
+                    <span className="text-[10px] text-slate-400 font-medium block">Contact Person</span>
                     <span className="text-xs font-bold text-slate-800 truncate block">
                       {society.contact_name || 'Not assigned'}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <div className="min-w-0">
-                    <span className="text-[11px] text-slate-400 font-medium block">Phone</span>
+                    <span className="text-[10px] text-slate-400 font-medium block">Phone</span>
                     <span className="text-xs font-bold text-slate-800 truncate block">
                       {society.contact_phone || 'N/A'}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <div className="min-w-0">
-                    <span className="text-[11px] text-slate-400 font-medium block">Email</span>
+                    <span className="text-[10px] text-slate-400 font-medium block">Email</span>
                     <span className="text-xs font-bold text-slate-800 truncate block">
                       {society.contact_email || 'N/A'}
                     </span>
@@ -195,46 +195,46 @@ export const SocietyOverviewTab: React.FC<SocietyOverviewTabProps> = ({
           <Card
             title={
               <div className="flex items-center gap-2">
-                <Compass className="w-5 h-5 text-indigo-600" />
+                <Compass className="w-4 h-4 text-indigo-600" />
                 <span className="font-bold text-slate-900">Quick Navigation Hub</span>
               </div>
             }
           >
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <button
                 type="button"
                 onClick={() => onSwitchTab('structure')}
-                className="p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/30 transition-all text-left group shadow-2xs"
+                className="p-3 rounded-lg border border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/30 transition-all text-left group shadow-2xs cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                  <Layers className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-1.5 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                  <Layers className="w-3.5 h-3.5" />
                 </div>
                 <h4 className="text-xs font-bold text-slate-900">Structure Explorer</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">Explore unit matrix & floor layout</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Explore unit matrix & floor layout</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => onSwitchTab('import')}
-                className="p-4 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50/30 transition-all text-left group shadow-2xs"
+                className="p-3 rounded-lg border border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50/30 transition-all text-left group shadow-2xs cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  <UploadCloud className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1.5 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                  <UploadCloud className="w-3.5 h-3.5" />
                 </div>
                 <h4 className="text-xs font-bold text-slate-900">Owner Data Import</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">Download template & upload Excel</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Download template & upload Excel</p>
               </button>
 
               <button
                 type="button"
                 onClick={() => onSwitchTab('users')}
-                className="p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-400 hover:bg-purple-50/30 transition-all text-left group shadow-2xs"
+                className="p-3 rounded-lg border border-slate-200 bg-white hover:border-purple-400 hover:bg-purple-50/30 transition-all text-left group shadow-2xs cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-2 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                  <UserPlus className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                  <UserPlus className="w-3.5 h-3.5" />
                 </div>
                 <h4 className="text-xs font-bold text-slate-900">User Management</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">Admin quota meter & staff access</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">Admin quota meter & staff access</p>
               </button>
             </div>
           </Card>
