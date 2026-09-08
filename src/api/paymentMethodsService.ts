@@ -2,8 +2,8 @@ import axiosClient from './axiosClient';
 import { ApiResponse, PaymentMethodItem } from '../types';
 
 export const paymentMethodsService = {
-  getAll: async (): Promise<ApiResponse<PaymentMethodItem[]>> => {
-    const response = await axiosClient.get<ApiResponse<PaymentMethodItem[]>>('/payment-methods');
+  getAll: async (params?: { status?: string; is_active?: boolean }): Promise<ApiResponse<PaymentMethodItem[]>> => {
+    const response = await axiosClient.get<ApiResponse<PaymentMethodItem[]>>('/payment-methods', { params });
     return response.data;
   },
 

@@ -4,11 +4,12 @@ import { formatEnumString } from '../../utils/formatters';
 
 export interface StatusBadgeProps {
   status: string | null | undefined;
+  label?: string;
   className?: string;
   size?: 'sm' | 'md';
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = '', size = 'md' }) => {
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label, className = '', size = 'md' }) => {
   if (!status) return null;
 
   const normalized = status.toLowerCase();
@@ -69,7 +70,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
 
   return (
     <Badge variant={variant} size={size} dot className={className}>
-      {formatEnumString(status)}
+      {label || formatEnumString(status)}
     </Badge>
   );
 };

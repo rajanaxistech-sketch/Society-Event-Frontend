@@ -16,7 +16,7 @@ import Switch from '../../components/ui/Switch';
 import StatusBadge from '../../components/common/StatusBadge';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { extractErrorMessage } from '../../utils/errorExtractor';
-import { Plus, Edit2, ArrowLeft, Sliders, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, ArrowLeft, RefreshCw, CreditCard } from 'lucide-react';
 
 export const PaymentMethodsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +35,7 @@ export const PaymentMethodsPage: React.FC = () => {
   const [requiresVerification, setRequiresVerification] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const fetchMethods = async () => {
     try {
@@ -69,9 +70,44 @@ export const PaymentMethodsPage: React.FC = () => {
     setName(m.name);
     setCode(m.code);
     setDescription(m.description || '');
-    setRequiresVerification(m.requires_verification ?? false);
-    setIsActive(m.is_active ?? true);
+    setRequiresVerification(m.requires_verification ?? m.requires_reference ?? false);
+    const active = m.status === 'active' || m.is_active === true;
+    setIsActive(active);
     setModalOpen(true);
+  };
+
+  const handleToggleStatus = async (m: PaymentMethodItem) => {
+    const currentlyActive = m.status === 'active' || m.is_active === true;
+    const nextStatus = currentlyActive ? 'inactive' : 'active';
+
+    try {
+      setTogglingId(m.id);
+      // Optimistic update
+      setMethods((prev) =>
+        prev.map((item) =>
+          item.id === m.id
+            ? { ...item, status: nextStatus, is_active: nextStatus === 'active' }
+            : item
+        )
+      );
+
+      const res = await paymentMethodsService.update(m.id, {
+        status: nextStatus,
+        is_active: nextStatus === 'active',
+      });
+
+      if (res.success) {
+        toast.success(`Payment mode "${m.name}" set to ${nextStatus.toUpperCase()}`);
+      } else {
+        toast.error(res.message || 'Failed to update payment mode status');
+        fetchMethods();
+      }
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, 'Error updating payment method'));
+      fetchMethods();
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -84,10 +120,12 @@ export const PaymentMethodsPage: React.FC = () => {
     try {
       setIsSaving(true);
       const payload = {
-        name,
-        code: code.toUpperCase(),
-        description: description || null,
+        name: name.trim(),
+        code: code.trim().toUpperCase(),
+        description: description.trim() || null,
         requires_verification: requiresVerification,
+        requires_reference: requiresVerification,
+        status: isActive ? 'active' : 'inactive',
         is_active: isActive,
       };
 
@@ -117,9 +155,11 @@ export const PaymentMethodsPage: React.FC = () => {
       key: 'name',
       header: 'Method Name',
       render: (row) => (
-        <div>
-          <span className="font-bold text-slate-900 block">{row.name}</span>
-          <span className="text-xs text-slate-400">{row.description || '—'}</span>
+        <div className="py-0.5">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-900 text-xs sm:text-[13px]">{row.name}</span>
+          </div>
+          <span className="text-[11px] text-slate-400 block mt-0.5">{row.description || '—'}</span>
         </div>
       ),
     },
@@ -127,7 +167,7 @@ export const PaymentMethodsPage: React.FC = () => {
       key: 'code',
       header: 'Code Identifier',
       render: (row) => (
-        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
           {row.code}
         </span>
       ),
@@ -135,55 +175,79 @@ export const PaymentMethodsPage: React.FC = () => {
     {
       key: 'requires_verification',
       header: 'Verification Required',
-      render: (row) => (
-        <span className="text-xs text-slate-600">
-          {row.requires_verification ? 'Yes (e.g. Cheque / NEFT)' : 'No (Instant)'}
-        </span>
-      ),
+      render: (row) => {
+        const req = row.requires_verification ?? row.requires_reference;
+        return (
+          <span className="text-xs font-medium text-slate-600">
+            {req ? 'Yes (Cheque / NEFT)' : 'No (Instant Cash/QR)'}
+          </span>
+        );
+      },
     },
     {
-      key: 'is_active',
-      header: 'Status',
+      key: 'status',
+      header: 'Status & Toggle',
       align: 'center',
-      render: (row) => <StatusBadge status={row.is_active ? 'active' : 'inactive'} size="sm" />,
+      render: (row) => {
+        const rowActive = row.status === 'active' || row.is_active === true;
+        return (
+          <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <StatusBadge status={rowActive ? 'active' : 'inactive'} size="sm" />
+            <PermissionGuard permission={Permissions.PAYMENT_METHOD_MANAGE}>
+              <Switch
+                checked={rowActive}
+                onChange={() => handleToggleStatus(row)}
+                disabled={togglingId === row.id}
+              />
+            </PermissionGuard>
+          </div>
+        );
+      },
     },
     {
       key: 'actions',
       header: 'Actions',
       align: 'right',
       render: (row) => (
-        <PermissionGuard permission={Permissions.PAYMENT_METHOD_MANAGE}>
-          <button
-            type="button"
-            onClick={() => handleOpenEdit(row)}
-            className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            title="Edit Mode"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-        </PermissionGuard>
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <PermissionGuard permission={Permissions.PAYMENT_METHOD_MANAGE}>
+            <button
+              type="button"
+              onClick={() => handleOpenEdit(row)}
+              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="Edit Payment Mode"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+          </PermissionGuard>
+        </div>
       ),
     },
   ];
 
   return (
-    <div className="space-y-3.5 max-w-4xl mx-auto">
+    <div className="space-y-3.5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(AppRoutes.PAYMENTS)}
+            onClick={() => navigate(AppRoutes.EVENTS)}
             leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
             Back
           </Button>
-          <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Payment Modes</h1>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Configure supported payment channels (Cash, UPI / QR, Cheque, Bank Transfer).
-            </p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+              <CreditCard className="w-4 h-4" />
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Payment Modes</h1>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Configure supported payment channels (Cash, UPI / QR, Cheque, Bank Transfer) and toggle active modes for collection.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -222,8 +286,9 @@ export const PaymentMethodsPage: React.FC = () => {
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingMethod ? 'Edit Payment Method' : 'Add Payment Method'}
+        title={editingMethod ? 'Edit Payment Mode' : 'Add Payment Mode'}
         description="Configure payment method attributes and clearing rules."
+        size="md"
       >
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -263,7 +328,7 @@ export const PaymentMethodsPage: React.FC = () => {
             <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
               <div>
                 <span className="font-semibold text-xs text-slate-900 block">Active Status</span>
-                <span className="text-[11px] text-slate-500">Enable this mode on the payment form</span>
+                <span className="text-[11px] text-slate-500">Enable this mode for event flat collection and vendor payments</span>
               </div>
               <Switch checked={isActive} onChange={setIsActive} />
             </div>

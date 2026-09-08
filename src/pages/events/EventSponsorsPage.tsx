@@ -57,10 +57,20 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
   const [deleteTarget, setDeleteTarget] = useState<SponsorItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const fetchPaymentMethods = async () => {
+    try {
+      const res = await paymentMethodsService.getAll({ status: 'active' });
+      if (res.success && res.data) {
+        const activeOnly = res.data.filter(
+          (m) => (m.status ? m.status.toLowerCase() === 'active' : m.is_active !== false)
+        );
+        setPaymentMethods(activeOnly);
+      }
+    } catch {}
+  };
+
   useEffect(() => {
-    paymentMethodsService.getAll().then((res) => {
-      if (res.success && res.data) setPaymentMethods(res.data);
-    });
+    fetchPaymentMethods();
   }, []);
 
   const fetchSponsors = async () => {
@@ -99,6 +109,7 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
     setSponsorshipDate(new Date().toISOString().split('T')[0]);
     setNotes('');
     setSponsorModalOpen(true);
+    fetchPaymentMethods();
   };
 
   const handleOpenEditModal = (sponsor: SponsorItem) => {
@@ -358,6 +369,7 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
               value={paymentMethodId}
               onChange={(e) => setPaymentMethodId(e.target.value)}
             >
+              <option value="">Select Payment Method (Optional)</option>
               {paymentMethods.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name} ({m.code})

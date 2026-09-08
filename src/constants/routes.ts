@@ -70,14 +70,7 @@ export const AppRoutes = {
   CIRCULAR_DETAILS: '/circulars/:id',
   CIRCULAR_EDIT: '/circulars/:id/edit',
 
-  // Collections
-  COLLECTIONS: '/collections',
-  COLLECTION_DETAILS: '/collections/:id',
-
-  // Payments
-  PAYMENTS: '/payments',
-  PAYMENT_DETAILS: '/payments/:id',
-  PAYMENT_RECORD: '/payments/record',
+  // Payment Methods
   PAYMENT_METHODS: '/payment-methods',
 
   // Sponsorships

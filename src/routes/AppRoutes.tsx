@@ -76,12 +76,7 @@ import CreateCircularPage from '../pages/circulars/CreateCircularPage';
 import CircularDetailsPage from '../pages/circulars/CircularDetailsPage';
 import EditCircularPage from '../pages/circulars/EditCircularPage';
 
-// Collections & Payments
-import CollectionListPage from '../pages/collections/CollectionListPage';
-import CollectionDetailsPage from '../pages/collections/CollectionDetailsPage';
-import PaymentListPage from '../pages/payments/PaymentListPage';
-import PaymentDetailsPage from '../pages/payments/PaymentDetailsPage';
-import RecordPaymentPage from '../pages/payments/RecordPaymentPage';
+// Payments & Payment Methods
 import PaymentMethodsPage from '../pages/payments/PaymentMethodsPage';
 import SponsorDetailsPage from '../pages/sponsorships/SponsorDetailsPage';
 
@@ -479,49 +474,7 @@ export const AppRoutes: React.FC = () => {
             }
           />
 
-          {/* Collections Master */}
-          <Route
-            path={Paths.COLLECTIONS}
-            element={
-              <PermissionRoute permission={Permissions.COLLECTION_READ}>
-                <CollectionListPage />
-              </PermissionRoute>
-            }
-          />
-          <Route
-            path={Paths.COLLECTION_DETAILS}
-            element={
-              <PermissionRoute permission={Permissions.COLLECTION_READ}>
-                <CollectionDetailsPage />
-              </PermissionRoute>
-            }
-          />
-
-          {/* Payments & Methods */}
-          <Route
-            path={Paths.PAYMENTS}
-            element={
-              <PermissionRoute permission={Permissions.PAYMENT_READ}>
-                <PaymentListPage />
-              </PermissionRoute>
-            }
-          />
-          <Route
-            path={Paths.PAYMENT_RECORD}
-            element={
-              <PermissionRoute permission={Permissions.PAYMENT_CREATE}>
-                <RecordPaymentPage />
-              </PermissionRoute>
-            }
-          />
-          <Route
-            path={Paths.PAYMENT_DETAILS}
-            element={
-              <PermissionRoute permission={Permissions.PAYMENT_READ}>
-                <PaymentDetailsPage />
-              </PermissionRoute>
-            }
-          />
+          {/* Payment Methods */}
           <Route
             path={Paths.PAYMENT_METHODS}
             element={

@@ -9,7 +9,6 @@ import {
   Building2,
   Users,
   Calendar,
-  Wallet,
   CreditCard,
   FileText,
   ScrollText,
@@ -87,18 +86,6 @@ export const Sidebar: React.FC = () => {
           to: AppRoutes.EVENTS,
           icon: <Calendar className="w-4 h-4" />,
           permission: Permissions.EVENT_READ,
-        },
-        {
-          label: 'Collections',
-          to: AppRoutes.COLLECTIONS,
-          icon: <Wallet className="w-4 h-4" />,
-          permission: Permissions.COLLECTION_READ,
-        },
-        {
-          label: 'Payments',
-          to: AppRoutes.PAYMENTS,
-          icon: <CreditCard className="w-4 h-4" />,
-          permission: Permissions.PAYMENT_READ,
         },
         {
           label: 'Payment Methods',

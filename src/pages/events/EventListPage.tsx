@@ -116,10 +116,20 @@ export const EventListPage: React.FC = () => {
               <Calendar className="w-3.5 h-3.5" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-bold text-slate-900 block hover:text-indigo-600 transition-colors text-xs sm:text-[13px]">
                   {row.name}
                 </span>
+                {row.event_year && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    {row.event_year}
+                  </span>
+                )}
+                {row.is_navratri && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-orange-100 text-orange-800 border border-orange-200">
+                    Navratri
+                  </span>
+                )}
                 <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${theme.badgeClass}`}>
                   {theme.label}
                 </span>

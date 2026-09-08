@@ -343,6 +343,10 @@ export interface EventItem {
   id: string;
   society_id: string;
   name: string;
+  event_year?: number | null;
+  is_navratri?: boolean;
+  default_collection_amount?: number | string | null;
+  instructions?: string | null;
   description?: string | null;
   start_date: string;
   end_date?: string | null;
@@ -353,15 +357,141 @@ export interface EventItem {
   status: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled' | string;
   published_at?: string | null;
   created_at: string;
+  updated_at?: string;
   society?: SocietyItem;
   event_configuration?: EventConfigurationItem;
   _count?: {
     event_collections?: number;
+    event_items?: number;
+    vendor_contracts?: number;
     sponsors?: number;
     food_items?: number;
     dress_codes?: number;
     event_activities?: number;
     circulars?: number;
+  };
+}
+
+// Event Items / Services (Expenses)
+export type PricingType = 'fixed' | 'day_wise' | 'recurring_daily' | 'quantity_based';
+
+export interface EventServiceItem {
+  id: string;
+  event_id: string;
+  vendor_contract_id?: string | null;
+  name: string;
+  category: string;
+  description?: string | null;
+  vendor_name?: string | null;
+  pricing_type: PricingType;
+  quantity?: number | string | null;
+  unit?: string | null;
+  base_price?: number | string | null;
+  price_per_day?: number | string | null;
+  number_of_days?: number | null;
+  applicable_days?: string[] | number[] | null;
+  day_wise_prices?: Record<string, number> | null;
+  total_price: number | string;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_default_navratri?: boolean;
+  notes?: string | null;
+  status: 'active' | 'inactive' | 'cancelled' | string;
+  created_at: string;
+  updated_at?: string;
+  vendor_contract?: {
+    id: string;
+    vendor_name: string;
+    contract_type: string;
+    contract_amount: number | string;
+    remaining_balance: number | string;
+  } | null;
+}
+
+// Event Vendors / Contractors & Vendor Payments
+export interface VendorPaymentItem {
+  id: string;
+  contract_id: string;
+  event_id: string;
+  amount: number | string;
+  payment_date: string;
+  payment_method: 'CASH' | 'CHEQUE' | 'ONLINE' | 'BANK_TRANSFER' | string;
+  reference_number?: string | null;
+  cheque_number?: string | null;
+  bank_name?: string | null;
+  cheque_date?: string | null;
+  remarks?: string | null;
+  attachment_url?: string | null;
+  recorded_by?: string | null;
+  status: string;
+  created_at: string;
+}
+
+export interface EventContractItem {
+  id: string;
+  event_id: string;
+  contract_type: string;
+  vendor_name: string;
+  contact_person?: string | null;
+  mobile_number?: string | null;
+  email?: string | null;
+  description?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  contract_amount: number | string;
+  advance_payment: number | string;
+  total_paid: number | string;
+  remaining_balance: number | string;
+  notes?: string | null;
+  status: 'active' | 'completed' | 'cancelled' | string;
+  created_at: string;
+  updated_at?: string;
+  payments?: VendorPaymentItem[];
+  event_items?: EventServiceItem[];
+  _count?: {
+    payments?: number;
+    event_items?: number;
+  };
+}
+
+export interface EventFinancialSummary {
+  totalEstimatedCost: number;
+  totalVendorContracts: number;
+  totalVendorPaid: number;
+  totalVendorPending: number;
+  expectedCollection: number;
+  totalCollectionReceived: number;
+  collectionPending: number;
+}
+
+export interface EventDashboardData {
+  event?: EventItem;
+  summary?: {
+    total_budget: number;
+    total_actual_spent: number;
+    balance_budget: number;
+    total_revenue: number;
+    total_sponsors: number;
+    total_collections: number;
+    collection_progress_percent: number;
+  };
+  collections?: {
+    total_expected: number;
+    total_collected: number;
+    pending_amount: number;
+    paid_count: number;
+    pending_count: number;
+    total_flats: number;
+  };
+  items?: {
+    total_count: number;
+    total_estimated_cost: number;
+  };
+  vendors?: {
+    total_contracts: number;
+    total_agreed_amount: number;
+    total_paid: number;
+    total_pending_balance: number;
   };
 }
 
