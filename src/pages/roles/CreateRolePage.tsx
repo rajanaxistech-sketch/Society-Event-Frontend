@@ -102,35 +102,35 @@ export const CreateRolePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(AppRoutes.ROLES)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create Security Role</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Create Security Role</h1>
+          <p className="text-[11px] text-slate-500">
             Define role name, operational scope, and granted authorization permissions.
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-3.5">
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-4 h-4 text-indigo-600" />
               <span>Role Profile</span>
             </div>
           }
         >
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             <Input
               label="Role Name"
               placeholder="e.g. Festival Committee Treasurer, Security Gate Officer"
@@ -154,39 +154,39 @@ export const CreateRolePage: React.FC = () => {
           title={
             <div className="flex items-center justify-between w-full">
               <span>RBAC Permission Grants Matrix</span>
-              <span className="text-xs font-bold text-indigo-600">
+              <span className="text-[11px] font-bold text-indigo-600">
                 {selectedPermissionIds.length} of {permissions.length} Selected
               </span>
             </div>
           }
           subtitle="Select specific atomic access capabilities granted to this security role."
         >
-          <div className="space-y-6">
+          <div className="space-y-3">
             {Object.entries(groupedPermissions).map(([modName, modPerms]) => {
               const allChecked = modPerms.every((p) => selectedPermissionIds.includes(p.id));
               return (
-                <div key={modName} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <div key={modName} className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/50">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 mb-2">
+                    <h4 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider">
                       {modName} Module
                     </h4>
                     <button
                       type="button"
                       onClick={() => toggleModuleAll(modPerms)}
-                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800"
+                      className="text-[10px] font-semibold text-indigo-600 hover:text-indigo-800"
                     >
                       {allChecked ? 'Deselect All' : 'Select All'}
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5">
                     {modPerms.map((p) => {
                       const isChecked = selectedPermissionIds.includes(p.id);
                       return (
                         <div
                           key={p.id}
                           onClick={() => togglePermission(p.id)}
-                          className={`p-2.5 rounded-lg border cursor-pointer text-xs transition-colors flex items-start gap-2 ${
+                          className={`p-2 rounded-lg border cursor-pointer text-xs transition-colors flex items-start gap-1.5 ${
                             isChecked
                               ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 font-medium'
                               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
@@ -213,10 +213,11 @@ export const CreateRolePage: React.FC = () => {
         </Card>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => navigate(AppRoutes.ROLES)}
             disabled={isSubmitting}
           >
@@ -225,8 +226,9 @@ export const CreateRolePage: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
+            size="sm"
             isLoading={isSubmitting}
-            leftIcon={<Save className="w-4 h-4" />}
+            leftIcon={<Save className="w-3.5 h-3.5" />}
           >
             Create Security Role
           </Button>

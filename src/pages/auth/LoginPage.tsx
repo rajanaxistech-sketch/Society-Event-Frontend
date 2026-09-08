@@ -61,19 +61,19 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-6 text-center">
-        <h3 className="text-xl font-bold text-slate-900">Sign In to Your Account</h3>
-        <p className="text-xs text-slate-500 mt-1">
-          Enter your administrative email and password to access the platform.
+      <div className="mb-4 text-center">
+        <h3 className="text-lg font-bold text-slate-900">Sign In to Your Account</h3>
+        <p className="text-[11px] text-slate-500 mt-0.5">
+          Enter your administrative credentials to access the platform.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
         <Input
           label="Email Address"
           type="email"
           placeholder="admin@societyevents.com"
-          leftIcon={<Mail className="w-4 h-4" />}
+          leftIcon={<Mail className="w-3.5 h-3.5" />}
           error={errors.email?.message}
           requiredIndicator
           {...register('email')}
@@ -83,19 +83,20 @@ export const LoginPage: React.FC = () => {
           label="Password"
           type="password"
           placeholder="••••••••"
-          leftIcon={<Lock className="w-4 h-4" />}
+          leftIcon={<Lock className="w-3.5 h-3.5" />}
           error={errors.password?.message}
           requiredIndicator
           {...register('password')}
         />
 
-        <div className="pt-2">
+        <div className="pt-1.5">
           <Button
             type="submit"
             variant="primary"
+            size="sm"
             className="w-full justify-center"
             isLoading={isLoading}
-            leftIcon={<LogIn className="w-4 h-4" />}
+            leftIcon={<LogIn className="w-3.5 h-3.5" />}
           >
             Sign In
           </Button>

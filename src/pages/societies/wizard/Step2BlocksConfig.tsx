@@ -128,29 +128,29 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
     const bType = bungalowsConfig.bungalow_type || '3 BHK Duplex Villa';
 
     return (
-      <div className="space-y-6 animate-fadeIn">
+      <div className="space-y-3.5 animate-fadeIn">
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-amber-600" />
-              <span className="font-bold text-slate-900">Bungalows / Villas Community Setup</span>
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <Home className="w-4 h-4 text-amber-600" />
+              <span>Bungalows / Villas Community Setup</span>
             </div>
           }
           subtitle="Configure the naming conventions, count, and property types for your standalone villas."
         >
-          <div className="space-y-6">
+          <div className="space-y-3.5">
             {/* Bungalow Prefix Presets */}
             <div>
-              <span className="text-xs font-bold text-slate-700 block mb-2">
+              <span className="text-[11px] font-bold text-slate-700 block mb-1.5">
                 Bungalow / Plot Prefix Format: <span className="text-rose-500">*</span>
               </span>
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="flex flex-wrap gap-1.5 mb-2">
                 {BUNGALOW_PREFIX_PRESETS.map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => onBungalowsConfigChange({ ...bungalowsConfig, prefix: p })}
-                    className={`px-3 py-1.5 text-xs rounded-xl font-bold border transition-all ${
+                    className={`px-2.5 py-1 text-xs rounded-lg font-bold border transition-all ${
                       prefix === p
                         ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
                         : 'bg-white text-slate-700 hover:bg-amber-50 hover:border-amber-300 border-slate-200'
@@ -173,12 +173,12 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
             </div>
 
             {/* Total Count & Starting Number */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2.5 border-t border-slate-100">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
                   Total Bungalows / Villas Count <span className="text-rose-500">*</span>
                 </label>
-                <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-lg border border-slate-200">
                   <button
                     type="button"
                     onClick={() =>
@@ -187,7 +187,7 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                         count: Math.max(1, count - 5),
                       })
                     }
-                    className="w-8 h-8 rounded-lg bg-white font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-xs shadow-xs"
+                    className="w-7 h-7 rounded-md bg-white font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-xs shadow-xs"
                   >
                     -5
                   </button>
@@ -202,7 +202,7 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                         count: Math.max(1, parseInt(e.target.value) || 1),
                       })
                     }
-                    className="flex-1 text-center font-bold text-slate-900 bg-transparent text-sm border-0 focus:ring-0"
+                    className="flex-1 text-center font-bold text-slate-900 bg-transparent text-xs border-0 focus:ring-0"
                   />
                   <button
                     type="button"
@@ -212,18 +212,18 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                         count: Math.min(500, count + 5),
                       })
                     }
-                    className="w-8 h-8 rounded-lg bg-white font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-xs shadow-xs"
+                    className="w-7 h-7 rounded-md bg-white font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-xs shadow-xs"
                   >
                     +5
                   </button>
                 </div>
                 {errors.bungalows_count && (
-                  <p className="text-xs text-rose-600 mt-1">{errors.bungalows_count}</p>
+                  <p className="text-[11px] text-rose-600 mt-1">{errors.bungalows_count}</p>
                 )}
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
                   Starting Number Index <span className="text-rose-500">*</span>
                 </label>
                 <select
@@ -234,19 +234,19 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                       starting_number: parseInt(e.target.value) || 1,
                     })
                   }
-                  className="w-full px-3 py-2.5 text-xs font-semibold border border-slate-300 rounded-xl bg-white text-slate-800 focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-2.5 py-1.5 text-xs font-semibold border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-1 focus:ring-amber-500"
                 >
                   <option value={1}>Start from 1 ({prefix}1 .. {prefix}{count})</option>
                   <option value={101}>Start from 101 ({prefix}101 .. {prefix}{100 + count})</option>
                   <option value={1001}>Start from 1001 ({prefix}1001 .. {prefix}{1000 + count})</option>
                 </select>
                 {errors.bungalows_starting_number && (
-                  <p className="text-xs text-rose-600 mt-1">{errors.bungalows_starting_number}</p>
+                  <p className="text-[11px] text-rose-600 mt-1">{errors.bungalows_starting_number}</p>
                 )}
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
                   Default Villa Property Type <span className="text-rose-500">*</span>
                 </label>
                 <select
@@ -257,7 +257,7 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                       bungalow_type: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2.5 text-xs font-semibold border border-slate-300 rounded-xl bg-white text-slate-800 focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-2.5 py-1.5 text-xs font-semibold border border-slate-300 rounded-lg bg-white text-slate-800 focus:ring-1 focus:ring-amber-500"
                 >
                   {BUNGALOW_TYPES.map((t) => (
                     <option key={t} value={t}>{t}</option>
@@ -267,24 +267,24 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
             </div>
 
             {/* Live Visual Preview of Generated Bungalow Names */}
-            <div className="p-4 bg-amber-50/40 rounded-2xl border border-amber-200 space-y-3">
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-amber-600" />
-                <span className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+            <div className="p-3 bg-amber-50/40 rounded-xl border border-amber-200 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-amber-600" />
+                <span className="text-[11px] font-bold text-amber-950 uppercase tracking-wider">
                   Generated Bungalow Units Preview ({count} Villas)
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+              <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
                 {Array.from({ length: Math.min(count, 40) }).map((_, idx) => (
                   <span
                     key={idx}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-amber-900 text-xs font-bold shadow-2xs"
+                    className="px-2 py-0.5 rounded-md bg-white border border-amber-200 text-amber-900 text-[11px] font-bold shadow-2xs"
                   >
                     {prefix}{startNum + idx}
                   </span>
                 ))}
                 {count > 40 && (
-                  <span className="px-2.5 py-1 text-xs font-bold text-amber-700 self-center">
+                  <span className="px-2 py-0.5 text-[11px] font-bold text-amber-700 self-center">
                     + {count - 40} more villas...
                   </span>
                 )}
@@ -298,42 +298,42 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
 
   // Flats / Hybrid Setup Screen
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-3.5 animate-fadeIn">
       {/* Quick Setup & Presets Card */}
       <Card
         title={
-          <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-indigo-600" />
-            <span className="font-bold text-slate-900">1. Apartment Blocks / Towers Configuration</span>
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+            <Layers className="w-4 h-4 text-indigo-600" />
+            <span>1. Apartment Blocks / Towers Configuration</span>
           </div>
         }
         subtitle="Define the residential wings, buildings, or towers inside this society."
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Quick Count Stepper & Presets */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#EEF2FF]/60 rounded-2xl border border-indigo-100 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 bg-[#EEF2FF]/60 rounded-xl border border-indigo-100 shadow-2xs">
             <div>
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                Total Apartment Blocks: <strong className="text-[#6366F1] text-sm">{blocks.length}</strong>
+              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                Total Apartment Blocks: <strong className="text-[#6366F1] text-xs">{blocks.length}</strong>
               </span>
-              <span className="text-xs text-slate-500">Quickly adjust the number of blocks.</span>
+              <span className="text-[11px] text-slate-500">Quickly adjust the number of blocks.</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => handleSetBlockCount(blocks.length - 1)}
                 disabled={blocks.length <= 1}
-                className="w-8 h-8 rounded-xl bg-white border border-[#E2E8F0] text-slate-700 font-bold hover:bg-[#EEF2FF] hover:text-[#6366F1] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-2xs"
+                className="w-7 h-7 rounded-lg bg-white border border-[#E2E8F0] text-slate-700 font-bold hover:bg-[#EEF2FF] hover:text-[#6366F1] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-2xs text-xs"
               >
                 -
               </button>
-              <span className="w-8 text-center font-bold text-slate-900">{blocks.length}</span>
+              <span className="w-7 text-center font-bold text-slate-900 text-xs">{blocks.length}</span>
               <button
                 type="button"
                 onClick={() => handleSetBlockCount(blocks.length + 1)}
                 disabled={blocks.length >= 20}
-                className="w-8 h-8 rounded-xl bg-white border border-[#E2E8F0] text-slate-700 font-bold hover:bg-[#EEF2FF] hover:text-[#6366F1] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-2xs"
+                className="w-7 h-7 rounded-lg bg-white border border-[#E2E8F0] text-slate-700 font-bold hover:bg-[#EEF2FF] hover:text-[#6366F1] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-2xs text-xs"
               >
                 +
               </button>
@@ -342,17 +342,17 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
 
           {/* Naming Presets */}
           <div>
-            <div className="flex items-center gap-1.5 mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-xs font-semibold text-slate-600">Quick Naming Presets:</span>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Sparkles className="w-3 h-3 text-amber-500" />
+              <span className="text-[11px] font-semibold text-slate-600">Quick Naming Presets:</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {BLOCK_PRESETS.map((p) => (
                 <button
                   key={p.label}
                   type="button"
                   onClick={() => handleApplyBlockPreset(p.prefix)}
-                  className="px-3 py-1.5 text-xs rounded-xl bg-white hover:bg-[#EEF2FF] hover:border-indigo-300 hover:text-[#6366F1] text-slate-700 font-medium border border-[#E2E8F0] transition-all shadow-2xs"
+                  className="px-2.5 py-1 text-xs rounded-lg bg-white hover:bg-[#EEF2FF] hover:border-indigo-300 hover:text-[#6366F1] text-slate-700 font-medium border border-[#E2E8F0] transition-all shadow-2xs"
                 >
                   {p.label}
                 </button>
@@ -362,30 +362,30 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
 
           {/* General Blocks Error banner if any */}
           {errors.blocks && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">
+            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-medium">
               {errors.blocks}
             </div>
           )}
 
           {/* Block Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
             {blocks.map((block, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-2xl border border-[#E2E8F0] bg-white hover:border-indigo-300 hover:shadow-card transition-all duration-200 relative group shadow-2xs"
+                className="p-3 rounded-xl border border-[#E2E8F0] bg-white hover:border-indigo-300 hover:shadow-card transition-all duration-200 relative group shadow-2xs"
               >
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-xl bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-bold text-xs">
+                <div className="flex items-center justify-between gap-1.5 mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-6 h-6 rounded-md bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center font-bold text-xs">
                       #{idx + 1}
                     </div>
-                    <span className="text-xs font-bold text-slate-800">Block Configuration</span>
+                    <span className="text-xs font-bold text-slate-800">Block Config</span>
                   </div>
                   {blocks.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveBlock(idx)}
-                      className="text-slate-400 hover:text-rose-500 transition-colors p-1 rounded-lg hover:bg-rose-50"
+                      className="text-slate-400 hover:text-rose-500 transition-colors p-1 rounded-md hover:bg-rose-50"
                       title="Remove this block"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -393,7 +393,7 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
                   )}
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <Input
                     label="Block Display Name"
                     placeholder="e.g. Block A / Wing B"
@@ -415,7 +415,7 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
             ))}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1.5">
             <Button
               type="button"
               variant="outline"
@@ -433,14 +433,14 @@ export const Step2BlocksConfig: React.FC<Step2BlocksConfigProps> = ({
       {isHybrid && (
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-amber-600" />
-              <span className="font-bold text-slate-900">2. Hybrid Community: Bungalows / Villas Enclave</span>
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <Home className="w-4 h-4 text-amber-600" />
+              <span>2. Hybrid Community: Bungalows / Villas Enclave</span>
             </div>
           }
           subtitle="Configure standalone villas alongside apartment towers."
         >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Input
               label="Bungalow Prefix"
               value={bungalowsConfig.prefix || 'Villa-'}

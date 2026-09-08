@@ -75,24 +75,24 @@ export const UserDetailsPage: React.FC = () => {
   const assignedSocieties = (user.user_societies?.map((us) => us.society) || []).filter(Boolean) as SocietyItem[];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.USERS)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
             Back to Users
           </Button>
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{user.full_name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">{user.full_name}</h1>
               <StatusBadge status={user.status} />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">{user.email}</p>
+            <p className="text-[11px] text-slate-500">{user.email}</p>
           </div>
         </div>
 
@@ -109,26 +109,26 @@ export const UserDetailsPage: React.FC = () => {
       </div>
 
       {/* Profile & Security Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
         <Card title="Account Profile Details">
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Full Name:</span>
               <span className="font-semibold text-slate-900">{user.full_name}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Email (Username):</span>
               <span className="font-semibold text-slate-900">{user.email}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Phone Number:</span>
               <span className="font-semibold text-slate-900">{user.phone || '—'}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Account Created:</span>
               <span className="font-semibold text-slate-900">{formatDate(user.created_at)}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Last Login:</span>
               <span className="font-semibold text-slate-900">{formatDate(user.last_login_at)}</span>
             </div>
@@ -136,33 +136,33 @@ export const UserDetailsPage: React.FC = () => {
         </Card>
 
         <Card title="Roles & Security Permissions">
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             <div>
-              <span className="text-xs text-slate-400 font-semibold uppercase block mb-2">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-1">
                 Assigned System Roles
               </span>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {userRoles.map((r) => (
                   <span
                     key={r.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100"
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100"
                   >
-                    <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                    <Shield className="w-3 h-3 text-indigo-600" />
                     {r.name}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100">
-              <span className="text-xs text-slate-400 font-semibold uppercase block mb-2">
+            <div className="pt-2 border-t border-slate-100">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-1">
                 Assigned Society Scope
               </span>
               {assignedSocieties.length > 0 ? (
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   {assignedSocieties.map((s) => (
-                    <div key={s.id} className="flex items-center gap-2 text-xs text-slate-800 font-medium">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                    <div key={s.id} className="flex items-center gap-1.5 text-xs text-slate-800 font-medium">
+                      <Building2 className="w-3 h-3 text-slate-400" />
                       <span>{s.name}</span>
                     </div>
                   ))}

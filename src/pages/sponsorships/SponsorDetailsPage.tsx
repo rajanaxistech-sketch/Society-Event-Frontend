@@ -123,36 +123,36 @@ export const SponsorDetailsPage: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate(`/payments/${encodeId(row.id)}`)}
-          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
           title="View Payment Receipt"
         >
-          <Eye className="w-4 h-4" />
+          <Eye className="w-3.5 h-3.5" />
         </button>
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(`/events/${encodeId(sponsor.event_id)}`)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
-            Back to Event
+            Back
           </Button>
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                 {sponsor.company_name}
               </h1>
-              <StatusBadge status={sponsor.payment_status} />
+              <StatusBadge status={sponsor.payment_status} size="sm" />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Tier: <span className="font-semibold text-indigo-600">{sponsor.sponsorship_type || 'General Sponsor'}</span> &bull; {sponsor.event?.name}
             </p>
           </div>
@@ -163,7 +163,7 @@ export const SponsorDetailsPage: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={() => navigate(`/payments/record?sponsorId=${encodeId(sponsor.id)}`)}
-            leftIcon={<Plus className="w-4 h-4" />}
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
           >
             Record Sponsor Payment
           </Button>
@@ -171,40 +171,40 @@ export const SponsorDetailsPage: React.FC = () => {
       </div>
 
       {/* Financial Details */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
             Committed Sponsorship Funding
           </span>
           <CurrencyDisplay
             amount={sponsor.sponsorship_amount}
-            className="text-2xl font-bold text-slate-900 mt-1 block"
+            className="text-xl font-bold text-slate-900 mt-0.5 block"
           />
         </div>
 
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+        <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-2xs">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
             Pledge Date
           </span>
-          <span className="text-lg font-bold text-slate-900 mt-1 block">
+          <span className="text-base font-bold text-slate-900 mt-0.5 block">
             {formatDate(sponsor.sponsorship_date)}
           </span>
         </div>
       </div>
 
       {/* Sponsor Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         <Card title="Primary Contact Details">
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Contact Person:</span>
               <span className="font-semibold text-slate-900">{sponsor.contact_person || '—'}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Phone Number:</span>
               <span className="font-semibold text-slate-900">{sponsor.contact_number || '—'}</span>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Email Address:</span>
               <span className="font-semibold text-slate-900">{sponsor.email || '—'}</span>
             </div>
@@ -212,15 +212,15 @@ export const SponsorDetailsPage: React.FC = () => {
         </Card>
 
         <Card title="Event Association & Notes">
-          <div className="space-y-3 text-xs">
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between py-1 border-b border-slate-100">
               <span className="text-slate-500">Event:</span>
               <span className="font-semibold text-slate-900">{sponsor.event?.name}</span>
             </div>
             {sponsor.notes && (
-              <div className="pt-2">
-                <span className="text-slate-500 block mb-1">Deliverables / Notes:</span>
-                <p className="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <div className="pt-1.5">
+                <span className="text-slate-500 block mb-1 text-[11px]">Deliverables / Notes:</span>
+                <p className="text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-100 text-xs">
                   {sponsor.notes}
                 </p>
               </div>

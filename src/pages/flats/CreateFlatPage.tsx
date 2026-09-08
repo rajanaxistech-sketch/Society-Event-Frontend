@@ -69,20 +69,20 @@ export const CreateFlatPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(AppRoutes.FLATS)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create Flat</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Create Flat</h1>
+          <p className="text-[11px] text-slate-500">
             Register an apartment unit under a specific floor and block.
           </p>
         </div>
@@ -91,13 +91,13 @@ export const CreateFlatPage: React.FC = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-1.5">
+              <Home className="w-4 h-4 text-indigo-600" />
               <span>Flat Information</span>
             </div>
           }
         >
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             <Select
               label="Floor Level"
               requiredIndicator
@@ -137,10 +137,11 @@ export const CreateFlatPage: React.FC = () => {
               <option value="inactive">Inactive</option>
             </Select>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            <div className="pt-2.5 border-t border-slate-100 flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={() => navigate(AppRoutes.FLATS)}
                 disabled={isSubmitting}
               >
@@ -149,8 +150,9 @@ export const CreateFlatPage: React.FC = () => {
               <Button
                 type="submit"
                 variant="primary"
+                size="sm"
                 isLoading={isSubmitting}
-                leftIcon={<Save className="w-4 h-4" />}
+                leftIcon={<Save className="w-3.5 h-3.5" />}
               >
                 Create Flat
               </Button>

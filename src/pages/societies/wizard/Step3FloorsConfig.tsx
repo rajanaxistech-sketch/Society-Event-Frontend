@@ -47,37 +47,37 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
     const bType = bungalowsConfig.bungalow_type || '3 BHK Villa';
 
     return (
-      <div className="space-y-6 animate-fadeIn">
+      <div className="space-y-3.5 animate-fadeIn">
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Home className="w-5 h-5 text-amber-600" />
-              <span className="font-bold text-slate-900">Bungalows & Villa Enclave Review</span>
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <Home className="w-4 h-4 text-amber-600" />
+              <span>Bungalows & Villa Enclave Review</span>
             </div>
           }
           subtitle="Review and confirm the villa property allocations before setting up the unit matrix."
         >
-          <div className="space-y-4">
-            <div className="p-5 rounded-2xl bg-amber-50/60 border border-amber-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-3 bg-white rounded-xl border border-amber-100">
-                <span className="text-xs text-amber-800 font-semibold block">Total Standalone Units</span>
-                <span className="text-2xl font-black text-amber-950 mt-1 block">{count} Villas</span>
+          <div className="space-y-3">
+            <div className="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="p-2.5 bg-white rounded-lg border border-amber-100">
+                <span className="text-[11px] text-amber-800 font-semibold block">Total Standalone Units</span>
+                <span className="text-xl font-black text-amber-950 mt-0.5 block">{count} Villas</span>
               </div>
-              <div className="p-3 bg-white rounded-xl border border-amber-100">
-                <span className="text-xs text-amber-800 font-semibold block">Naming Range</span>
-                <span className="text-xl font-bold text-amber-950 mt-1 block">
+              <div className="p-2.5 bg-white rounded-lg border border-amber-100">
+                <span className="text-[11px] text-amber-800 font-semibold block">Naming Range</span>
+                <span className="text-base font-bold text-amber-950 mt-0.5 block">
                   {prefix}{startNum} &rarr; {prefix}{startNum + count - 1}
                 </span>
               </div>
-              <div className="p-3 bg-white rounded-xl border border-amber-100">
-                <span className="text-xs text-amber-800 font-semibold block">Property Specification</span>
-                <span className="text-sm font-bold text-amber-950 mt-1 block truncate">{bType}</span>
+              <div className="p-2.5 bg-white rounded-lg border border-amber-100">
+                <span className="text-[11px] text-amber-800 font-semibold block">Property Specification</span>
+                <span className="text-xs font-bold text-amber-950 mt-0.5 block truncate">{bType}</span>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <p className="text-xs text-slate-600">
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <p className="text-[11px] text-slate-600">
                 Since this society consists exclusively of standalone bungalows, multi-floor specifications are bypassed. You can proceed directly to the Unit Matrix and Owner Mapping.
               </p>
             </div>
@@ -88,19 +88,19 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
   }
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-3.5 animate-fadeIn">
       {/* Global Quick Actions */}
-      <div className="p-4 bg-gradient-to-r from-indigo-50/80 to-blue-50/80 border border-indigo-100 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <Sparkles className="w-5 h-5 text-indigo-600 shrink-0" />
+      <div className="p-3 bg-gradient-to-r from-indigo-50/80 to-blue-50/80 border border-indigo-100 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
           <div>
-            <h4 className="text-sm font-bold text-slate-900">Bulk Floor Setup</h4>
-            <p className="text-xs text-slate-600">Quickly apply standard floor heights across all blocks.</p>
+            <h4 className="text-xs font-bold text-slate-900">Bulk Floor Setup</h4>
+            <p className="text-[11px] text-slate-600">Quickly apply standard floor heights across all blocks.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="text-xs text-slate-500 font-medium">Floors:</span>
             <input
               type="number"
@@ -108,7 +108,7 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
               max={100}
               value={globalFloorCount}
               onChange={(e) => setGlobalFloorCount(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-              className="w-16 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-lg bg-white"
+              className="w-14 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-md bg-white"
             />
           </div>
           <Button
@@ -125,7 +125,7 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
 
       {/* General Step 3 Errors */}
       {errors.floors && (
-        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">
+        <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-medium">
           {errors.floors}
         </div>
       )}
@@ -133,42 +133,42 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
       {/* Per Block Configuration Cards */}
       <Card
         title={
-          <div className="flex items-center gap-2">
-            <Grid className="w-5 h-5 text-indigo-600" />
-            <span className="font-bold text-slate-900">Floors & Commercial Shops Configuration</span>
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+            <Grid className="w-4 h-4 text-indigo-600" />
+            <span>Floors & Commercial Shops Configuration</span>
           </div>
         }
         subtitle="Configure the number of residential floors and ground floor retail/commercial spaces for each block."
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           {blocks.map((block, idx) => (
             <div
               key={idx}
-              className="p-5 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all"
+              className="p-3.5 rounded-lg border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs">
                     {block.code || block.name.slice(0, 2)}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">{block.name}</h4>
-                    <span className="text-xs text-slate-400">
+                    <h4 className="text-xs font-bold text-slate-900">{block.name}</h4>
+                    <span className="text-[11px] text-slate-400">
                       Code: {block.code || 'N/A'} &bull; {block.floors_count} Residential Floors
                     </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:items-end gap-1">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:items-end gap-0.5">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-slate-600">
                       Total Floors: <span className="text-rose-500">*</span>
                     </span>
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                    <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md border border-slate-200">
                       <button
                         type="button"
                         onClick={() => handleUpdateBlock(idx, { floors_count: Math.max(1, block.floors_count - 1) })}
-                        className="w-7 h-7 bg-white rounded-md text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
+                        className="w-6 h-6 bg-white rounded text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
                       >
                         -
                       </button>
@@ -182,41 +182,41 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
                             floors_count: Math.max(1, Math.min(100, parseInt(e.target.value) || 1)),
                           })
                         }
-                        className="w-12 text-center text-xs font-bold text-slate-900 bg-transparent border-0 focus:ring-0 p-0"
+                        className="w-10 text-center text-xs font-bold text-slate-900 bg-transparent border-0 focus:ring-0 p-0"
                       />
                       <button
                         type="button"
                         onClick={() => handleUpdateBlock(idx, { floors_count: Math.min(100, block.floors_count + 1) })}
-                        className="w-7 h-7 bg-white rounded-md text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
+                        className="w-6 h-6 bg-white rounded text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center text-xs shadow-xs"
                       >
                         +
                       </button>
                     </div>
                   </div>
                   {errors[`block_${idx}_floors`] && (
-                    <p className="text-xs text-rose-600">{errors[`block_${idx}_floors`]}</p>
+                    <p className="text-[11px] text-rose-600">{errors[`block_${idx}_floors`]}</p>
                   )}
                 </div>
               </div>
 
               {/* Commercial Shops Section for this Block */}
-              <div className="pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                    <Store className="w-4 h-4" />
+              <div className="pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-7 h-7 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Store className="w-3.5 h-3.5" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-800 block">
                       Ground Floor Commercial Shops
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-[11px] text-slate-500">
                       Has retail shops/commercial units on ground floor?
                     </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:items-end gap-1">
-                  <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:items-end gap-0.5">
+                  <div className="flex items-center gap-3">
                     <Switch
                       checked={block.has_commercial_shops || false}
                       onChange={(val) =>
@@ -229,7 +229,7 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
                     />
 
                     {block.has_commercial_shops && (
-                      <div className="flex items-center gap-2 animate-fadeIn">
+                      <div className="flex items-center gap-1.5 animate-fadeIn">
                         <span className="text-xs text-slate-500">
                           Shops: <span className="text-rose-500">*</span>
                         </span>
@@ -243,13 +243,13 @@ export const Step3FloorsConfig: React.FC<Step3FloorsConfigProps> = ({
                               commercial_shops_count: Math.max(1, Math.min(50, parseInt(e.target.value) || 1)),
                             })
                           }
-                          className="w-16 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-lg bg-white"
+                          className="w-14 px-2 py-1 text-xs text-center font-bold border border-slate-300 rounded-md bg-white"
                         />
                       </div>
                     )}
                   </div>
                   {errors[`block_${idx}_shops`] && (
-                    <p className="text-xs text-rose-600">{errors[`block_${idx}_shops`]}</p>
+                    <p className="text-[11px] text-rose-600">{errors[`block_${idx}_shops`]}</p>
                   )}
                 </div>
               </div>

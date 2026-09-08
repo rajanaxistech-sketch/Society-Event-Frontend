@@ -224,38 +224,38 @@ export const BungalowDetailsPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.BUNGALOWS)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
             Back to Bungalows
           </Button>
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                 Bungalow / Villa {bungalow.bungalow_number}
               </h1>
               <StatusBadge status={bungalow.status} />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500">
               {bungalow.society?.name || 'Society'} &bull; Type: {bungalow.bungalow_type || 'Independent Villa'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <PermissionGuard permission={Permissions.BUNGALOW_UPDATE}>
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate(`/bungalows/${encodeId(id)}/edit`)}
-              leftIcon={<Edit2 className="w-3.5 h-3.5" />}
+              leftIcon={<Edit2 className="w-3 h-3" />}
             >
               Edit Bungalow
             </Button>
@@ -268,22 +268,22 @@ export const BungalowDetailsPage: React.FC = () => {
 
       {/* Tab 1: Info Overview */}
       {activeTab === 'info' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
           <Card title="Unit Information">
-            <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Bungalow Number:</span>
                 <span className="font-semibold text-slate-900">{bungalow.bungalow_number}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Society:</span>
                 <span className="font-semibold text-slate-900">{bungalow.society?.name || '—'}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Bungalow Type:</span>
                 <span className="font-semibold text-slate-900">{bungalow.bungalow_type || 'Villa'}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-100">
+              <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Registered On:</span>
                 <span className="font-semibold text-slate-900">{formatDate(bungalow.created_at)}</span>
               </div>
@@ -291,28 +291,28 @@ export const BungalowDetailsPage: React.FC = () => {
           </Card>
 
           <Card title="Occupancy & Ownership Summary">
-            <div className="space-y-4">
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+            <div className="space-y-2.5">
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
                 <div>
-                  <span className="text-xs text-slate-500 block">Total Residents</span>
-                  <span className="text-2xl font-bold text-slate-900">{residents.length}</span>
+                  <span className="text-[11px] text-slate-500 block">Total Residents</span>
+                  <span className="text-lg font-bold text-slate-900">{residents.length}</span>
                 </div>
-                <Users className="w-8 h-8 text-teal-600 opacity-70" />
+                <Users className="w-6 h-6 text-teal-600 opacity-70" />
               </div>
 
-              <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
-                <span className="text-xs text-amber-800 font-bold uppercase tracking-wider block mb-1">
+              <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-100">
+                <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block mb-0.5">
                   Primary Owner
                 </span>
                 {residents.find((r) => r.is_primary_owner) ? (
-                  <div className="flex items-center gap-2">
-                    <Crown className="w-4 h-4 text-amber-600" />
-                    <span className="text-sm font-semibold text-slate-900">
+                  <div className="flex items-center gap-1.5">
+                    <Crown className="w-3.5 h-3.5 text-amber-600" />
+                    <span className="text-xs font-semibold text-slate-900">
                       {residents.find((r) => r.is_primary_owner)?.full_name}
                     </span>
                   </div>
                 ) : (
-                  <p className="text-xs text-amber-700">
+                  <p className="text-[11px] text-amber-700">
                     No primary owner assigned. Select a resident from the Residents tab to designate.
                   </p>
                 )}

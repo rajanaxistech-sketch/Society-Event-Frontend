@@ -58,59 +58,59 @@ export const AuditLogDetailsPage: React.FC = () => {
   const newValues = log.new_values ? (typeof log.new_values === 'string' ? JSON.parse(log.new_values) : log.new_values) : null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(AppRoutes.AUDIT_LOGS)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
-          Back to Audit Trail
+          Back
         </Button>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
               Audit Event: <span className="font-mono text-indigo-600">{log.action}</span>
             </h1>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Target Entity: <span className="font-bold text-slate-700">{log.entity_type}</span> &bull; {formatDate(log.created_at)}
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Target Entity: <span className="font-semibold text-slate-700">{log.entity_type}</span> &bull; {formatDate(log.created_at)}
           </p>
         </div>
       </div>
 
       {/* Metadata Card */}
       <Card title="Event Context & Forensic Metadata">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-1">Actor User</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 text-xs">
+          <div className="p-2.5 bg-slate-50/80 rounded-lg border border-slate-100">
+            <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-0.5">Actor User</span>
             <span className="font-bold text-slate-900 block">{log.user?.full_name || 'System'}</span>
             <span className="text-slate-500 text-[11px] truncate block">{log.user?.email || 'N/A'}</span>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-1">Entity ID</span>
+          <div className="p-2.5 bg-slate-50/80 rounded-lg border border-slate-100">
+            <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-0.5">Entity ID</span>
             <span className="font-mono text-slate-900 font-semibold block truncate text-[11px]">{log.entity_id}</span>
             <span className="text-slate-500 text-[11px] block">{log.entity_type}</span>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-1">Client IP</span>
+          <div className="p-2.5 bg-slate-50/80 rounded-lg border border-slate-100">
+            <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-0.5">Client IP</span>
             <span className="font-mono font-bold text-slate-900 block">{log.ip_address || '127.0.0.1'}</span>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-1">Timestamp</span>
+          <div className="p-2.5 bg-slate-50/80 rounded-lg border border-slate-100">
+            <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-0.5">Timestamp</span>
             <span className="font-mono text-slate-900 font-semibold block">{formatDate(log.created_at)}</span>
           </div>
         </div>
 
         {log.user_agent && (
-          <div className="mt-4 pt-4 border-t border-slate-100 text-xs">
-            <span className="text-slate-400 block mb-1">User Agent Header:</span>
-            <span className="font-mono text-slate-600 bg-slate-50 px-2 py-1 rounded block text-[11px]">
+          <div className="mt-3 pt-3 border-t border-slate-100 text-xs">
+            <span className="text-slate-400 block mb-1 text-[11px]">User Agent Header:</span>
+            <span className="font-mono text-slate-600 bg-slate-50 px-2 py-1 rounded block text-[11px] break-all">
               {log.user_agent}
             </span>
           </div>
@@ -118,17 +118,17 @@ export const AuditLogDetailsPage: React.FC = () => {
       </Card>
 
       {/* Payload Inspection Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-red-500" />
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <Terminal className="w-3.5 h-3.5 text-rose-500" />
               <span>Prior State (Old Values)</span>
             </div>
           }
         >
           {oldValues ? (
-            <pre className="bg-slate-50 border border-slate-200 text-slate-800 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-96 shadow-2xs">
+            <pre className="bg-slate-50 border border-slate-200 text-slate-800 p-3 rounded-lg text-[11px] font-mono overflow-x-auto max-h-80 shadow-2xs">
               {JSON.stringify(oldValues, null, 2)}
             </pre>
           ) : (
@@ -138,14 +138,14 @@ export const AuditLogDetailsPage: React.FC = () => {
 
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-emerald-600" />
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <Terminal className="w-3.5 h-3.5 text-emerald-600" />
               <span>Mutated State (New Values)</span>
             </div>
           }
         >
           {newValues ? (
-            <pre className="bg-slate-50 border border-slate-200 text-slate-800 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-96 shadow-2xs">
+            <pre className="bg-slate-50 border border-slate-200 text-slate-800 p-3 rounded-lg text-[11px] font-mono overflow-x-auto max-h-80 shadow-2xs">
               {JSON.stringify(newValues, null, 2)}
             </pre>
           ) : (

@@ -68,43 +68,43 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-3.5 animate-fadeIn">
       {/* Structure Type Selection Radio Cards */}
       <Card
         title={
-          <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-indigo-600" />
-            <span className="font-bold text-slate-900">1. Society Property Type / Architecture</span>
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+            <Layers className="w-4 h-4 text-indigo-600" />
+            <span>1. Society Property Type / Architecture</span>
           </div>
         }
         subtitle="Select the architectural structure of this society to customize the setup workflow."
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
           {/* Option 1: Flats / Apartments */}
           <button
             type="button"
             onClick={() => onStructureTypeChange('flats')}
-            className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer relative group flex flex-col justify-between ${
+            className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer relative group flex flex-col justify-between ${
               structureType === 'flats'
                 ? 'border-indigo-600 bg-indigo-50/50 shadow-sm ring-2 ring-indigo-500/20'
                 : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50/50'
             }`}
           >
             {structureType === 'flats' && (
-              <div className="absolute top-3 right-3 text-indigo-600">
-                <CheckCircle2 className="w-5 h-5 fill-indigo-600 text-white" />
+              <div className="absolute top-2.5 right-2.5 text-indigo-600">
+                <CheckCircle2 className="w-4 h-4 fill-indigo-600 text-white" />
               </div>
             )}
             <div>
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold mb-3 shadow-2xs">
-                <Building2 className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold mb-2 shadow-2xs">
+                <Building2 className="w-4 h-4" />
               </div>
-              <h4 className="text-sm font-black text-slate-900">Flats / Apartments</h4>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              <h4 className="text-xs font-bold text-slate-900">Flats / Apartments</h4>
+              <p className="text-[11px] text-slate-500 mt-0.5 leading-normal">
                 Multi-story residential towers with Blocks &rarr; Floors &rarr; Flats + optional Ground Floor Shops.
               </p>
             </div>
-            <span className="text-[11px] font-bold text-indigo-600 mt-3 block">
+            <span className="text-[10px] font-bold text-indigo-600 mt-2 block">
               Multi-Floor Towers &bull; 101/102 Series
             </span>
           </button>
@@ -113,27 +113,27 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
           <button
             type="button"
             onClick={() => onStructureTypeChange('bungalows')}
-            className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer relative group flex flex-col justify-between ${
+            className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer relative group flex flex-col justify-between ${
               structureType === 'bungalows'
                 ? 'border-amber-600 bg-amber-50/50 shadow-sm ring-2 ring-amber-500/20'
                 : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-slate-50/50'
             }`}
           >
             {structureType === 'bungalows' && (
-              <div className="absolute top-3 right-3 text-amber-600">
-                <CheckCircle2 className="w-5 h-5 fill-amber-600 text-white" />
+              <div className="absolute top-2.5 right-2.5 text-amber-600">
+                <CheckCircle2 className="w-4 h-4 fill-amber-600 text-white" />
               </div>
             )}
             <div>
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold mb-3 shadow-2xs">
-                <Home className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold mb-2 shadow-2xs">
+                <Home className="w-4 h-4" />
               </div>
-              <h4 className="text-sm font-black text-slate-900">Bungalows / Villas</h4>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              <h4 className="text-xs font-bold text-slate-900">Bungalows / Villas</h4>
+              <p className="text-[11px] text-slate-500 mt-0.5 leading-normal">
                 Independent row houses, standalone bungalows, villas, or residential plots without floors.
               </p>
             </div>
-            <span className="text-[11px] font-bold text-amber-600 mt-3 block">
+            <span className="text-[10px] font-bold text-amber-600 mt-2 block">
               Villa-1..Villa-50 &bull; Plot-101..150
             </span>
           </button>
@@ -142,27 +142,27 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
           <button
             type="button"
             onClick={() => onStructureTypeChange('hybrid')}
-            className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer relative group flex flex-col justify-between ${
+            className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer relative group flex flex-col justify-between ${
               structureType === 'hybrid'
                 ? 'border-purple-600 bg-purple-50/50 shadow-sm ring-2 ring-purple-500/20'
                 : 'border-slate-200 bg-white hover:border-purple-200 hover:bg-slate-50/50'
             }`}
           >
             {structureType === 'hybrid' && (
-              <div className="absolute top-3 right-3 text-purple-600">
-                <CheckCircle2 className="w-5 h-5 fill-purple-600 text-white" />
+              <div className="absolute top-2.5 right-2.5 text-purple-600">
+                <CheckCircle2 className="w-4 h-4 fill-purple-600 text-white" />
               </div>
             )}
             <div>
-              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold mb-3 shadow-2xs">
-                <Layers className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold mb-2 shadow-2xs">
+                <Layers className="w-4 h-4" />
               </div>
-              <h4 className="text-sm font-black text-slate-900">Hybrid Community</h4>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              <h4 className="text-xs font-bold text-slate-900">Hybrid Community</h4>
+              <p className="text-[11px] text-slate-500 mt-0.5 leading-normal">
                 Large gated township containing both multi-story apartment towers and standalone villa plots.
               </p>
             </div>
-            <span className="text-[11px] font-bold text-purple-600 mt-3 block">
+            <span className="text-[10px] font-bold text-purple-600 mt-2 block">
               Combined Towers + Villa Enclave
             </span>
           </button>
@@ -172,14 +172,14 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
       {/* Society Primary Information */}
       <Card
         title={
-          <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-indigo-600" />
-            <span className="font-bold text-slate-900">2. Society Identity & Basic Profile</span>
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+            <Building2 className="w-4 h-4 text-indigo-600" />
+            <span>2. Society Identity & Basic Profile</span>
           </div>
         }
         subtitle="Provide the registered name and unique shortcode for this housing society."
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input
             label="Society Name"
             placeholder="e.g. Palm Meadows Co-op Housing Society"
@@ -205,14 +205,14 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
       {/* Address & GPS Geolocation */}
       <Card
         title={
-          <div className="flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-emerald-600" />
-            <span className="font-bold text-slate-900">3. Physical Address & GPS Coordinates</span>
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+            <MapPin className="w-4 h-4 text-emerald-600" />
+            <span>3. Physical Address & GPS Coordinates</span>
           </div>
         }
         subtitle="Used for location-based services, resident directions, and security geo-fencing."
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Input
             label="Street Address / Landmark"
             placeholder="e.g. Near Hiranandani Gardens, Main Boulevard Road"
@@ -229,7 +229,7 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
             onChange={(e) => onChange({ address_line2: e.target.value })}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Input
               label="City"
               placeholder="e.g. Mumbai"
@@ -256,15 +256,15 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
           </div>
 
           {/* GPS Coordinates with Quick Presets */}
-          <div className="pt-3 border-t border-slate-100">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          <div className="pt-2.5 border-t border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
               <div>
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
                   Geo Coordinates (Lat / Long)
                 </span>
-                <span className="text-xs text-slate-400">Accurate coordinates for society mapping.</span>
+                <span className="text-[11px] text-slate-400">Accurate coordinates for society mapping.</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Button
                   type="button"
                   variant="outline"
@@ -278,21 +278,21 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
             </div>
 
             {/* Quick City Presets */}
-            <div className="flex flex-wrap items-center gap-1.5 mb-3">
-              <span className="text-xs text-slate-400 mr-1">Quick Pin:</span>
+            <div className="flex flex-wrap items-center gap-1 mb-2.5">
+              <span className="text-[11px] text-slate-400 mr-1">Quick Pin:</span>
               {CITY_PRESETS.map((p) => (
                 <button
                   key={p.city}
                   type="button"
                   onClick={() => handleApplyPreset(p)}
-                  className="px-2.5 py-1 text-xs rounded-full bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-medium transition-colors border border-slate-200"
+                  className="px-2 py-0.5 text-[11px] rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 font-medium transition-colors border border-slate-200"
                 >
                   {p.city}
                 </button>
               ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input
                 label="Latitude"
                 placeholder="e.g. 19.076090"
@@ -325,14 +325,14 @@ export const Step1SocietyInfo: React.FC<Step1SocietyInfoProps> = ({
       {/* Primary Management Contact */}
       <Card
         title={
-          <div className="flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-indigo-600" />
-            <span className="font-bold text-slate-900">4. Primary Society Contact / Secretary</span>
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+            <UserCheck className="w-4 h-4 text-indigo-600" />
+            <span>4. Primary Society Contact / Secretary</span>
           </div>
         }
         subtitle="Main administrative contact for urgent communications & onboarding."
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Input
             label="Contact Person Name"
             placeholder="e.g. Rajesh Sharma"

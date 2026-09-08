@@ -91,12 +91,12 @@ export const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Settings</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">System Settings</h1>
+          <p className="text-[11px] text-slate-500 mt-0.5">
             Configure global defaults, payment policies, notifications, and security rules.
           </p>
         </div>
@@ -111,24 +111,24 @@ export const SettingsPage: React.FC = () => {
         </Button>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-3.5">
         {/* General Application Settings */}
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <Globe className="w-4 h-4 text-indigo-600" />
               <span>General Platform Configurations</span>
             </div>
           }
         >
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Input
               label="Application Brand Name"
               value={settings.system_name || ''}
               onChange={(e) => setSettings({ ...settings, system_name: e.target.value })}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label="Default Currency Code"
                 value={settings.default_currency || 'INR'}
@@ -147,14 +147,14 @@ export const SettingsPage: React.FC = () => {
         {/* Payment & Receipts Policy */}
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <SettingsIcon className="w-5 h-5 text-emerald-600" />
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <SettingsIcon className="w-4 h-4 text-emerald-600" />
               <span>Payment & Receipt Automation Policies</span>
             </div>
           }
         >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-2.5 bg-slate-50/80 rounded-lg border border-slate-200">
               <div>
                 <span className="text-xs font-semibold text-slate-900 block">
                   Enable Online Payment Gateway & UPI QR
@@ -169,7 +169,7 @@ export const SettingsPage: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+            <div className="flex items-center justify-between p-2.5 bg-slate-50/80 rounded-lg border border-slate-200">
               <div>
                 <span className="text-xs font-semibold text-slate-900 block">
                   Automatic Receipt Numbering
@@ -189,14 +189,14 @@ export const SettingsPage: React.FC = () => {
         {/* Security & Notifications */}
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-amber-600" />
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <Bell className="w-4 h-4 text-amber-600" />
               <span>Notifications & Security Policy</span>
             </div>
           }
         >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-2.5 bg-slate-50/80 rounded-lg border border-slate-200">
               <div>
                 <span className="text-xs font-semibold text-slate-900 block">
                   Email Notifications for Payment Receipts
@@ -225,12 +225,13 @@ export const SettingsPage: React.FC = () => {
 
         {/* Submit Actions */}
         <PermissionGuard permission={Permissions.SETTING_UPDATE}>
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-2.5">
             <Button
               type="submit"
               variant="primary"
+              size="sm"
               isLoading={isSaving}
-              leftIcon={<Save className="w-4 h-4" />}
+              leftIcon={<Save className="w-3.5 h-3.5" />}
             >
               Save System Settings
             </Button>

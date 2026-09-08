@@ -137,42 +137,42 @@ export const ImportPreviewPage: React.FC = () => {
     (job.valid_rows ?? 0) > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(AppRoutes.IMPORTS)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
           >
             Back to Imports
           </Button>
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{job.file_name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">{job.file_name}</h1>
               <StatusBadge status={job.status} />
-              <span className="text-xs uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">
+              <span className="text-[10px] uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">
                 {job.file_type || 'spreadsheet'}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500">
               Uploaded on {formatDate(job.uploaded_at || job.created_at)}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {(job.invalid_rows ?? 0) > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={handleDownloadErrors}
               isLoading={isDownloadingErrors}
-              leftIcon={<Download className="w-4 h-4 text-rose-600" />}
+              leftIcon={<Download className="w-3.5 h-3.5 text-rose-600" />}
             >
-              Download Error Report
+              Error Report
             </Button>
           )}
 
@@ -182,9 +182,9 @@ export const ImportPreviewPage: React.FC = () => {
                 variant="primary"
                 size="sm"
                 onClick={() => setCommitConfirmOpen(true)}
-                leftIcon={<Play className="w-4 h-4" />}
+                leftIcon={<Play className="w-3.5 h-3.5" />}
               >
-                Commit Valid Records ({job.valid_rows})
+                Commit Valid ({job.valid_rows})
               </Button>
             </PermissionGuard>
           )}
@@ -192,45 +192,45 @@ export const ImportPreviewPage: React.FC = () => {
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
             Total Parsed Rows
           </span>
-          <span className="text-2xl font-bold text-slate-900 mt-1 block">{job.total_rows ?? rows.length}</span>
+          <span className="text-lg font-bold text-slate-900 mt-0.5 block">{job.total_rows ?? rows.length}</span>
         </div>
 
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+        <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
             Valid Staged Rows
           </span>
-          <span className="text-2xl font-bold text-emerald-600 mt-1 block">{job.valid_rows ?? 0}</span>
+          <span className="text-lg font-bold text-emerald-600 mt-0.5 block">{job.valid_rows ?? 0}</span>
         </div>
 
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+        <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
             Validation Errors
           </span>
-          <span className={`text-2xl font-bold mt-1 block ${(job.invalid_rows ?? 0) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+          <span className={`text-lg font-bold mt-0.5 block ${(job.invalid_rows ?? 0) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
             {job.invalid_rows ?? errorsList.length}
           </span>
         </div>
 
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+        <div className="p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
             Committed to Database
           </span>
-          <span className="text-2xl font-bold text-indigo-600 mt-1 block">{job.inserted_rows ?? 0}</span>
+          <span className="text-lg font-bold text-indigo-600 mt-0.5 block">{job.inserted_rows ?? 0}</span>
         </div>
       </div>
 
       {/* Errors Box if any */}
       {errorsList.length > 0 && (
         <Card title="Validation Errors & Issues">
-          <div className="p-3 bg-red-50 rounded-xl border border-red-200 space-y-2 text-xs text-red-800 max-h-48 overflow-y-auto">
+          <div className="p-2.5 bg-red-50 rounded-xl border border-red-200 space-y-1.5 text-xs text-red-800 max-h-40 overflow-y-auto">
             {errorsList.map((errItem: any, idx: number) => (
-              <div key={idx} className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <div key={idx} className="flex items-start gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
                 <span>
                   <strong>Row {errItem.row_number || idx + 1}:</strong> {errItem.field_name ? `[${errItem.field_name}] ` : ''}
                   {errItem.error_message}
@@ -244,20 +244,20 @@ export const ImportPreviewPage: React.FC = () => {
       {/* Parsed Staged Records Table */}
       <Card title={`Staged Records Preview (${rows.length} rows loaded)`}>
         {rows.length === 0 ? (
-          <div className="text-center py-8 text-xs text-slate-500">No staged rows found in this batch.</div>
+          <div className="text-center py-6 text-xs text-slate-500">No staged rows found in this batch.</div>
         ) : (
           <div className="overflow-x-auto no-scrollbar">
             <table className="min-w-full divide-y divide-slate-200 text-xs text-left">
               <thead className="bg-slate-50 text-slate-600 font-semibold">
                 <tr>
-                  <th className="px-3 py-2.5">Row #</th>
-                  <th className="px-3 py-2.5">Status</th>
-                  <th className="px-3 py-2.5">Society</th>
-                  <th className="px-3 py-2.5">Unit Details</th>
-                  <th className="px-3 py-2.5">Resident / Owner</th>
-                  <th className="px-3 py-2.5">Contact</th>
-                  <th className="px-3 py-2.5">Primary Owner</th>
-                  <th className="px-3 py-2.5">Errors / Notes</th>
+                  <th className="px-2.5 py-2">Row #</th>
+                  <th className="px-2.5 py-2">Status</th>
+                  <th className="px-2.5 py-2">Society</th>
+                  <th className="px-2.5 py-2">Unit Details</th>
+                  <th className="px-2.5 py-2">Resident / Owner</th>
+                  <th className="px-2.5 py-2">Contact</th>
+                  <th className="px-2.5 py-2">Primary Owner</th>
+                  <th className="px-2.5 py-2">Errors / Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -275,22 +275,22 @@ export const ImportPreviewPage: React.FC = () => {
                         rowItem.validation_status === 'invalid' ? 'bg-rose-50/30' : ''
                       }`}
                     >
-                      <td className="px-3 py-2 text-slate-400 font-mono">{rowItem.row_number}</td>
-                      <td className="px-3 py-2">
+                      <td className="px-2.5 py-1.5 text-slate-400 font-mono">{rowItem.row_number}</td>
+                      <td className="px-2.5 py-1.5">
                         <StatusBadge status={rowItem.validation_status} size="sm" />
                       </td>
-                      <td className="px-3 py-2 font-medium text-slate-900">
+                      <td className="px-2.5 py-1.5 font-medium text-slate-900">
                         {raw.society_name || '—'}
                         {raw.society_code ? ` (${raw.society_code})` : ''}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-2.5 py-1.5">
                         {isBung ? (
                           <div>
                             <span className="font-semibold text-indigo-700">
                               {raw.bungalow_number || '—'}
                             </span>
                             {raw.bungalow_type && (
-                              <span className="text-slate-500 block text-[11px]">{raw.bungalow_type}</span>
+                              <span className="text-slate-500 block text-[10px]">{raw.bungalow_type}</span>
                             )}
                           </div>
                         ) : (
@@ -298,7 +298,7 @@ export const ImportPreviewPage: React.FC = () => {
                             <span className="font-semibold text-slate-800">
                               {raw.flat_number ? `Flat ${raw.flat_number}` : '—'}
                             </span>
-                            <span className="text-slate-500 block text-[11px]">
+                            <span className="text-slate-500 block text-[10px]">
                               {raw.block_name ? `${raw.block_name}` : ''}
                               {raw.floor_number !== undefined ? ` • Floor ${raw.floor_number}` : ''}
                               {raw.flat_type ? ` • ${raw.flat_type}` : ''}
@@ -306,33 +306,33 @@ export const ImportPreviewPage: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-2.5 py-1.5">
                         <span className="font-medium text-slate-800 block">
                           {raw.resident_name || '—'}
                         </span>
                         {raw.relationship_to_owner && (
-                          <span className="text-[11px] text-slate-500">
+                          <span className="text-[10px] text-slate-500">
                             Rel: {raw.relationship_to_owner}
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-[11px] text-slate-600">
+                      <td className="px-2.5 py-1.5 text-[11px] text-slate-600">
                         {raw.resident_phone && <div>{raw.resident_phone}</div>}
                         {raw.resident_email && <div>{raw.resident_email}</div>}
                         {!raw.resident_phone && !raw.resident_email && '—'}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-2.5 py-1.5">
                         {raw.is_primary_owner ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
                             YES
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600">
                             NO
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-rose-600 text-[11px]">
+                      <td className="px-2.5 py-1.5 text-rose-600 text-[11px]">
                         {rowItem.error_messages && rowItem.error_messages.length > 0 ? (
                           <div className="space-y-0.5">
                             {rowItem.error_messages.map((m, i) => (

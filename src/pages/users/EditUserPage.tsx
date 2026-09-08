@@ -136,36 +136,36 @@ export const EditUserPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(`/users/${encodeId(id)}`)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Edit User Account</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Edit User Account</h1>
+          <p className="text-[11px] text-slate-500">
             Modify profile details, security role, and assigned society scope.
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-3.5">
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-1.5">
+              <User className="w-4 h-4 text-indigo-600" />
               <span>User Profile & Security Role</span>
             </div>
           }
         >
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               <Input
                 label="Full Name"
                 requiredIndicator
@@ -182,7 +182,7 @@ export const EditUserPage: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               <Input
                 label="Reset Password (Optional)"
                 type="password"
@@ -198,7 +198,7 @@ export const EditUserPage: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
               <Select
                 label="Security Role"
                 requiredIndicator
@@ -228,21 +228,21 @@ export const EditUserPage: React.FC = () => {
         {/* Society Scope */}
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-indigo-600" />
               <span>Assigned Society Scope</span>
             </div>
           }
           subtitle="Select societies this user can view and manage."
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {societies.map((s) => {
               const checked = selectedSocietyIds.includes(s.id);
               return (
                 <div
                   key={s.id}
                   onClick={() => toggleSociety(s.id)}
-                  className={`p-3 rounded-xl border cursor-pointer flex items-center justify-between transition-colors ${
+                  className={`p-2.5 rounded-xl border cursor-pointer flex items-center justify-between transition-colors ${
                     checked
                       ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 font-semibold'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-700'
@@ -261,10 +261,11 @@ export const EditUserPage: React.FC = () => {
           </div>
         </Card>
 
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => navigate(`/users/${encodeId(id)}`)}
             disabled={isSubmitting}
           >
@@ -273,8 +274,9 @@ export const EditUserPage: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
+            size="sm"
             isLoading={isSubmitting}
-            leftIcon={<Save className="w-4 h-4" />}
+            leftIcon={<Save className="w-3.5 h-3.5" />}
           >
             Save Changes
           </Button>

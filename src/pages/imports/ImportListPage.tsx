@@ -101,32 +101,32 @@ export const ImportListPage: React.FC = () => {
         <button
           type="button"
           onClick={() => navigate(`/imports/${encodeId(row.id)}`)}
-          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
           title="View Import Summary"
         >
-          <Eye className="w-4 h-4" />
+          <Eye className="w-3.5 h-3.5" />
         </button>
       ),
     },
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Bulk Data Import</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Bulk Data Import</h1>
+          <p className="text-[11px] text-slate-500">
             Import residential structures, flats, and residents en masse via Excel / CSV.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchJobs}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={<RefreshCw className="w-3 h-3" />}
           >
             Refresh
           </Button>
@@ -135,7 +135,7 @@ export const ImportListPage: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={() => navigate(AppRoutes.IMPORT_UPLOAD)}
-              leftIcon={<Upload className="w-4 h-4" />}
+              leftIcon={<Upload className="w-3.5 h-3.5" />}
             >
               Upload New File
             </Button>

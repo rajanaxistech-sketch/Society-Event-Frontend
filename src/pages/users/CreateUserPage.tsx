@@ -90,36 +90,36 @@ export const CreateUserPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-3 sm:space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(AppRoutes.USERS)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Cancel
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create User Account</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Create User Account</h1>
+          <p className="text-[11px] text-slate-500">
             Provision access credentials, role permissions, and assigned society scope.
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-3.5">
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-1.5">
+              <UserPlus className="w-4 h-4 text-indigo-600" />
               <span>User Profile & Credentials</span>
             </div>
           }
         >
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               <Input
                 label="Full Name"
                 placeholder="e.g. Ramesh Chandra"
@@ -138,7 +138,7 @@ export const CreateUserPage: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
               <Input
                 label="Password"
                 type="password"
@@ -156,7 +156,7 @@ export const CreateUserPage: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
               <Select
                 label="Security Role"
                 requiredIndicator
@@ -187,21 +187,21 @@ export const CreateUserPage: React.FC = () => {
         {/* Assigned Societies Scope */}
         <Card
           title={
-            <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-1.5">
+              <Building2 className="w-4 h-4 text-indigo-600" />
               <span>Assigned Societies Scope (Optional)</span>
             </div>
           }
           subtitle="Grant management access to specific societies. Leave empty for global access."
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {societies.map((s) => {
               const checked = selectedSocietyIds.includes(s.id);
               return (
                 <div
                   key={s.id}
                   onClick={() => toggleSociety(s.id)}
-                  className={`p-3 rounded-xl border cursor-pointer flex items-center justify-between transition-colors ${
+                  className={`p-2.5 rounded-xl border cursor-pointer flex items-center justify-between transition-colors ${
                     checked
                       ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 font-semibold'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-700'
@@ -221,10 +221,11 @@ export const CreateUserPage: React.FC = () => {
         </Card>
 
         {/* Form Actions */}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-2">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => navigate(AppRoutes.USERS)}
             disabled={isSubmitting}
           >
@@ -233,8 +234,9 @@ export const CreateUserPage: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
+            size="sm"
             isLoading={isSubmitting}
-            leftIcon={<Save className="w-4 h-4" />}
+            leftIcon={<Save className="w-3.5 h-3.5" />}
           >
             Create User Account
           </Button>

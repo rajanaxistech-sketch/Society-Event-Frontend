@@ -111,14 +111,6 @@ export const EventListPage: React.FC = () => {
       render: (row) => {
         const theme = getEventTheme(row.name, row.description);
         return (
-  const columns: Column<EventItem>[] = [
-    {
-      key: 'name',
-      header: 'Event Name',
-      sortable: true,
-      render: (row) => {
-        const theme = getEventTheme(row.name, row.description);
-        return (
           <div className="flex items-center gap-2.5 py-0.5">
             <div className={`w-7 h-7 rounded-lg ${theme.iconBgClass} flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs`}>
               <Calendar className="w-3.5 h-3.5" />
