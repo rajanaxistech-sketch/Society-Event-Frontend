@@ -182,10 +182,11 @@ export const societiesService = {
 
           if (blockRes.success && blockRes.data) {
             const blockId = blockRes.data.id;
-            const totalFloors = blockConfig.floors_count || 1;
+            const totalFloors = (blockConfig as any).total_floors || blockConfig.floors_count || 1;
             const flatsPerFloor = blockConfig.flats_per_floor || 4;
-            const seriesStart = blockConfig.series_start || 101;
+            const seriesStart = (blockConfig as any).series_start || (blockConfig as any).starting_series || 101;
             const flatType = blockConfig.flat_type || '2 BHK';
+
 
             // Create Floors & Flats
             for (let f = 1; f <= totalFloors; f++) {
