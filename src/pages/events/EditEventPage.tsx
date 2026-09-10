@@ -19,21 +19,54 @@ import { encodeId, decodeId } from '../../utils/idObfuscator';
 
 const currentYear = new Date().getFullYear();
 
-const editEventSchema = z.object({
-  name: z.string().min(2, 'Event name must be at least 2 characters'),
-  event_year: z.coerce.number().int().min(2000).max(2100).optional().nullable(),
-  is_navratri: z.boolean().optional(),
-  default_collection_amount: z.coerce.number().min(0, 'Default collection amount must be 0 or positive').optional(),
-  instructions: z.string().optional(),
-  description: z.string().optional(),
-  start_date: z.string().min(1, 'Start date is required'),
-  end_date: z.string().optional(),
-  start_time: z.string().optional(),
-  end_time: z.string().optional(),
-  venue: z.string().optional(),
-  banner_url: z.string().optional(),
-  status: z.enum(['draft', 'published', 'ongoing', 'completed', 'cancelled']),
-});
+const editEventSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, 'Event title is required')
+      .min(3, 'Event title must be at least 3 characters')
+      .max(60, 'Event title cannot exceed 60 characters'),
+    event_year: z
+      .coerce
+      .number({ invalid_type_error: 'Valid year is required (e.g. 2026)' })
+      .int('Year must be a whole number')
+      .min(2000, 'Year must be 2000 or later')
+      .max(2100, 'Year cannot exceed 2100'),
+    is_navratri: z.boolean().optional(),
+    default_collection_amount: z
+      .coerce
+      .number({ invalid_type_error: 'Collection amount must be a number' })
+      .min(0, 'Collection amount must be 0 or positive')
+      .optional(),
+    instructions: z.string().max(2000, 'Instructions cannot exceed 2000 characters').optional(),
+    description: z.string().max(1000, 'Description cannot exceed 1000 characters').optional(),
+    start_date: z.string().min(1, 'Start date is required'),
+    end_date: z.string().optional().nullable(),
+    start_time: z.string().optional(),
+    end_time: z.string().optional(),
+    venue: z.string().max(100, 'Venue cannot exceed 100 characters').optional(),
+    banner_url: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || val.trim() === '' || /^https?:\/\/.+/i.test(val.trim()),
+        'Invalid URL format (must start with http:// or https://)'
+      ),
+    status: z.enum(['draft', 'published', 'ongoing', 'completed', 'cancelled']),
+  })
+  .superRefine((data, ctx) => {
+    if (data.start_date && data.end_date && data.end_date.trim() !== '') {
+      const start = new Date(data.start_date);
+      const end = new Date(data.end_date);
+      if (end < start) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'End date cannot be earlier than start date',
+          path: ['end_date'],
+        });
+      }
+    }
+  });
 
 type EditEventFormData = z.infer<typeof editEventSchema>;
 
@@ -53,10 +86,17 @@ export const EditEventPage: React.FC = () => {
     handleSubmit,
     reset,
     setValue,
+    trigger,
+    watch,
     formState: { errors },
   } = useForm<EditEventFormData>({
     resolver: zodResolver(editEventSchema),
+    mode: 'onBlur',
   });
+
+  const watchedName = watch('name') || '';
+  const watchedDescription = watch('description') || '';
+  const watchedInstructions = watch('instructions') || '';
 
   useEffect(() => {
     if (!id) return;
@@ -97,7 +137,7 @@ export const EditEventPage: React.FC = () => {
 
   const handleNavratriToggle = (checked: boolean) => {
     setIsNavratri(checked);
-    setValue('is_navratri', checked);
+    setValue('is_navratri', checked, { shouldValidate: true });
   };
 
   const onSubmit = async (data: EditEventFormData) => {
@@ -106,6 +146,11 @@ export const EditEventPage: React.FC = () => {
       setIsSubmitting(true);
       const res = await eventsService.update(id, {
         ...data,
+        name: data.name.trim(),
+        description: data.description?.trim() || null,
+        instructions: data.instructions?.trim() || null,
+        venue: data.venue?.trim() || null,
+        banner_url: data.banner_url?.trim() || null,
         is_navratri: isNavratri,
         event_year: data.event_year ? Number(data.event_year) : undefined,
         default_collection_amount: Number(data.default_collection_amount) || 0,
@@ -210,9 +255,17 @@ export const EditEventPage: React.FC = () => {
                 <Input
                   label="Event Name"
                   requiredIndicator
+                  maxLength={60}
+                  showCount
+                  currentCount={watchedName.length}
                   placeholder="e.g., Navratri 2026 or Annual Diwali Gala"
                   error={errors.name?.message}
-                  {...register('name')}
+                  {...register('name', {
+                    onBlur: () => trigger('name'),
+                    onChange: () => {
+                      if (errors.name) trigger('name');
+                    },
+                  })}
                 />
               </div>
 
@@ -221,8 +274,14 @@ export const EditEventPage: React.FC = () => {
                   label="Event Year"
                   type="number"
                   placeholder="e.g., 2026"
+                  requiredIndicator
                   error={errors.event_year?.message}
-                  {...register('event_year')}
+                  {...register('event_year', {
+                    onBlur: () => trigger('event_year'),
+                    onChange: () => {
+                      if (errors.event_year) trigger('event_year');
+                    },
+                  })}
                 />
               </div>
             </div>
@@ -236,7 +295,9 @@ export const EditEventPage: React.FC = () => {
                   placeholder="e.g. 5000"
                   leftIcon={<Wallet className="w-3.5 h-3.5 text-slate-400" />}
                   error={errors.default_collection_amount?.message}
-                  {...register('default_collection_amount')}
+                  {...register('default_collection_amount', {
+                    onBlur: () => trigger('default_collection_amount'),
+                  })}
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
                   Standard expected contribution amount per flat.
@@ -248,7 +309,9 @@ export const EditEventPage: React.FC = () => {
                   label="Event Status"
                   requiredIndicator
                   error={errors.status?.message}
-                  {...register('status')}
+                  {...register('status', {
+                    onChange: () => trigger('status'),
+                  })}
                 >
                   <option value="draft">Draft</option>
                   <option value="published">Published</option>
@@ -260,18 +323,29 @@ export const EditEventPage: React.FC = () => {
             </div>
 
             <Textarea
-              label="Event Instructions & Guidelines"
+              label="Event Instructions & Guidelines (Optional)"
               rows={3}
-              placeholder="Guidelines for members, dress codes, timings, garba passes..."
+              maxLength={2000}
+              showCount
+              currentCount={watchedInstructions.length}
+              placeholder="Guidelines for members, dress codes, timings, garba passes (Max 2000 characters)..."
               error={errors.instructions?.message}
-              {...register('instructions')}
+              {...register('instructions', {
+                onBlur: () => trigger('instructions'),
+              })}
             />
 
             <Textarea
-              label="Description"
+              label="Description (Optional)"
               rows={2}
+              maxLength={1000}
+              showCount
+              currentCount={watchedDescription.length}
+              placeholder="Describe event details, agenda, and notes (Max 1000 characters)..."
               error={errors.description?.message}
-              {...register('description')}
+              {...register('description', {
+                onBlur: () => trigger('description'),
+              })}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -280,13 +354,25 @@ export const EditEventPage: React.FC = () => {
                 type="date"
                 requiredIndicator
                 error={errors.start_date?.message}
-                {...register('start_date')}
+                {...register('start_date', {
+                  onBlur: () => {
+                    trigger('start_date');
+                    trigger('end_date');
+                  },
+                  onChange: () => {
+                    trigger('start_date');
+                    trigger('end_date');
+                  },
+                })}
               />
               <Input
-                label="End Date"
+                label="End Date (Optional)"
                 type="date"
                 error={errors.end_date?.message}
-                {...register('end_date')}
+                {...register('end_date', {
+                  onBlur: () => trigger('end_date'),
+                  onChange: () => trigger('end_date'),
+                })}
               />
               <Input
                 label="Start Time"
@@ -305,13 +391,21 @@ export const EditEventPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label="Venue / Location"
+                maxLength={200}
+                placeholder="e.g. Clubhouse Ground"
                 error={errors.venue?.message}
                 {...register('venue')}
               />
               <Input
-                label="Banner Image URL"
+                label="Banner Image URL (Optional)"
+                placeholder="https://example.com/banner.jpg"
                 error={errors.banner_url?.message}
-                {...register('banner_url')}
+                {...register('banner_url', {
+                  onBlur: () => trigger('banner_url'),
+                  onChange: () => {
+                    if (errors.banner_url) trigger('banner_url');
+                  },
+                })}
               />
             </div>
 

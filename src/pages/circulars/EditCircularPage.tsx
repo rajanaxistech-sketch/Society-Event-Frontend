@@ -115,17 +115,42 @@ export const EditCircularPage: React.FC = () => {
     }
   };
 
+  const validateTitle = (val: string): string => {
+    const trimmed = val.trim();
+    if (!trimmed) {
+      return 'Circular title is required';
+    }
+    if (trimmed.length < 3) {
+      return 'Circular title must be at least 3 characters';
+    }
+    if (trimmed.length > 200) {
+      return 'Circular title cannot exceed 200 characters';
+    }
+    return '';
+  };
+
+  const validateDescription = (val: string): string => {
+    const trimmed = val.trim();
+    if (!trimmed) {
+      return 'Notice content & instructions are required';
+    }
+    if (trimmed.length < 5) {
+      return 'Notice content must be at least 5 characters';
+    }
+    if (trimmed.length > 5000) {
+      return 'Notice content cannot exceed 5000 characters';
+    }
+    return '';
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!title.trim()) {
-      newErrors.title = 'Title is required';
-    } else if (title.trim().length < 2) {
-      newErrors.title = 'Title must be at least 2 characters';
-    }
 
-    if (!description.trim()) {
-      newErrors.description = 'Description is required';
-    }
+    const titleErr = validateTitle(title);
+    if (titleErr) newErrors.title = titleErr;
+
+    const descErr = validateDescription(description);
+    if (descErr) newErrors.description = descErr;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -177,54 +202,81 @@ export const EditCircularPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-3.5">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(-1)}
-          leftIcon={<ArrowLeft className="w-4 h-4" />}
+          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
         >
           Back
         </Button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shadow-2xs">
-            <ScrollText className="w-5 h-5" />
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shadow-2xs">
+            <ScrollText className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Edit Circular</h1>
-            <p className="text-xs text-slate-500">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Edit Circular</h1>
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Update details, publication status, and document attachments
             </p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <Card title="Circular Details">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Society banner */}
-            <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700">
+            <div className="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700">
               <Building2 className="w-4 h-4 text-indigo-600 shrink-0" />
               <span className="font-semibold">Society:</span>
               <span>{circular.society?.name || '—'}</span>
             </div>
 
             {/* Title */}
-            <Input
-              label="Circular Title *"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                if (errors.title) setErrors((err) => ({ ...err, title: '' }));
-              }}
-              error={errors.title}
-              required
-            />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  Circular Title <span className="text-red-500">*</span>
+                </label>
+                <span
+                  className={`text-[10px] font-medium ${
+                    title.length > 200
+                      ? 'text-red-600 font-bold'
+                      : title.length >= 180
+                      ? 'text-amber-600'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  {title.length}/200 characters
+                </span>
+              </div>
+              <Input
+                placeholder="e.g. Navratri 2026 Collection & Garba Guidelines"
+                value={title}
+                maxLength={200}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setTitle(val);
+                  if (errors.title) {
+                    const err = validateTitle(val);
+                    setErrors((prev) => ({ ...prev, title: err }));
+                  }
+                }}
+                onBlur={() => {
+                  const err = validateTitle(title);
+                  if (err) setErrors((prev) => ({ ...prev, title: err }));
+                }}
+                error={errors.title}
+                helperText={!errors.title ? 'Max 200 characters' : undefined}
+              />
+            </div>
 
             {/* Event Association & Status */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
                 label="Associated Event"
                 value={eventId}
@@ -239,7 +291,8 @@ export const EditCircularPage: React.FC = () => {
               />
 
               <Select
-                label="Status *"
+                label="Status"
+                requiredIndicator
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 options={[
@@ -247,22 +300,47 @@ export const EditCircularPage: React.FC = () => {
                   { label: 'Published (Officially released)', value: 'published' },
                   { label: 'Unpublished (Hidden from residents)', value: 'unpublished' },
                 ]}
-                required
               />
             </div>
 
             {/* Description */}
-            <Textarea
-              label="Notice Content & Instructions *"
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                if (errors.description) setErrors((err) => ({ ...err, description: '' }));
-              }}
-              error={errors.description}
-              rows={5}
-              required
-            />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  Notice Content & Instructions <span className="text-red-500">*</span>
+                </label>
+                <span
+                  className={`text-[10px] font-medium ${
+                    description.length > 5000
+                      ? 'text-red-600 font-bold'
+                      : description.length >= 4800
+                      ? 'text-amber-600'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  {description.length}/5000 characters
+                </span>
+              </div>
+              <Textarea
+                placeholder="Enter the official details, requirements, collection deadlines, or important announcements for residents..."
+                value={description}
+                maxLength={5000}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setDescription(val);
+                  if (errors.description) {
+                    const err = validateDescription(val);
+                    setErrors((prev) => ({ ...prev, description: err }));
+                  }
+                }}
+                onBlur={() => {
+                  const err = validateDescription(description);
+                  if (err) setErrors((prev) => ({ ...prev, description: err }));
+                }}
+                error={errors.description}
+                rows={5}
+              />
+            </div>
           </div>
         </Card>
 
@@ -271,7 +349,7 @@ export const EditCircularPage: React.FC = () => {
           title="Document Attachment"
           subtitle="Keep existing attachment or upload a replacement file (PDF, PNG, JPG, JPEG)"
         >
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             <input
               type="file"
               ref={fileInputRef}
@@ -282,20 +360,20 @@ export const EditCircularPage: React.FC = () => {
 
             {/* Existing attachment info */}
             {circular.file_url && !newFile && (
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
                     {circular.file_type === 'pdf' ? (
-                      <FileText className="w-5 h-5 text-rose-600" />
+                      <FileText className="w-4 h-4 text-rose-600" />
                     ) : (
-                      <ImageIcon className="w-5 h-5 text-indigo-600" />
+                      <ImageIcon className="w-4 h-4 text-indigo-600" />
                     )}
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900">
                       {circular.file_name || 'Current Attachment'}
                     </p>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[10px] text-slate-500">
                       Existing file &bull; {circular.file_type?.toUpperCase()}
                     </p>
                   </div>
@@ -314,18 +392,18 @@ export const EditCircularPage: React.FC = () => {
 
             {/* Replacement or New File Selected */}
             {newFile && (
-              <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+              <div className="p-3 rounded-xl bg-indigo-50/50 border border-indigo-200 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
                     {newFile.name.endsWith('.pdf') ? (
-                      <FileText className="w-5 h-5 text-rose-600" />
+                      <FileText className="w-4 h-4 text-rose-600" />
                     ) : (
-                      <ImageIcon className="w-5 h-5 text-indigo-600" />
+                      <ImageIcon className="w-4 h-4 text-indigo-600" />
                     )}
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-900 line-clamp-1">{newFile.name}</p>
-                    <p className="text-[11px] text-indigo-600 font-semibold">New file selected</p>
+                    <p className="text-[10px] text-indigo-600 font-semibold">New file selected</p>
                   </div>
                 </div>
 
@@ -335,9 +413,9 @@ export const EditCircularPage: React.FC = () => {
                     setNewFile(null);
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
@@ -345,16 +423,16 @@ export const EditCircularPage: React.FC = () => {
             {!circular.file_url && !newFile && (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 hover:bg-indigo-50/70 transition-all rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group"
+                className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 hover:bg-indigo-50/70 transition-all rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer group"
               >
-                <UploadCloud className="w-6 h-6 text-indigo-600 mb-2" />
+                <UploadCloud className="w-5 h-5 text-indigo-600 mb-1.5" />
                 <p className="text-xs font-bold text-slate-800">Upload Attachment (PDF, PNG, JPG, JPEG)</p>
               </div>
             )}
 
             {fileError && (
-              <div className="flex items-center gap-2 text-rose-600 text-xs font-semibold bg-rose-50 p-2.5 rounded-xl border border-rose-100">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="flex items-center gap-1.5 text-red-600 text-[11px] font-semibold bg-red-50 p-2 rounded-lg border border-red-200">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{fileError}</span>
               </div>
             )}
@@ -362,10 +440,11 @@ export const EditCircularPage: React.FC = () => {
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-2">
+        <div className="flex items-center justify-end gap-2 pt-1">
           <Button
             type="button"
             variant="outline"
+            size="sm"
             onClick={() => navigate(`/circulars/${encodeId(id)}`)}
             disabled={isSubmitting}
           >
@@ -374,8 +453,9 @@ export const EditCircularPage: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
+            size="sm"
             isLoading={isSubmitting}
-            leftIcon={<Save className="w-4 h-4" />}
+            leftIcon={<Save className="w-3.5 h-3.5" />}
           >
             Save Changes
           </Button>

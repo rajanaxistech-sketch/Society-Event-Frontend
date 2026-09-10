@@ -121,17 +121,42 @@ export const CreateCircularPage: React.FC = () => {
     }
   };
 
+  const validateTitle = (val: string): string => {
+    const trimmed = val.trim();
+    if (!trimmed) {
+      return 'Circular title is required';
+    }
+    if (trimmed.length < 3) {
+      return 'Circular title must be at least 3 characters';
+    }
+    if (trimmed.length > 200) {
+      return 'Circular title cannot exceed 200 characters';
+    }
+    return '';
+  };
+
+  const validateDescription = (val: string): string => {
+    const trimmed = val.trim();
+    if (!trimmed) {
+      return 'Notice content & instructions are required';
+    }
+    if (trimmed.length < 5) {
+      return 'Notice content must be at least 5 characters';
+    }
+    if (trimmed.length > 5000) {
+      return 'Notice content cannot exceed 5000 characters';
+    }
+    return '';
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!title.trim()) {
-      newErrors.title = 'Title is required';
-    } else if (title.trim().length < 2) {
-      newErrors.title = 'Title must be at least 2 characters';
-    }
 
-    if (!description.trim()) {
-      newErrors.description = 'Description is required';
-    }
+    const titleErr = validateTitle(title);
+    if (titleErr) newErrors.title = titleErr;
+
+    const descErr = validateDescription(description);
+    if (descErr) newErrors.description = descErr;
 
     if (isSuperAdmin && !societyId) {
       newErrors.societyId = 'Target society must be selected';
@@ -206,7 +231,9 @@ export const CreateCircularPage: React.FC = () => {
             <ScrollText className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">Create Official Circular</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">
+              Create Official Circular
+            </h1>
             <p className="text-[11px] text-slate-500">
               Draft and publish circulars, collections, and event instructions for society members
             </p>
@@ -215,35 +242,64 @@ export const CreateCircularPage: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <Card title="Circular Information" subtitle="Provide the notice title, details, and target association">
-          <div className="space-y-2.5">
+        <Card
+          title="Circular Information"
+          subtitle="Provide the notice title, details, and target association"
+        >
+          <div className="space-y-3">
             {/* Title */}
-            <Input
-              label="Circular Title *"
-              placeholder="e.g. Navratri 2026 Collection & Garba Guidelines"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                if (errors.title) setErrors((err) => ({ ...err, title: '' }));
-              }}
-              error={errors.title}
-              helperText="A clear, descriptive title visible on the resident feed"
-              required
-            />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  Circular Title <span className="text-red-500">*</span>
+                </label>
+                <span
+                  className={`text-[10px] font-medium ${
+                    title.length > 200
+                      ? 'text-red-600 font-bold'
+                      : title.length >= 180
+                      ? 'text-amber-600'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  {title.length}/200 characters
+                </span>
+              </div>
+              <Input
+                placeholder="e.g. Navratri 2026 Collection & Garba Guidelines"
+                value={title}
+                maxLength={200}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setTitle(val);
+                  if (errors.title) {
+                    const err = validateTitle(val);
+                    setErrors((prev) => ({ ...prev, title: err }));
+                  }
+                }}
+                onBlur={() => {
+                  const err = validateTitle(title);
+                  if (err) setErrors((prev) => ({ ...prev, title: err }));
+                }}
+                error={errors.title}
+                helperText={!errors.title ? 'A clear, descriptive title visible on the resident feed (Max 200 characters)' : undefined}
+              />
+            </div>
 
             {/* Scope: Society & Event */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {isSuperAdmin ? (
                 <Select
-                  label="Target Society *"
+                  label="Target Society"
+                  requiredIndicator
                   value={societyId}
                   onChange={(e) => {
                     setSocietyId(e.target.value);
                     setEventId('');
+                    if (errors.societyId) setErrors((err) => ({ ...err, societyId: '' }));
                   }}
                   options={societies.map((s) => ({ label: s.name, value: s.id }))}
                   error={errors.societyId}
-                  required
                 />
               ) : (
                 <div>
@@ -272,18 +328,43 @@ export const CreateCircularPage: React.FC = () => {
             </div>
 
             {/* Description */}
-            <Textarea
-              label="Notice Content & Instructions *"
-              placeholder="Enter the official details, requirements, collection deadlines, or important announcements for residents..."
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                if (errors.description) setErrors((err) => ({ ...err, description: '' }));
-              }}
-              error={errors.description}
-              rows={4}
-              required
-            />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  Notice Content & Instructions <span className="text-red-500">*</span>
+                </label>
+                <span
+                  className={`text-[10px] font-medium ${
+                    description.length > 5000
+                      ? 'text-red-600 font-bold'
+                      : description.length >= 4800
+                      ? 'text-amber-600'
+                      : 'text-slate-400'
+                  }`}
+                >
+                  {description.length}/5000 characters
+                </span>
+              </div>
+              <Textarea
+                placeholder="Enter the official details, requirements, collection deadlines, or important announcements for residents..."
+                value={description}
+                maxLength={5000}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setDescription(val);
+                  if (errors.description) {
+                    const err = validateDescription(val);
+                    setErrors((prev) => ({ ...prev, description: err }));
+                  }
+                }}
+                onBlur={() => {
+                  const err = validateDescription(description);
+                  if (err) setErrors((prev) => ({ ...prev, description: err }));
+                }}
+                error={errors.description}
+                rows={4}
+              />
+            </div>
           </div>
         </Card>
 
@@ -340,7 +421,7 @@ export const CreateCircularPage: React.FC = () => {
                     setFile(null);
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
-                  className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -348,7 +429,7 @@ export const CreateCircularPage: React.FC = () => {
             )}
 
             {fileError && (
-              <div className="flex items-center gap-1.5 text-rose-600 text-[11px] font-semibold bg-rose-50 p-2 rounded-lg border border-rose-100">
+              <div className="flex items-center gap-1.5 text-red-600 text-[11px] font-semibold bg-red-50 p-2 rounded-lg border border-red-200">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{fileError}</span>
               </div>

@@ -20,21 +20,54 @@ import { encodeId } from '../../utils/idObfuscator';
 
 const currentYear = new Date().getFullYear();
 
-const createEventSchema = z.object({
-  society_id: z.string().min(1, 'Please select a society'),
-  name: z.string().min(2, 'Event name must be at least 2 characters'),
-  event_year: z.coerce.number().int().min(2000).max(2100).optional().nullable(),
-  is_navratri: z.boolean().optional(),
-  default_collection_amount: z.coerce.number().min(0, 'Default collection amount must be 0 or positive').optional(),
-  instructions: z.string().optional(),
-  description: z.string().optional(),
-  start_date: z.string().min(1, 'Start date is required'),
-  end_date: z.string().optional(),
-  start_time: z.string().optional(),
-  end_time: z.string().optional(),
-  venue: z.string().optional(),
-  banner_url: z.string().optional(),
-});
+const createEventSchema = z
+  .object({
+    society_id: z.string().min(1, 'Please select a host society'),
+    name: z
+      .string()
+      .min(1, 'Event title is required')
+      .min(3, 'Event title must be at least 3 characters')
+      .max(60, 'Event title cannot exceed 60 characters'),
+    event_year: z
+      .coerce
+      .number({ invalid_type_error: 'Valid year is required (e.g. 2026)' })
+      .int('Year must be a whole number')
+      .min(2000, 'Year must be 2000 or later')
+      .max(2100, 'Year cannot exceed 2100'),
+    is_navratri: z.boolean().optional(),
+    default_collection_amount: z
+      .coerce
+      .number({ invalid_type_error: 'Collection amount must be a number' })
+      .min(0, 'Collection amount must be 0 or positive')
+      .optional(),
+    description: z.string().max(1000, 'Description cannot exceed 1000 characters').optional(),
+    instructions: z.string().max(2000, 'Instructions cannot exceed 2000 characters').optional(),
+    start_date: z.string().min(1, 'Start date is required'),
+    end_date: z.string().optional().nullable(),
+    start_time: z.string().optional(),
+    end_time: z.string().optional(),
+    venue: z.string().max(100, 'Venue cannot exceed 100 characters').optional(),
+    banner_url: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || val.trim() === '' || /^https?:\/\/.+/i.test(val.trim()),
+        'Invalid URL format (must start with http:// or https://)'
+      ),
+  })
+  .superRefine((data, ctx) => {
+    if (data.start_date && data.end_date && data.end_date.trim() !== '') {
+      const start = new Date(data.start_date);
+      const end = new Date(data.end_date);
+      if (end < start) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'End date cannot be earlier than start date',
+          path: ['end_date'],
+        });
+      }
+    }
+  });
 
 type CreateEventFormData = z.infer<typeof createEventSchema>;
 
@@ -67,9 +100,11 @@ export const CreateEventPage: React.FC = () => {
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<CreateEventFormData>({
     resolver: zodResolver(createEventSchema),
+    mode: 'onBlur',
     defaultValues: {
       society_id: '',
       name: '',
@@ -88,22 +123,30 @@ export const CreateEventPage: React.FC = () => {
   });
 
   const watchedYear = watch('event_year');
+  const watchedName = watch('name') || '';
+  const watchedDescription = watch('description') || '';
+  const watchedInstructions = watch('instructions') || '';
 
   const handleNavratriToggle = (checked: boolean) => {
     setIsNavratri(checked);
-    setValue('is_navratri', checked);
+    setValue('is_navratri', checked, { shouldValidate: true });
     if (checked) {
       setCollectionEnabled(true);
       setFoodEnabled(true);
       setActivitiesEnabled(true);
       const yr = watchedYear || currentYear;
-      setValue('name', `Navratri ${yr}`);
-      setValue('default_collection_amount', 5000);
+      setValue('name', `Navratri ${yr}`, { shouldValidate: true });
+      setValue('default_collection_amount', 5000, { shouldValidate: true });
       setValue(
         'instructions',
-        `Navratri ${yr} celebration rules & guidelines:\n- Garba dress code is encouraged.\n- Resident flat collection amount is ₹5,000.\n- Aarti begins daily at 7:30 PM followed by Raas Garba.`
+        `Navratri ${yr} celebration rules & guidelines:\n- Garba dress code is encouraged.\n- Resident flat collection amount is ₹5,000.\n- Aarti begins daily at 7:30 PM followed by Raas Garba.`,
+        { shouldValidate: true }
       );
-      setValue('description', `Annual Grand Navratri Mahotsav ${yr} with live orchestra, daily aarti, and resident garba competitions.`);
+      setValue(
+        'description',
+        `Annual Grand Navratri Mahotsav ${yr} with live orchestra, daily aarti, and resident garba competitions.`,
+        { shouldValidate: true }
+      );
     }
   };
 
@@ -113,6 +156,11 @@ export const CreateEventPage: React.FC = () => {
 
       const payload = {
         ...data,
+        name: data.name.trim(),
+        description: data.description?.trim() || null,
+        instructions: data.instructions?.trim() || null,
+        venue: data.venue?.trim() || null,
+        banner_url: data.banner_url?.trim() || null,
         is_navratri: isNavratri,
         event_year: Number(data.event_year) || currentYear,
         default_collection_amount: Number(data.default_collection_amount) || 5000,
@@ -226,14 +274,16 @@ export const CreateEventPage: React.FC = () => {
             </div>
           }
         >
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Select
                 label="Host Society"
                 requiredIndicator
                 error={errors.society_id?.message}
                 placeholder="-- Select Host Society --"
-                {...register('society_id')}
+                {...register('society_id', {
+                  onChange: () => trigger('society_id'),
+                })}
               >
                 {societies.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -248,15 +298,28 @@ export const CreateEventPage: React.FC = () => {
                 placeholder="e.g. 2026"
                 requiredIndicator
                 error={errors.event_year?.message}
-                {...register('event_year')}
+                {...register('event_year', {
+                  onBlur: () => trigger('event_year'),
+                  onChange: () => {
+                    if (errors.event_year) trigger('event_year');
+                  },
+                })}
               />
 
               <Input
                 label="Event Title"
                 placeholder={isNavratri ? 'e.g. Navratri 2026' : 'e.g. Annual Cultural Gathering 2026'}
                 requiredIndicator
+                maxLength={60}
+                showCount
+                currentCount={watchedName.length}
                 error={errors.name?.message}
-                {...register('name')}
+                {...register('name', {
+                  onBlur: () => trigger('name'),
+                  onChange: () => {
+                    if (errors.name) trigger('name');
+                  },
+                })}
               />
             </div>
 
@@ -270,25 +333,37 @@ export const CreateEventPage: React.FC = () => {
                   requiredIndicator
                   helperText="Base amount assigned to all society flats for this Navratri event. Individual flat overrides can be made inside Collection Management."
                   error={errors.default_collection_amount?.message}
-                  {...register('default_collection_amount')}
+                  {...register('default_collection_amount', {
+                    onBlur: () => trigger('default_collection_amount'),
+                  })}
                 />
               </div>
             )}
 
             <Textarea
               label="Event Description"
-              placeholder="Describe the occasion, schedule of events, and notes for residents..."
+              placeholder="Describe the occasion, schedule of events, and notes for residents (Max 1000 characters)..."
               rows={2}
+              maxLength={1000}
+              showCount
+              currentCount={watchedDescription.length}
               error={errors.description?.message}
-              {...register('description')}
+              {...register('description', {
+                onBlur: () => trigger('description'),
+              })}
             />
 
             <Textarea
               label="Event Instructions / Information (Optional)"
-              placeholder="Important rules, aarti timings, dress code guidelines, or instructions for participants..."
+              placeholder="Important rules, aarti timings, dress code guidelines, or instructions for participants (Max 2000 characters)..."
               rows={2}
+              maxLength={2000}
+              showCount
+              currentCount={watchedInstructions.length}
               error={errors.instructions?.message}
-              {...register('instructions')}
+              {...register('instructions', {
+                onBlur: () => trigger('instructions'),
+              })}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -297,13 +372,25 @@ export const CreateEventPage: React.FC = () => {
                 type="date"
                 requiredIndicator
                 error={errors.start_date?.message}
-                {...register('start_date')}
+                {...register('start_date', {
+                  onBlur: () => {
+                    trigger('start_date');
+                    trigger('end_date');
+                  },
+                  onChange: () => {
+                    trigger('start_date');
+                    trigger('end_date');
+                  },
+                })}
               />
               <Input
                 label="End Date (Optional)"
                 type="date"
                 error={errors.end_date?.message}
-                {...register('end_date')}
+                {...register('end_date', {
+                  onBlur: () => trigger('end_date'),
+                  onChange: () => trigger('end_date'),
+                })}
               />
               <Input
                 label="Start Time"
@@ -323,6 +410,7 @@ export const CreateEventPage: React.FC = () => {
               <Input
                 label="Venue / Location"
                 placeholder="e.g. Clubhouse Lawn, Central Amphitheater"
+                maxLength={100}
                 error={errors.venue?.message}
                 {...register('venue')}
               />
@@ -330,7 +418,12 @@ export const CreateEventPage: React.FC = () => {
                 label="Banner Image URL (Optional)"
                 placeholder="https://example.com/banner.jpg"
                 error={errors.banner_url?.message}
-                {...register('banner_url')}
+                {...register('banner_url', {
+                  onBlur: () => trigger('banner_url'),
+                  onChange: () => {
+                    if (errors.banner_url) trigger('banner_url');
+                  },
+                })}
               />
             </div>
           </div>

@@ -6,19 +6,31 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
   error?: string;
   helperText?: string;
   requiredIndicator?: boolean;
+  showCount?: boolean;
+  currentCount?: number;
 }
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, helperText, requiredIndicator, className = '', id, rows = 3, ...props }, ref) => {
+  ({ label, error, helperText, requiredIndicator, showCount, currentCount, className = '', id, rows = 3, ...props }, ref) => {
     const textareaId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
     return (
       <div className="w-full flex flex-col gap-1">
         {label && (
-          <label htmlFor={textareaId} className="text-xs font-semibold text-[#1E293B] flex items-center gap-1">
-            {label}
-            {(requiredIndicator || props.required) && <span className="text-rose-500">*</span>}
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor={textareaId} className="text-xs font-semibold text-[#1E293B] flex items-center gap-1">
+              {label}
+              {(requiredIndicator || props.required) && <span className="text-rose-500">*</span>}
+            </label>
+            {showCount && props.maxLength && (
+              <span className={clsx(
+                "text-[10px] font-medium tracking-tight",
+                (currentCount || 0) >= props.maxLength ? "text-rose-600 font-semibold" : "text-slate-400"
+              )}>
+                {currentCount || 0}/{props.maxLength} max
+              </span>
+            )}
+          </div>
         )}
         <textarea
           id={textareaId}
@@ -34,7 +46,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {error ? (
-          <p className="text-[11px] text-rose-600 mt-0.5">{error}</p>
+          <p className="text-[11px] text-red-600 font-medium mt-0.5">{error}</p>
         ) : helperText ? (
           <p className="text-[11px] text-slate-500 mt-0.5">{helperText}</p>
         ) : null}

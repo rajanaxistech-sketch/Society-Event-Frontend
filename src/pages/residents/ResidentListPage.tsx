@@ -106,18 +106,53 @@ export const ResidentListPage: React.FC = () => {
       header: 'Assigned Unit',
       render: (row) => {
         if (row.flat) {
+          const blockName = row.flat.floor?.block?.name || 'Block';
+          const floorNum = row.flat.floor?.floor_number;
+          const floorText = floorNum !== undefined ? (floorNum === 0 ? 'Ground Floor' : `Floor ${floorNum}`) : '';
           return (
-            <div className="flex items-center gap-1.5 text-xs text-slate-800 font-medium">
-              <Home className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-              <span>Flat {row.flat.flat_number} ({row.flat.floor?.block?.name || 'Block'})</span>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 border border-indigo-100/80 shadow-2xs">
+                <Home className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-bold text-slate-900 text-xs">
+                    Flat {row.flat.flat_number}
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    {blockName}
+                  </span>
+                </div>
+                {floorText && (
+                  <span className="text-[11px] text-slate-500 block">
+                    {floorText}
+                  </span>
+                )}
+              </div>
             </div>
           );
         }
         if (row.bungalow) {
           return (
-            <div className="flex items-center gap-1.5 text-xs text-slate-800 font-medium">
-              <Building2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-              <span>Bungalow {row.bungalow.bungalow_number}</span>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-200/80 shadow-2xs">
+                <Building2 className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-bold text-slate-900 text-xs">
+                    Bungalow {row.bungalow.bungalow_number}
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                    Villa
+                  </span>
+                </div>
+                {row.bungalow.bungalow_type && (
+                  <span className="text-[11px] text-slate-500 block">
+                    {row.bungalow.bungalow_type}
+                  </span>
+                )}
+              </div>
             </div>
           );
         }

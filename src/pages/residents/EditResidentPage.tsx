@@ -15,11 +15,25 @@ import ErrorState from '../../components/common/ErrorState';
 import { ArrowLeft, Save, Users } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
+import { isValidEmail, isValidPhone } from '../../utils/validators';
 
 const editResidentSchema = z.object({
-  full_name: z.string().min(2, 'Full name must be at least 2 characters'),
-  phone: z.string().optional(),
-  email: z.string().email('Invalid email address').optional(),
+  full_name: z
+    .string()
+    .min(1, 'Full name is required')
+    .min(2, 'Full name must be at least 2 characters'),
+  phone: z
+    .string()
+    .optional()
+    .refine((val) => !val || isValidPhone(val), {
+      message: 'Invalid phone number (must be 7 to 15 digits, e.g. +91 9876543210)',
+    }),
+  email: z
+    .string()
+    .optional()
+    .refine((val) => !val || isValidEmail(val), {
+      message: 'Invalid email address format (e.g. resident@example.com)',
+    }),
   relationship_to_owner: z.string().max(80, 'Max 80 characters').optional(),
   status: z.enum(['active', 'inactive']),
 });
@@ -40,10 +54,13 @@ export const EditResidentPage: React.FC = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     reset,
+    trigger,
     formState: { errors },
   } = useForm<EditResidentFormData>({
     resolver: zodResolver(editResidentSchema),
+    mode: 'onBlur',
   });
 
   useEffect(() => {
@@ -80,8 +97,12 @@ export const EditResidentPage: React.FC = () => {
     try {
       setIsSubmitting(true);
       const res = await personsService.update(id, {
-        ...data,
+        full_name: data.full_name.trim(),
+        phone: data.phone?.trim() || null,
+        email: data.email?.trim() || null,
+        relationship_to_owner: data.relationship_to_owner?.trim() || null,
         is_primary_owner: isPrimaryOwner,
+        status: data.status,
       });
 
       if (res.success) {
@@ -143,7 +164,9 @@ export const EditResidentPage: React.FC = () => {
               label="Full Name"
               requiredIndicator
               error={errors.full_name?.message}
-              {...register('full_name')}
+              {...register('full_name', {
+                onBlur: () => trigger('full_name'),
+              })}
             />
 
             <Input
@@ -155,15 +178,50 @@ export const EditResidentPage: React.FC = () => {
 
             <Input
               label="Phone Number"
+              placeholder="e.g. 9876543210"
+              maxLength={15}
               error={errors.phone?.message}
-              {...register('phone')}
+              {...register('phone', {
+                onBlur: () => trigger('phone'),
+                onChange: (e) => {
+                  const numericVal = e.target.value.replace(/\D/g, '');
+                  setValue('phone', numericVal, { shouldValidate: true });
+                },
+              })}
+              onKeyDown={(e) => {
+                if (
+                  [
+                    'Backspace',
+                    'Delete',
+                    'Tab',
+                    'Escape',
+                    'Enter',
+                    'ArrowLeft',
+                    'ArrowRight',
+                    'Home',
+                    'End',
+                  ].includes(e.key) ||
+                  (e.ctrlKey || e.metaKey)
+                ) {
+                  return;
+                }
+                if (!/^[0-9]$/.test(e.key)) {
+                  e.preventDefault();
+                }
+              }}
             />
 
             <Input
               label="Email Address"
               type="email"
+              placeholder="resident@example.com"
               error={errors.email?.message}
-              {...register('email')}
+              {...register('email', {
+                onBlur: () => trigger('email'),
+                onChange: () => {
+                  if (errors.email) trigger('email');
+                },
+              })}
             />
 
             <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -180,10 +238,11 @@ export const EditResidentPage: React.FC = () => {
               requiredIndicator
               error={errors.status?.message}
               {...register('status')}
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </Select>
+              options={[
+                { label: 'Active', value: 'active' },
+                { label: 'Inactive', value: 'inactive' },
+              ]}
+            />
 
             <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
               <Button

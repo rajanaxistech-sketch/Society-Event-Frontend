@@ -8,6 +8,8 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   requiredIndicator?: boolean;
+  showCount?: boolean;
+  currentCount?: number;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -19,6 +21,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       leftIcon,
       rightIcon,
       requiredIndicator,
+      showCount,
+      currentCount,
       className = '',
       id,
       ...props
@@ -30,10 +34,20 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full flex flex-col gap-1">
         {label && (
-          <label htmlFor={inputId} className="text-xs font-semibold text-[#1E293B] flex items-center gap-1">
-            {label}
-            {(requiredIndicator || props.required) && <span className="text-rose-500">*</span>}
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor={inputId} className="text-xs font-semibold text-[#1E293B] flex items-center gap-1">
+              {label}
+              {(requiredIndicator || props.required) && <span className="text-rose-500">*</span>}
+            </label>
+            {showCount && props.maxLength && (
+              <span className={clsx(
+                "text-[10px] font-medium tracking-tight",
+                (currentCount || 0) >= props.maxLength ? "text-rose-600 font-semibold" : "text-slate-400"
+              )}>
+                {currentCount || 0}/{props.maxLength} max
+              </span>
+            )}
+          </div>
         )}
         <div className="relative flex items-center">
           {leftIcon && (
@@ -62,7 +76,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error ? (
-          <p className="text-[11px] text-rose-600 mt-0.5">{error}</p>
+          <p className="text-[11px] text-red-600 font-medium mt-0.5">{error}</p>
         ) : helperText ? (
           <p className="text-[11px] text-slate-500 mt-0.5">{helperText}</p>
         ) : null}
