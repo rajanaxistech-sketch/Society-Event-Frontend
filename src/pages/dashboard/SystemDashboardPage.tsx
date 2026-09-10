@@ -25,12 +25,50 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
+  CartesianGrid,
+  LabelList,
 } from 'recharts';
 import Button from '../../components/ui/Button';
+
+// Formatting helper for currency axis ticks
+const formatAxisCurrency = (val: number) => {
+  if (val === 0) return '₹0';
+  if (val >= 10000000) return `₹${(val / 10000000).toFixed(1)}Cr`;
+  if (val >= 100000) return `₹${(val / 100000).toFixed(val % 100000 === 0 ? 0 : 1)}L`;
+  if (val >= 1000) return `₹${Math.round(val / 1000)}k`;
+  return `₹${val}`;
+};
+
+// Custom interactive tooltip for grouped horizontal bars
+const CustomBarTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 backdrop-blur-sm border border-slate-200 rounded-lg p-3 shadow-lg text-xs min-w-[170px]">
+        <p className="font-bold text-slate-900 mb-2 pb-1.5 border-b border-slate-100 flex items-center gap-1.5">
+          <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+          <span>{label}</span>
+        </p>
+        <div className="space-y-1.5">
+          {payload.map((entry: any, index: number) => (
+            <div key={`tooltip-${index}`} className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: entry.color || (entry.name === 'Collected' ? '#4F46E5' : '#F59E0B') }}
+                />
+                <span className="text-slate-600 font-medium">{entry.name}:</span>
+              </div>
+              <span className="font-semibold text-slate-900">
+                {formatCurrency(entry.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export const SystemDashboardPage: React.FC = () => {
   const [data, setData] = useState<SystemDashboardData | null>(null);
@@ -79,10 +117,22 @@ export const SystemDashboardPage: React.FC = () => {
     { name: 'Bungalows', Collected: financials.bungalowCollectionPaid, Pending: financials.bungalowCollectionPending },
   ];
 
-  const pieData = [
-    { name: 'Collected', value: financials.totalCollectionPaid, color: '#10B981' },
-    { name: 'Pending', value: financials.totalCollectionPending, color: '#F59E0B' },
-  ];
+  const maxCollectionValue = Math.max(
+    Number(financials.flatCollectionPaid) || 0,
+    Number(financials.flatCollectionPending) || 0,
+    Number(financials.bungalowCollectionPaid) || 0,
+    Number(financials.bungalowCollectionPending) || 0,
+    1000
+  );
+  // Add a 25% buffer so direct value labels have ample breathing room without clipping
+  const xAxisMax = Math.ceil((maxCollectionValue * 1.25) / 10000) * 10000 || 10000;
+
+  const hasCollectionData = (
+    (Number(financials.flatCollectionPaid) || 0) > 0 ||
+    (Number(financials.flatCollectionPending) || 0) > 0 ||
+    (Number(financials.bungalowCollectionPaid) || 0) > 0 ||
+    (Number(financials.bungalowCollectionPending) || 0) > 0
+  );
 
   return (
     <div className="space-y-3.5">
@@ -261,23 +311,94 @@ export const SystemDashboardPage: React.FC = () => {
           </div>
         </Card>
 
-        {/* Breakdown by Property Structure (Bar Chart) */}
-        <Card title="Collections by Unit Type" subtitle="Comparison of Flat vs Bungalow revenue" className="lg:col-span-2">
-          <div className="h-64 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={financialComparisonData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#94A3B8" fontSize={12} />
-                <YAxis stroke="#94A3B8" fontSize={12} tickFormatter={(val) => `₹${val / 1000}k`} />
-                <Tooltip
-                  formatter={(val: any) => [formatCurrency(val), '']}
-                  contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '12px' }}
-                />
-                <Legend />
-                <Bar dataKey="Collected" fill="#4F46E5" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Pending" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* Breakdown by Property Structure (Horizontal Grouped Bar Chart) */}
+        <Card
+          title="Collections by Unit Type"
+          subtitle="Comparison of collected vs pending revenue"
+          headerAction={
+            <div className="flex items-center gap-3 sm:gap-4 text-xs font-medium">
+              <div className="flex items-center gap-1.5 text-slate-700">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#4F46E5] shadow-xs" />
+                <span>Collected</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-700">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] shadow-xs" />
+                <span>Pending</span>
+              </div>
+            </div>
+          }
+          className="lg:col-span-2"
+        >
+          {hasCollectionData ? (
+            <div className="h-64 w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  layout="vertical"
+                  data={financialComparisonData}
+                  margin={{ top: 12, right: 80, left: 10, bottom: 5 }}
+                  barCategoryGap="28%"
+                  barGap={6}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F1F5F9" />
+                  <XAxis
+                    type="number"
+                    domain={[0, xAxisMax]}
+                    axisLine={{ stroke: '#E2E8F0' }}
+                    tickLine={false}
+                    tick={{ fill: '#64748B', fontSize: 11 }}
+                    tickFormatter={formatAxisCurrency}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#1E293B', fontSize: 12, fontWeight: 600 }}
+                    width={85}
+                  />
+                  <Tooltip content={<CustomBarTooltip />} />
+                  <Bar
+                    dataKey="Collected"
+                    name="Collected"
+                    fill="#4F46E5"
+                    radius={[0, 6, 6, 0]}
+                    barSize={18}
+                  >
+                    <LabelList
+                      dataKey="Collected"
+                      position="right"
+                      formatter={(val: any) => formatCurrency(val)}
+                      style={{ fill: '#334155', fontSize: '11px', fontWeight: 600 }}
+                      offset={8}
+                    />
+                  </Bar>
+                  <Bar
+                    dataKey="Pending"
+                    name="Pending"
+                    fill="#F59E0B"
+                    radius={[0, 6, 6, 0]}
+                    barSize={18}
+                  >
+                    <LabelList
+                      dataKey="Pending"
+                      position="right"
+                      formatter={(val: any) => formatCurrency(val)}
+                      style={{ fill: '#334155', fontSize: '11px', fontWeight: 600 }}
+                      offset={8}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-slate-400">
+              <Building2 className="w-10 h-10 mb-2 text-slate-300 stroke-[1.5]" />
+              <p className="text-xs font-semibold text-slate-600">No collection data available</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Collections will appear here once events are published and obligations generated.
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     </div>
@@ -285,3 +406,4 @@ export const SystemDashboardPage: React.FC = () => {
 };
 
 export default SystemDashboardPage;
+
