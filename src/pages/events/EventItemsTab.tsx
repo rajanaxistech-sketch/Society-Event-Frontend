@@ -234,9 +234,6 @@ export const EventItemsTab: React.FC<EventItemsTabProps> = ({ eventId, isNavratr
     serviceGroups.forEach((g) => {
       map[g.name] = { group: g, items: [], totalCost: 0 };
     });
-    if (!map['Other']) {
-      map['Other'] = { items: [], totalCost: 0 };
-    }
 
     // Filter items
     const filtered = items.filter((item) => {
@@ -1003,170 +1000,201 @@ export const EventItemsTab: React.FC<EventItemsTabProps> = ({ eventId, isNavratr
 
         {/* VIEW 1: GROUPED BY SERVICE GROUP */}
         {viewMode === 'groups' && (
-          <div className="space-y-3">
-            {Object.entries(groupedItems).map(([groupName, groupData]) => {
-              if (groupData.items.length === 0 && selectedGroupFilter) return null;
-              const isExpanded = expandedGroups[groupName] !== false;
-
-              return (
-                <div
-                  key={groupName}
-                  className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs transition-all"
-                >
-                  {/* Accordion Header */}
-                  <div
-                    onClick={() => toggleGroup(groupName)}
-                    className="p-3.5 bg-slate-50/80 hover:bg-slate-100/80 cursor-pointer flex items-center justify-between border-b border-slate-100 transition-colors"
+          Object.entries(groupedItems).length === 0 ? (
+            <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+              <Tag className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <h4 className="text-sm font-semibold text-slate-700">No Service Groups or Items Yet</h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                No categories have been added yet. Super Admin can add category groups using "+ Group Master" or add service items directly.
+              </p>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <PermissionGuard permission={Permissions.EVENT_UPDATE}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setGroupModalOpen(true)}
+                    leftIcon={<Tag className="w-3.5 h-3.5 text-slate-500" />}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        type="button"
-                        className="p-1 rounded text-slate-500 hover:text-indigo-600"
-                      >
-                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                      </button>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-slate-900">{groupName}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">
-                            {groupData.items.length} {groupData.items.length === 1 ? 'Service' : 'Services'}
-                          </span>
-                        </div>
-                        {groupData.group?.description && (
-                          <p className="text-[11px] text-slate-500 mt-0.5">{groupData.group.description}</p>
-                        )}
-                      </div>
-                    </div>
+                    + Group Master
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => openCreateModal()}
+                    leftIcon={<Plus className="w-3.5 h-3.5" />}
+                  >
+                    + Add Service / Item
+                  </Button>
+                </PermissionGuard>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(groupedItems).map(([groupName, groupData]) => {
+                if (groupData.items.length === 0 && selectedGroupFilter) return null;
+                const isExpanded = expandedGroups[groupName] !== false;
 
-                    <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="text-right">
-                        <span className="text-[10px] font-semibold text-slate-400 block uppercase">Group Total</span>
-                        <CurrencyDisplay
-                          amount={groupData.totalCost}
-                          className="text-sm font-extrabold text-slate-900"
-                        />
-                      </div>
-                      <PermissionGuard permission={Permissions.EVENT_UPDATE}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openCreateModal(groupName)}
-                          leftIcon={<Plus className="w-3 h-3" />}
+                return (
+                  <div
+                    key={groupName}
+                    className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs transition-all"
+                  >
+                    {/* Accordion Header */}
+                    <div
+                      onClick={() => toggleGroup(groupName)}
+                      className="p-3.5 bg-slate-50/80 hover:bg-slate-100/80 cursor-pointer flex items-center justify-between border-b border-slate-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          className="p-1 rounded text-slate-500 hover:text-indigo-600"
                         >
-                          Add Item
-                        </Button>
-                      </PermissionGuard>
-                    </div>
-                  </div>
-
-                  {/* Accordion Content */}
-                  {isExpanded && (
-                    <div className="p-0">
-                      {groupData.items.length === 0 ? (
-                        <div className="p-6 text-center text-slate-400 text-xs">
-                          No items added to {groupName} yet. Click "+ Add Item" above to add one.
+                          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                        </button>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-slate-900">{groupName}</h4>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">
+                              {groupData.items.length} {groupData.items.length === 1 ? 'Service' : 'Services'}
+                            </span>
+                          </div>
+                          {groupData.group?.description && (
+                            <p className="text-[11px] text-slate-500 mt-0.5">{groupData.group.description}</p>
+                          )}
                         </div>
-                      ) : (
-                        <div className="divide-y divide-slate-100">
-                          {groupData.items.map((item) => {
-                            const vendor = item.vendor?.vendor_name || item.vendor_name || item.vendor_contract?.vendor_name;
-                            const assignedDaysCount =
-                              item.day_assignments?.length ||
-                              (Array.isArray(item.applicable_days) ? item.applicable_days.length : 1);
-                            const isAllDays = assignedDaysCount === eventDays.length && assignedDaysCount > 1;
+                      </div>
 
-                            return (
-                              <div
-                                key={item.id}
-                                className="p-3 sm:p-3.5 hover:bg-indigo-50/20 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
-                              >
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-900 text-sm">{item.name}</span>
-                                    {item.is_default_navratri && (
-                                      <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-semibold">
-                                        Default Theme
-                                      </span>
+                      <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="text-right">
+                          <span className="text-[10px] font-semibold text-slate-400 block uppercase">Group Total</span>
+                          <CurrencyDisplay
+                            amount={groupData.totalCost}
+                            className="text-sm font-extrabold text-slate-900"
+                          />
+                        </div>
+
+                        <PermissionGuard permission={Permissions.EVENT_UPDATE}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openCreateModal(groupName)}
+                            leftIcon={<Plus className="w-3 h-3" />}
+                          >
+                            Add Item
+                          </Button>
+                        </PermissionGuard>
+                      </div>
+                    </div>
+
+                    {/* Accordion Content */}
+                    {isExpanded && (
+                      <div className="p-0">
+                        {groupData.items.length === 0 ? (
+                          <div className="p-6 text-center text-slate-400 text-xs">
+                            No items added to {groupName} yet. Click "+ Add Item" above to add one.
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-slate-100">
+                            {groupData.items.map((item) => {
+                              const vendor = item.vendor?.vendor_name || item.vendor_name || item.vendor_contract?.vendor_name;
+                              const assignedDaysCount =
+                                item.day_assignments?.length ||
+                                (Array.isArray(item.applicable_days) ? item.applicable_days.length : 1);
+                              const isAllDays = assignedDaysCount === eventDays.length && assignedDaysCount > 1;
+
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="p-3 sm:p-3.5 hover:bg-indigo-50/20 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
+                                >
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-slate-900 text-sm">{item.name}</span>
+                                      {item.is_default_navratri && (
+                                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-semibold">
+                                          Default Theme
+                                        </span>
+                                      )}
+                                    </div>
+                                    {item.description && (
+                                      <p className="text-xs text-slate-500">{item.description}</p>
                                     )}
-                                  </div>
-                                  {item.description && (
-                                    <p className="text-xs text-slate-500">{item.description}</p>
-                                  )}
-                                  <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap pt-0.5">
-                                    {/* Vendor */}
-                                    <div className="flex items-center gap-1 text-indigo-700">
-                                      <Building2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                                      <span className="font-medium">
-                                        {vendor || <span className="text-slate-400 italic">No Vendor Assigned</span>}
+                                    <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap pt-0.5">
+                                      {/* Vendor */}
+                                      <div className="flex items-center gap-1 text-indigo-700">
+                                        <Building2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                        <span className="font-medium">
+                                          {vendor || <span className="text-slate-400 italic">No Vendor Assigned</span>}
+                                        </span>
+                                      </div>
+
+                                      {/* Days */}
+                                      <div className="flex items-center gap-1 text-slate-700">
+                                        <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                        <span className="font-medium">
+                                          {isAllDays ? `All ${assignedDaysCount} Days` : `${assignedDaysCount} Days Assigned`}
+                                        </span>
+                                      </div>
+
+                                      {/* Pricing Type */}
+                                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium">
+                                        {item.pricing_type === 'fixed' && 'Fixed Price'}
+                                        {item.pricing_type === 'day_wise' && 'Day-Wise Pricing'}
+                                        {item.pricing_type === 'recurring_daily' && `Daily (₹${item.price_per_day || item.base_price}/day)`}
+                                        {item.pricing_type === 'quantity_based' && `${item.quantity || 1} ${item.unit || 'Nos'} @ ₹${item.base_price}`}
                                       </span>
                                     </div>
+                                  </div>
 
-                                    {/* Days */}
-                                    <div className="flex items-center gap-1 text-slate-700">
-                                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                      <span className="font-medium">
-                                        {isAllDays ? `All ${assignedDaysCount} Days` : `${assignedDaysCount} Days Assigned`}
-                                      </span>
+                                  {/* Cost & Actions */}
+                                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                    <div className="text-right">
+                                      <CurrencyDisplay
+                                        amount={item.total_price}
+                                        className="text-base font-extrabold text-slate-900"
+                                      />
+                                      {Number(item.total_price) === 0 && (
+                                        <span className="text-[10px] text-amber-600 block">Pending Pricing</span>
+                                      )}
                                     </div>
 
-                                    {/* Pricing Type */}
-                                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium">
-                                      {item.pricing_type === 'fixed' && 'Fixed Price'}
-                                      {item.pricing_type === 'day_wise' && 'Day-Wise Pricing'}
-                                      {item.pricing_type === 'recurring_daily' && `Daily (₹${item.price_per_day || item.base_price}/day)`}
-                                      {item.pricing_type === 'quantity_based' && `${item.quantity || 1} ${item.unit || 'Nos'} @ ₹${item.base_price}`}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* Cost & Actions */}
-                                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                                  <div className="text-right">
-                                    <CurrencyDisplay
-                                      amount={item.total_price}
-                                      className="text-base font-extrabold text-slate-900"
-                                    />
-                                    {Number(item.total_price) === 0 && (
-                                      <span className="text-[10px] text-amber-600 block">Pending Pricing</span>
-                                    )}
-                                  </div>
-
-                                  <div className="flex items-center gap-1">
-                                    <PermissionGuard permission={Permissions.EVENT_UPDATE}>
-                                      <button
-                                        type="button"
-                                        onClick={() => openEditModal(item)}
-                                        className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
-                                        title="Edit Item"
-                                      >
-                                        <Edit2 className="w-3.5 h-3.5" />
-                                      </button>
-                                    </PermissionGuard>
-                                    {!item.is_default_navratri && (
+                                    <div className="flex items-center gap-1">
                                       <PermissionGuard permission={Permissions.EVENT_UPDATE}>
                                         <button
                                           type="button"
-                                          onClick={() => setItemToDelete(item)}
-                                          className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-colors"
-                                          title="Delete Item"
+                                          onClick={() => openEditModal(item)}
+                                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                          title="Edit Item"
                                         >
-                                          <Trash2 className="w-3.5 h-3.5" />
+                                          <Edit2 className="w-3.5 h-3.5" />
                                         </button>
                                       </PermissionGuard>
-                                    )}
+                                      {!item.is_default_navratri && (
+                                        <PermissionGuard permission={Permissions.EVENT_UPDATE}>
+                                          <button
+                                            type="button"
+                                            onClick={() => setItemToDelete(item)}
+                                            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                            title="Delete Item"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        </PermissionGuard>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
         )}
 
         {/* VIEW 2: DAY-WISE PLANNING SCHEDULE */}
@@ -1403,8 +1431,12 @@ export const EventItemsTab: React.FC<EventItemsTabProps> = ({ eventId, isNavratr
               <Select
                 value={serviceGroupId}
                 onChange={(e) => setServiceGroupId(e.target.value)}
-                requiredIndicator
               >
+                <option value="">
+                  {serviceGroups.length === 0
+                    ? 'No Groups Yet (Click "+ New Group" to create)'
+                    : 'Select Service Group (Optional)'}
+                </option>
                 {serviceGroups.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.name}
@@ -1868,7 +1900,7 @@ export const EventItemsTab: React.FC<EventItemsTabProps> = ({ eventId, isNavratr
                       ) : null}
 
                       {/* Day Calculated Price */}
-                      <div className="text-right shrink-0 w-24">
+                      <div className="text-right shrink-0 min-w-[70px]">
                         <CurrencyDisplay
                           amount={
                             pricingType === 'quantity_based'
@@ -1884,6 +1916,23 @@ export const EventItemsTab: React.FC<EventItemsTabProps> = ({ eventId, isNavratr
                           className="font-extrabold text-slate-900"
                         />
                       </div>
+
+                      {/* Remove Day Row Action */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (dayAssignmentMode === 'all') {
+                            setDayAssignmentMode('custom');
+                            setSelectedDayIds(eventDays.filter((d) => d.id !== day.id).map((d) => d.id));
+                          } else {
+                            setSelectedDayIds((prev) => prev.filter((id) => id !== day.id));
+                          }
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors shrink-0"
+                        title="Remove this day assignment"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   );
                 })}
