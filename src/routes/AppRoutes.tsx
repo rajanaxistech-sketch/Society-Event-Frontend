@@ -96,6 +96,9 @@ import RoleListPage from '../pages/roles/RoleListPage';
 import CreateRolePage from '../pages/roles/CreateRolePage';
 import RoleDetailsPage from '../pages/roles/RoleDetailsPage';
 import SettingsPage from '../pages/settings/SettingsPage';
+import VendorListPage from '../pages/vendors/VendorListPage';
+import CreateVendorPage from '../pages/vendors/CreateVendorPage';
+import EditVendorPage from '../pages/vendors/EditVendorPage';
 import AuditLogListPage from '../pages/audit-logs/AuditLogListPage';
 import AuditLogDetailsPage from '../pages/audit-logs/AuditLogDetailsPage';
 
@@ -591,12 +594,46 @@ export const AppRoutes: React.FC = () => {
             }
           />
 
-          {/* Settings */}
+          {/* Settings & Setting Master */}
           <Route
             path={Paths.SETTINGS}
             element={
               <PermissionRoute permission={Permissions.SETTING_READ}>
                 <SettingsPage />
+              </PermissionRoute>
+            }
+          />
+
+          {/* Vendors (Setting Master) */}
+          <Route
+            path={Paths.VENDORS}
+            element={
+              <PermissionRoute permission={Permissions.VENDOR_READ}>
+                <VendorListPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="/vendors"
+            element={
+              <PermissionRoute permission={Permissions.VENDOR_READ}>
+                <VendorListPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.VENDOR_CREATE}
+            element={
+              <PermissionRoute permission={Permissions.VENDOR_CREATE}>
+                <CreateVendorPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.VENDOR_EDIT}
+            element={
+              <PermissionRoute permission={Permissions.VENDOR_UPDATE}>
+                <EditVendorPage />
               </PermissionRoute>
             }
           />

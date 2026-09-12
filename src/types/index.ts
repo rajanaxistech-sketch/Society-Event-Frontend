@@ -811,3 +811,51 @@ export interface ReportExportResponse {
   format?: string;
   total_records?: number;
 }
+
+// Vendor Master Types (Setting Master)
+export interface VendorItem {
+  id: string;
+  vendorName: string;
+  vendor_name?: string;
+  shortName: string;
+  short_name?: string;
+  address: string;
+  email: string;
+  mobileNo: string;
+  mobile_no?: string;
+  isActive: boolean;
+  is_active?: boolean;
+  status?: string;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+}
+
+export interface CreateVendorInput {
+  vendorName: string;
+  vendor_name?: string;
+  shortName: string;
+  short_name?: string;
+  address: string;
+  email: string;
+  mobileNo: string;
+  mobile_no?: string;
+  isActive?: boolean;
+  is_active?: boolean;
+  status?: string;
+}
+
+export interface UpdateVendorInput {
+  vendorName?: string;
+  vendor_name?: string;
+  shortName?: string;
+  short_name?: string;
+  address?: string;
+  email?: string;
+  mobileNo?: string;
+  mobile_no?: string;
+  isActive?: boolean;
+  is_active?: boolean;
+  status?: string;
+}

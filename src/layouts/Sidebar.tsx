@@ -16,6 +16,7 @@ import {
   UserCheck,
   Shield,
   Settings,
+  Store,
   History,
   X,
   Sparkles,
@@ -141,6 +142,17 @@ export const Sidebar: React.FC = () => {
         },
       ],
     },
+    {
+      title: 'SETTING MASTER',
+      items: [
+        {
+          label: 'Vendor Master',
+          to: AppRoutes.VENDORS,
+          icon: <Store className="w-4 h-4" />,
+          permission: Permissions.VENDOR_READ,
+        },
+      ],
+    },
   ];
 
   return (
@@ -206,7 +218,7 @@ export const Sidebar: React.FC = () => {
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    end={item.to === AppRoutes.DASHBOARD}
+                    end={item.to === AppRoutes.DASHBOARD || item.to === AppRoutes.SETTINGS}
                     onClick={() => {
                       if (window.innerWidth < 1024) setSidebarOpen(false);
                     }}

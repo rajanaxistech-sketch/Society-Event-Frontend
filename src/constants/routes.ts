@@ -85,7 +85,7 @@ export const AppRoutes = {
   IMPORT_UPLOAD: '/imports/upload',
   IMPORT_PREVIEW: '/imports/:id/preview',
 
-  // Administration
+  // Administration & Setting Master
   USERS: '/users',
   USER_CREATE: '/users/create',
   USER_DETAILS: '/users/:id',
@@ -94,6 +94,9 @@ export const AppRoutes = {
   ROLE_CREATE: '/roles/create',
   ROLE_DETAILS: '/roles/:id',
   SETTINGS: '/settings',
+  VENDORS: '/settings/vendors',
+  VENDOR_CREATE: '/settings/vendors/create',
+  VENDOR_EDIT: '/settings/vendors/:id/edit',
   AUDIT_LOGS: '/audit-logs',
   AUDIT_LOG_DETAILS: '/audit-logs/:id',
 } as const;

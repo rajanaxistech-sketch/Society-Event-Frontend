@@ -21,6 +21,7 @@ import {
   UploadCloud,
   Settings,
   Shield,
+  Store,
   CreditCard,
   CheckCircle2,
   Sparkles,
@@ -148,6 +149,13 @@ export const MobileAppLayout: React.FC = () => {
       to: AppRoutes.SETTINGS,
       icon: Settings,
       color: 'bg-slate-100 text-slate-700',
+    },
+    {
+      title: 'Vendor Master',
+      description: 'Approved contractors & suppliers',
+      to: AppRoutes.VENDORS,
+      icon: Store,
+      color: 'bg-indigo-50 text-indigo-700',
     },
   ];
 

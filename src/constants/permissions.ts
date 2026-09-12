@@ -116,9 +116,14 @@ export const Permissions = {
   CIRCULAR_DELETE: 'circular.delete',
   CIRCULAR_PUBLISH: 'circular.publish',
 
-  // System Settings
+  // System Settings & Vendors
   SETTING_READ: 'setting.read',
   SETTING_UPDATE: 'setting.update',
+  VENDOR_READ: 'vendor.read',
+  VENDOR_CREATE: 'vendor.create',
+  VENDOR_UPDATE: 'vendor.update',
+  VENDOR_DELETE: 'vendor.delete',
+  VENDOR_MANAGE: 'vendor.manage',
 
   // Audit Logs
   AUDIT_READ: 'audit.read',
