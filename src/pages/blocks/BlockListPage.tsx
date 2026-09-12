@@ -17,13 +17,14 @@ import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
-import { Plus, Edit2, Trash2, RefreshCw, Layers } from 'lucide-react';
+import MobileListCard from '../../components/mobile/MobileListCard';
+import { Plus, Edit2, Trash2, RefreshCw, Layers, Building2 } from 'lucide-react';
 
 export const BlockListPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const { can } = usePermission();
+  const { can, isSuperAdmin } = usePermission();
 
   // Seed society filter from URL query param (e.g. ?societyId=xxx when coming from Society Details)
   const initialSocietyId = decodeId(new URLSearchParams(location.search).get('societyId') || '');
@@ -272,7 +273,7 @@ export const BlockListPage: React.FC = () => {
         }
       />
 
-      {/* Table */}
+      {/* Table / Mobile Cards */}
       <Table
         columns={columns}
         data={blocks}
@@ -288,6 +289,58 @@ export const BlockListPage: React.FC = () => {
             setSortOrder('asc');
           }
         }}
+        renderCard={
+          !isSuperAdmin
+            ? (row) => (
+                <MobileListCard
+                  title={row.name}
+                  subtitle={
+                    <span className="flex items-center gap-1.5 text-slate-500">
+                      <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span className="truncate">{row.society?.name || 'Society'}</span>
+                    </span>
+                  }
+                  icon={<Layers className="w-4 h-4" />}
+                  iconBg="bg-indigo-50 text-indigo-600"
+                  status={row.status}
+                  badge={
+                    row.code ? (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        {row.code}
+                      </span>
+                    ) : undefined
+                  }
+                  meta={[
+                    { label: 'Floors Count', value: `${row._count?.floors ?? row.floors?.length ?? 0} Floors` },
+                    { label: 'Created Date', value: formatDate(row.created_at) },
+                  ]}
+                  actions={
+                    <div className="flex items-center gap-1.5">
+                      {can(Permissions.BLOCK_UPDATE) && (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/blocks/${encodeId(row.id)}/edit`)}
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                          Edit
+                        </button>
+                      )}
+                      {can(Permissions.BLOCK_DELETE) && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(row)}
+                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  }
+                />
+              )
+            : undefined
+        }
       />
 
       {/* Pagination */}

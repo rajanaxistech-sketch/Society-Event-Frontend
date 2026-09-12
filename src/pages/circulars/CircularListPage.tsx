@@ -500,8 +500,8 @@ export const CircularListPage: React.FC = () => {
             ) : undefined
           }
         />
-      ) : !canManage || isResident ? (
-        /* ================= RESIDENT CARDS GRID ================= */
+      ) : !isSuperAdmin ? (
+        /* ================= MOBILE / RESIDENT CARDS GRID ================= */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
           {circulars.map((item) => {
             const hasNewTag = isRecent(item.published_at);
@@ -513,7 +513,7 @@ export const CircularListPage: React.FC = () => {
                 className="flex flex-col justify-between hover:shadow-card-hover transition-all duration-200 border border-slate-200/80 rounded-xl group"
               >
                 <div>
-                  {/* Top Bar with Event Tag & New indicator */}
+                  {/* Top Bar with Event Tag & New indicator & Status */}
                   <div className="flex items-center justify-between gap-2 mb-2">
                     {item.event ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
@@ -526,59 +526,61 @@ export const CircularListPage: React.FC = () => {
                       </span>
                     )}
 
-                    {hasNewTag && (
-                      <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-emerald-50 text-emerald-700 rounded border border-emerald-200 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        New
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {canManage && <StatusBadge status={item.status} size="sm" />}
+                      {hasNewTag && (
+                        <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-emerald-50 text-emerald-700 rounded border border-emerald-200 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          New
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Title */}
                   <h3
                     onClick={() => handleOpenCircular(item)}
                     className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors cursor-pointer line-clamp-2 leading-snug"
-                    title={item.file_url ? 'Click to open document in new tab' : 'Click to view'}
                   >
                     {item.title}
                   </h3>
 
-                  {/* Date & Author */}
-                  <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5">
-                    <span>Published: {formatDate(item.published_at || item.created_at)}</span>
-                    <span>&bull;</span>
-                    <span className="truncate">{item.society?.name}</span>
-                  </p>
-
-                  {/* Description Snippet */}
-                  <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">
-                    {item.description}
-                  </p>
+                  {/* Description */}
+                  {item.description && (
+                    <p className="text-[11px] text-slate-500 line-clamp-3 mt-1 font-medium leading-relaxed">
+                      {item.description}
+                    </p>
+                  )}
                 </div>
 
-                {/* Attachment & Action Footer */}
+                {/* Footer with Metadata & Actions */}
                 <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
-                  {item.file_url ? (
-                    <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
-                      {isPdf ? (
-                        <FileText className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                      ) : (
-                        <ImageIcon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                      )}
-                      <span className="truncate max-w-[100px] text-[10px]">
-                        {item.file_name || 'Attachment'}
-                      </span>
-                      {item.file_size && (
-                        <span className="text-[9px] text-slate-400">
-                          ({formatFileSize(item.file_size)})
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">Text Notice</span>
-                  )}
+                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                    <Calendar className="w-3 h-3" />
+                    <span>{formatDate(item.published_at || item.created_at)}</span>
+                  </div>
 
                   <div className="flex items-center gap-1">
+                    {canManage && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/circulars/${encodeId(item.id)}/edit`)}
+                          className="p-1 rounded text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(item)}
+                          className="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
                     {item.file_url && (
                       <a
                         href={getFileUrl(item.file_url)}

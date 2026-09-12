@@ -15,6 +15,7 @@ import NotFoundPage from '../pages/errors/NotFoundPage';
 import UnauthorizedPage from '../pages/errors/UnauthorizedPage';
 
 // Dashboards
+import DashboardRouter from '../pages/dashboard/DashboardRouter';
 import SystemDashboardPage from '../pages/dashboard/SystemDashboardPage';
 import SocietyDashboardPage from '../pages/dashboard/SocietyDashboardPage';
 import EventDashboardPage from '../pages/dashboard/EventDashboardPage';
@@ -117,7 +118,7 @@ export const AppRoutes: React.FC = () => {
             path={Paths.DASHBOARD_SYSTEM}
             element={
               <PermissionRoute permission={Permissions.DASHBOARD_SYSTEM}>
-                <SystemDashboardPage />
+                <DashboardRouter />
               </PermissionRoute>
             }
           />

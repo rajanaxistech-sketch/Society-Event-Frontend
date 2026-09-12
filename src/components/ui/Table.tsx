@@ -23,6 +23,7 @@ export interface TableProps<T> {
   onSort?: (field: string) => void;
   onRowClick?: (row: T) => void;
   className?: string;
+  renderCard?: (row: T, index: number) => React.ReactNode;
 }
 
 export function Table<T extends Record<string, any>>({
@@ -35,7 +36,33 @@ export function Table<T extends Record<string, any>>({
   onSort,
   onRowClick,
   className = '',
+  renderCard,
 }: TableProps<T>) {
+  if (renderCard) {
+    return (
+      <div className={clsx('space-y-2.5', className)}>
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-card animate-pulse space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))
+        ) : data.length === 0 ? (
+          <div className="bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-card text-slate-400 text-xs">
+            {emptyText}
+          </div>
+        ) : (
+          data.map((row, idx) => (
+            <React.Fragment key={row.id || idx}>
+              {renderCard(row, idx)}
+            </React.Fragment>
+          ))
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={clsx('w-full overflow-x-auto border border-[#E2E8F0] rounded-xl bg-white shadow-card no-scrollbar', className)}>
       <table className="w-full min-w-[600px] text-left border-collapse text-xs">

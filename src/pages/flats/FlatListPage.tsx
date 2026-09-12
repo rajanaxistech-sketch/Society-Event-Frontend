@@ -17,13 +17,14 @@ import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
-import { Plus, Eye, Edit2, Trash2, RefreshCw } from 'lucide-react';
+import MobileListCard from '../../components/mobile/MobileListCard';
+import { Plus, Eye, Edit2, Trash2, RefreshCw, Home, Layers, Users } from 'lucide-react';
 
 export const FlatListPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const { can } = usePermission();
+  const { can, isSuperAdmin } = usePermission();
 
   const initialFloorId = decodeId(new URLSearchParams(location.search).get('floorId') || '');
 
@@ -266,7 +267,7 @@ export const FlatListPage: React.FC = () => {
         }
       />
 
-      {/* Table */}
+      {/* Table / Mobile Cards */}
       <Table
         columns={columns}
         data={flats}
@@ -283,6 +284,66 @@ export const FlatListPage: React.FC = () => {
           }
         }}
         onRowClick={(row) => navigate(`/flats/${encodeId(row.id)}`)}
+        renderCard={
+          !isSuperAdmin
+            ? (row) => {
+                const primaryPerson = row.persons?.find((p) => p.is_primary_owner) || row.persons?.[0];
+                return (
+                  <MobileListCard
+                    title={`Flat ${row.flat_number}`}
+                    subtitle={
+                      <span className="flex items-center gap-1.5 text-slate-500">
+                        <Layers className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>
+                          {row.floor?.block?.name || 'Block'} &bull; Floor {row.floor?.floor_number ?? '—'}
+                        </span>
+                      </span>
+                    }
+                    icon={<Home className="w-4 h-4" />}
+                    iconBg="bg-indigo-50 text-indigo-600"
+                    status={row.status}
+                    badge={
+                      row.flat_type ? (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                          {row.flat_type}
+                        </span>
+                      ) : undefined
+                    }
+                    meta={[
+                      {
+                        label: 'Primary Resident / Owner',
+                        value: primaryPerson ? primaryPerson.full_name : 'Vacant / Unassigned',
+                        icon: <Users className="w-3 h-3" />,
+                      },
+                      { label: 'Registered On', value: formatDate(row.created_at) },
+                    ]}
+                    actions={
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/flats/${encodeId(row.id)}`)}
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors"
+                        >
+                          <Eye className="w-3 h-3" />
+                          View
+                        </button>
+                        {can(Permissions.FLAT_UPDATE) && (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/flats/${encodeId(row.id)}/edit`)}
+                            className="p-1 text-slate-500 hover:text-indigo-600 rounded"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    }
+                    onClick={() => navigate(`/flats/${encodeId(row.id)}`)}
+                  />
+                );
+              }
+            : undefined
+        }
       />
 
       {/* Pagination */}
