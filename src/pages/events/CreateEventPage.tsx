@@ -213,20 +213,18 @@ export const CreateEventPage: React.FC = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
         {/* Navratri Special Event Card */}
         <div
-          className={`p-4 rounded-xl border transition-all duration-200 ${
-            isNavratri
+          className={`p-4 rounded-xl border transition-all duration-200 ${isNavratri
               ? 'bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-orange-500/10 border-amber-300 ring-1 ring-amber-300/50'
               : 'bg-white border-slate-200'
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-2xs ${
-                  isNavratri
+                className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-2xs ${isNavratri
                     ? 'bg-gradient-to-br from-amber-500 to-rose-600 text-white'
                     : 'bg-slate-100 text-slate-600'
-                }`}
+                  }`}
               >
                 <Flame className="w-5 h-5" />
               </div>

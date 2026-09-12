@@ -652,8 +652,8 @@ export const CircularListPage: React.FC = () => {
           isUpdatingStatus
             ? 'Updating...'
             : statusTarget?.action === 'publish'
-            ? 'Publish Now'
-            : 'Unpublish'
+              ? 'Publish Now'
+              : 'Unpublish'
         }
         cancelLabel="Cancel"
         variant="primary"

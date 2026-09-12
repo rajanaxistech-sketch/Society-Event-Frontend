@@ -372,12 +372,95 @@ export interface EventItem {
   };
 }
 
+// Service Group Master Types
+export interface EventServiceGroupItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  display_order: number;
+  is_active: boolean;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  _count?: {
+    event_items?: number;
+  };
+}
+
+export interface CreateEventServiceGroupInput {
+  name: string;
+  description?: string | null;
+  display_order?: number;
+  is_active?: boolean;
+  status?: string;
+}
+
+export interface UpdateEventServiceGroupInput {
+  name?: string;
+  description?: string | null;
+  display_order?: number;
+  is_active?: boolean;
+  status?: string;
+}
+
+// Event Day Types
+export interface EventDayItem {
+  id: string;
+  event_id: string;
+  day_number: number;
+  dayNumber?: number;
+  date: string;
+  display_name?: string | null;
+  displayName?: string | null;
+  notes?: string | null;
+  is_active: boolean;
+  isActive?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Event Item Day Assignment Types
+export interface EventItemDayAssignmentItem {
+  id: string;
+  event_item_id: string;
+  event_day_id: string;
+  vendor_id?: string | null;
+  vendor_name?: string | null;
+  contact_person?: string | null;
+  contact_number?: string | null;
+  quantity?: number | string | null;
+  rate?: number | string | null;
+  price: number | string;
+  notes?: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  event_day?: EventDayItem;
+  vendor?: VendorItem | null;
+}
+
+export interface DayAssignmentPayload {
+  id?: string;
+  event_day_id: string;
+  vendor_id?: string | null;
+  vendor_name?: string | null;
+  contact_person?: string | null;
+  contact_number?: string | null;
+  quantity?: number | null;
+  rate?: number | null;
+  price: number;
+  notes?: string | null;
+  status?: string;
+}
+
 // Event Items / Services (Expenses)
 export type PricingType = 'fixed' | 'day_wise' | 'recurring_daily' | 'quantity_based';
 
 export interface EventServiceItem {
   id: string;
   event_id: string;
+  service_group_id?: string | null;
+  vendor_id?: string | null;
   vendor_contract_id?: string | null;
   name: string;
   category: string;
@@ -399,6 +482,8 @@ export interface EventServiceItem {
   status: 'active' | 'inactive' | 'cancelled' | string;
   created_at: string;
   updated_at?: string;
+  service_group?: EventServiceGroupItem | null;
+  vendor?: VendorItem | null;
   vendor_contract?: {
     id: string;
     vendor_name: string;
@@ -406,6 +491,75 @@ export interface EventServiceItem {
     contract_amount: number | string;
     remaining_balance: number | string;
   } | null;
+  day_assignments?: EventItemDayAssignmentItem[];
+}
+
+// Day Breakdown and Vendor Breakdown Types
+export interface EventDayServiceDetail {
+  itemId: string;
+  assignmentId?: string | null;
+  serviceName: string;
+  serviceGroup: string;
+  vendorName: string;
+  vendorId?: string | null;
+  quantity: number;
+  unit?: string | null;
+  rate: number;
+  price: number;
+  pricingType: string;
+  notes?: string | null;
+}
+
+export interface EventDayBreakdownItem {
+  dayId: string;
+  dayNumber: number;
+  date: string;
+  displayName?: string | null;
+  notes?: string | null;
+  totalCost: number;
+  servicesCount: number;
+  services: EventDayServiceDetail[];
+}
+
+export interface EventDayBreakdownResponse {
+  eventId: string;
+  eventName: string;
+  totalDays: number;
+  grandTotal: number;
+  days: EventDayBreakdownItem[];
+}
+
+export interface EventVendorServiceAssignment {
+  itemId: string;
+  serviceName: string;
+  serviceGroup: string;
+  dayNumber?: number | null;
+  dayName?: string | null;
+  date?: string | null;
+  quantity: number;
+  unit?: string | null;
+  rate: number;
+  price: number;
+  notes?: string | null;
+}
+
+export interface EventVendorBreakdownItem {
+  vendorId?: string | null;
+  vendorName: string;
+  contactPerson?: string | null;
+  mobileNumber?: string | null;
+  email?: string | null;
+  isMasterVendor: boolean;
+  totalAmount: number;
+  assignments: EventVendorServiceAssignment[];
+}
+
+export interface EventVendorBreakdownResponse {
+  eventId: string;
+  eventName: string;
+  totalVendors: number;
+  totalContractedAmount: number;
+  vendors: EventVendorBreakdownItem[];
 }
 
 // Event Vendors / Contractors & Vendor Payments
