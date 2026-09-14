@@ -139,8 +139,10 @@ export function Table<T extends Record<string, any>>({
                 {columns.map((col) => (
                   <td
                     key={col.key}
+                    style={{ width: col.width }}
                     className={clsx(
-                      'px-3 py-1.5 sm:py-2 whitespace-nowrap text-xs text-slate-700',
+                      'px-3 py-1.5 sm:py-2 text-xs text-slate-700',
+                      !col.className?.includes('whitespace-') && 'whitespace-nowrap',
                       col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
                       col.className
                     )}

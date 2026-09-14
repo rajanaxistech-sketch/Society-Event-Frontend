@@ -22,6 +22,7 @@ import {
   History,
   X,
   Sparkles,
+  Wallet,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -89,6 +90,12 @@ export const Sidebar: React.FC = () => {
           to: AppRoutes.EVENTS,
           icon: <Calendar className="w-4 h-4" />,
           permission: Permissions.EVENT_READ,
+        },
+        {
+          label: 'Flat Collections',
+          to: AppRoutes.FLAT_COLLECTIONS,
+          icon: <Wallet className="w-4 h-4" />,
+          permission: Permissions.COLLECTION_READ,
         },
         {
           label: 'Payment Methods',

@@ -149,6 +149,7 @@ export const VendorListPage: React.FC = () => {
     {
       key: 'vendorName',
       header: 'Vendor Name',
+      className: 'min-w-[180px]',
       render: (row) => {
         const name = row.vendorName || row.vendor_name;
         return (
@@ -169,26 +170,31 @@ export const VendorListPage: React.FC = () => {
     {
       key: 'address',
       header: 'Address',
+      className: 'whitespace-normal min-w-[220px] max-w-[320px]',
       render: (row) => (
-        <div className="flex items-start gap-1.5 max-w-xs text-xs text-slate-600">
+        <div className="flex items-start gap-1.5 text-xs text-slate-600 whitespace-normal">
           <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-          <span className="line-clamp-2 leading-relaxed">{row.address || '—'}</span>
+          <span className="break-words line-clamp-2 leading-relaxed" title={row.address || undefined}>
+            {row.address || '—'}
+          </span>
         </div>
       ),
     },
     {
       key: 'contact',
       header: 'Contact Details',
+      className: 'whitespace-normal min-w-[190px]',
       render: (row) => {
         const phone = row.mobileNo || row.mobile_no;
         return (
-          <div className="space-y-1 text-xs">
+          <div className="space-y-1 text-xs whitespace-normal">
             {row.email && (
               <div className="flex items-center gap-1.5 text-slate-700">
                 <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <a
                   href={`mailto:${row.email}`}
-                  className="hover:text-indigo-600 hover:underline truncate max-w-[180px]"
+                  className="hover:text-indigo-600 hover:underline truncate max-w-[180px] block"
+                  title={row.email}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {row.email}
@@ -207,6 +213,7 @@ export const VendorListPage: React.FC = () => {
                 </a>
               </div>
             )}
+            {!row.email && !phone && <span className="text-slate-400">—</span>}
           </div>
         );
       },
@@ -215,6 +222,7 @@ export const VendorListPage: React.FC = () => {
       key: 'status',
       header: 'Status & Toggle',
       align: 'center',
+      className: 'min-w-[130px]',
       render: (row) => {
         const active = row.isActive ?? row.is_active ?? (row.status === 'active');
         return (
@@ -235,6 +243,7 @@ export const VendorListPage: React.FC = () => {
       key: 'actions',
       header: 'Actions',
       align: 'right',
+      className: 'min-w-[80px]',
       render: (row) => (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           {canManage && (

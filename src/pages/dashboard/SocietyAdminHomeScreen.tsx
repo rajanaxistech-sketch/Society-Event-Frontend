@@ -31,6 +31,7 @@ import {
   RefreshCw,
   Tag,
   Coins,
+  Wallet,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -179,6 +180,14 @@ export const SocietyAdminHomeScreen: React.FC = () => {
             badge={counts.events}
             badgeColor="purple"
             onClick={() => navigate(AppRoutes.EVENTS)}
+          />
+
+          <ModuleGridCard
+            title="Flat Collections"
+            description="Event-wise payment collections"
+            icon={<Wallet className="w-4 h-4" />}
+            iconBg="bg-emerald-50 text-emerald-600"
+            onClick={() => navigate(AppRoutes.FLAT_COLLECTIONS)}
           />
 
           <ModuleGridCard

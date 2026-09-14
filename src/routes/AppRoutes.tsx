@@ -65,6 +65,7 @@ import EventDetailsPage from '../pages/events/EventDetailsPage';
 import EditEventPage from '../pages/events/EditEventPage';
 import EventConfigurationPage from '../pages/events/EventConfigurationPage';
 import EventCollectionsPage from '../pages/events/EventCollectionsPage';
+import FlatCollectionsEventListPage from '../pages/collections/FlatCollectionsEventListPage';
 import EventSponsorsPage from '../pages/events/EventSponsorsPage';
 import EventFoodPage from '../pages/events/EventFoodPage';
 import EventDressCodesPage from '../pages/events/EventDressCodesPage';
@@ -397,6 +398,24 @@ export const AppRoutes: React.FC = () => {
               </PermissionRoute>
             }
           />
+          {/* Flat Collections Standalone Routes */}
+          <Route
+            path={Paths.FLAT_COLLECTIONS}
+            element={
+              <PermissionRoute permission={Permissions.COLLECTION_READ}>
+                <FlatCollectionsEventListPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.FLAT_COLLECTION_DETAILS}
+            element={
+              <PermissionRoute permission={Permissions.COLLECTION_READ}>
+                <EventCollectionsPage />
+              </PermissionRoute>
+            }
+          />
+
           <Route
             path={Paths.EVENT_COLLECTIONS}
             element={

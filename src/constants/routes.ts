@@ -64,6 +64,10 @@ export const AppRoutes = {
   EVENT_ACTIVITIES: '/events/:id/activities',
   EVENT_CIRCULARS: '/events/:id/circulars',
 
+  // Flat Collections
+  FLAT_COLLECTIONS: '/flat-collections',
+  FLAT_COLLECTION_DETAILS: '/flat-collections/:id',
+
   // Circulars
   CIRCULARS: '/circulars',
   CIRCULAR_CREATE: '/circulars/create',

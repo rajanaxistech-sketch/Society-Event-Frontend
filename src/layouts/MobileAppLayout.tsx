@@ -204,7 +204,7 @@ export const MobileAppLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900/10 via-slate-800/5 to-slate-900/10 flex items-center justify-center sm:py-3 sm:px-2 antialiased selection:bg-indigo-100 selection:text-indigo-800">
       {/* Mobile Device Canvas Frame */}
-      <div className="w-full max-w-[440px] min-h-screen sm:min-h-[94vh] sm:max-h-[94vh] sm:rounded-[32px] sm:shadow-2xl sm:border sm:border-slate-200/80 bg-[#F8F7FC] flex flex-col overflow-hidden relative">
+      <div className="w-full max-w-[440px] h-screen h-[100dvh] sm:h-auto sm:min-h-[94vh] sm:max-h-[94vh] sm:rounded-[32px] sm:shadow-2xl sm:border sm:border-slate-200/80 bg-[#F8F7FC] flex flex-col overflow-hidden relative">
         {/* Top Mobile App Header */}
         <header className="h-14 bg-white border-b border-slate-200/80 px-3.5 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-2xs">
           {/* Society Badge / Selector */}
@@ -256,12 +256,23 @@ export const MobileAppLayout: React.FC = () => {
         </header>
 
         {/* Scrollable Main Content Viewport */}
-        <main className="flex-1 overflow-y-auto px-3 py-3 sm:px-3.5 sm:py-3.5 space-y-3.5 no-scrollbar bg-[#F8F7FC] relative">
+        <main
+          className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:px-3.5 sm:py-3.5 space-y-3.5 no-scrollbar bg-[#F8F7FC] relative"
+          style={{
+            paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           <Outlet />
         </main>
 
         {/* Persistent Fixed Mobile Bottom Navigation */}
-        <nav className="h-16 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 flex items-center justify-around shrink-0 sticky bottom-0 z-30 shadow-lg">
+        <nav
+          className="fixed sm:absolute bottom-0 left-0 right-0 z-40 max-w-[440px] mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 flex items-center justify-around shadow-lg"
+          style={{
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            height: 'calc(4rem + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           {currentNavItems.map((item) => {
             const Icon = item.icon;
             return (

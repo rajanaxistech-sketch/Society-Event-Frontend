@@ -32,6 +32,7 @@ import PermissionGuard from '../../components/common/PermissionGuard';
 import { formatDate, formatCurrency } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
+import { getEventTheme } from '../../utils/eventTheme';
 import {
   Plus,
   Edit2,
@@ -51,6 +52,9 @@ import {
   CheckSquare,
   Square,
   Sparkles,
+  ArrowLeft,
+  Calendar,
+  ExternalLink,
 } from 'lucide-react';
 
 interface EventCollectionsPageProps {
@@ -653,8 +657,79 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     },
   ];
 
+  const isStandalone = !propEventId;
+  const eventTheme = event ? getEventTheme(event.name, event.description) : null;
+
   return (
     <div className="space-y-3.5">
+      {/* Standalone Route Page Header (when accessed via /flat-collections/:id or /events/:id/collections) */}
+      {isStandalone && (
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/flat-collections')}
+                className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                title="Back to Flat Collections"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-2.5">
+                {eventTheme && (
+                  <div
+                    className={`w-9 h-9 rounded-xl ${eventTheme.iconBgClass} flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs`}
+                  >
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                )}
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
+                      {event?.name || 'Event Flat Collections'}
+                    </h1>
+                    {event?.event_year && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/60">
+                        {event.event_year}
+                      </span>
+                    )}
+                    {event?.is_navratri && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 bg-amber-50 text-amber-700 rounded border border-amber-200/60 flex items-center gap-0.5">
+                        <Sparkles className="w-2.5 h-2.5" /> Navratri
+                      </span>
+                    )}
+                    {event?.status && <StatusBadge status={event.status} size="sm" />}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-0.5 font-medium">
+                    <Building2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    <span>{event?.society?.name || 'Society Event'}</span>
+                    {event?.society?.code && (
+                      <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1 py-0.2 rounded">
+                        {event.society.code}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {event && (
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/events/${encodeId(event.id)}`)}
+                  leftIcon={<ExternalLink className="w-3.5 h-3.5" />}
+                  className="text-xs"
+                >
+                  View Event Overview
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* KPI Summary Dashboard */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
