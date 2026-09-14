@@ -115,6 +115,8 @@ export interface UserItem {
   last_login_at?: string | null;
   created_at: string;
   updated_at?: string;
+  is_main_admin?: boolean;
+  isMainAdmin?: boolean;
   role?: UserRole;
   roles?: RoleItem[];
   user_roles?: Array<{
@@ -124,6 +126,8 @@ export interface UserItem {
   user_societies?: Array<{
     society_id: string;
     is_primary: boolean;
+    is_main_admin?: boolean;
+    isMainAdmin?: boolean;
     society?: SocietyItem;
   }>;
 }

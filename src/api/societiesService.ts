@@ -480,5 +480,11 @@ export const societiesService = {
       return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     }
   },
+
+  // Set Main Admin for a Society
+  setMainAdmin: async (societyId: string, userId: string): Promise<ApiResponse<UserItem>> => {
+    const response = await axiosClient.patch<ApiResponse<UserItem>>(`/societies/${societyId}/users/${userId}/main-admin`);
+    return response.data;
+  },
 };
 

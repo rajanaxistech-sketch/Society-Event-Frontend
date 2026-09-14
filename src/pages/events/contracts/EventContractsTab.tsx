@@ -33,6 +33,7 @@ import {
   Edit2,
   Trash2,
   Eye,
+  History,
   FileText,
   Printer,
   CreditCard,
@@ -85,6 +86,7 @@ export const EventContractsTab: React.FC<EventContractsTabProps> = ({
   const [editingContract, setEditingContract] = useState<ContractItemModel | null>(null);
 
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsInitialTab, setDetailsInitialTab] = useState<string>('overview');
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -299,10 +301,26 @@ export const EventContractsTab: React.FC<EventContractsTabProps> = ({
             title="View Details, Scope, Documents & Ledger"
             onClick={() => {
               setSelectedContractId(row.id);
+              setDetailsInitialTab('overview');
               setDetailsModalOpen(true);
             }}
           >
             <Eye className="w-4 h-4" />
+          </Button>
+
+          {/* Payment History */}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50"
+            title="Payment History & Ledger"
+            onClick={() => {
+              setSelectedContractId(row.id);
+              setDetailsInitialTab('payments');
+              setDetailsModalOpen(true);
+            }}
+          >
+            <History className="w-4 h-4" />
           </Button>
 
           {/* Record Payment */}
@@ -541,6 +559,7 @@ export const EventContractsTab: React.FC<EventContractsTabProps> = ({
         <ContractDetailsModal
           contractId={selectedContractId}
           isOpen={detailsModalOpen}
+          initialTab={detailsInitialTab}
           onClose={() => {
             setDetailsModalOpen(false);
             setSelectedContractId(null);

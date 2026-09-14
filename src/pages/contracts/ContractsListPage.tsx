@@ -41,6 +41,7 @@ import {
   Edit2,
   Trash2,
   Eye,
+  History,
   FileText,
   Printer,
   CreditCard,
@@ -60,11 +61,12 @@ export const ContractsListPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const { selectedSocietyId } = useAuth();
+  const { user, selectedSocietyId } = useAuth();
   const { can, isSuperAdmin } = usePermission();
 
+  const userSocieties = user?.societies || [];
   const urlParams = new URLSearchParams(location.search);
-  const initialSocietyId = decodeId(urlParams.get('societyId') || '') || selectedSocietyId || '';
+  const initialSocietyId = decodeId(urlParams.get('societyId') || '') || selectedSocietyId || (!isSuperAdmin && userSocieties[0]?.id ? userSocieties[0].id : '');
   const initialEventId = decodeId(urlParams.get('eventId') || '') || '';
 
   // Data States
@@ -92,6 +94,7 @@ export const ContractsListPage: React.FC = () => {
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [editingContract, setEditingContract] = useState<ContractItemModel | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsInitialTab, setDetailsInitialTab] = useState<string>('overview');
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [contractForPayment, setContractForPayment] = useState<ContractItemModel | null>(null);
@@ -104,15 +107,15 @@ export const ContractsListPage: React.FC = () => {
 
   // Sync society context selector if user changes it in header
   useEffect(() => {
-    if (selectedSocietyId && !isSuperAdmin) {
-      setSocietyFilter(selectedSocietyId);
+    if (!isSuperAdmin) {
+      setSocietyFilter(selectedSocietyId || userSocieties[0]?.id || '');
     }
-  }, [selectedSocietyId, isSuperAdmin]);
+  }, [selectedSocietyId, isSuperAdmin, userSocieties]);
 
   // Load Societies and Vendors master
   useEffect(() => {
     Promise.all([
-      societiesService.getAll({ limit: 100 }),
+      isSuperAdmin ? societiesService.getAll({ limit: 100 }) : Promise.resolve({ success: true, data: userSocieties as any }),
       vendorsService.getAll({ limit: 100 }),
     ])
       .then(([socRes, venRes]) => {
@@ -123,7 +126,7 @@ export const ContractsListPage: React.FC = () => {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [isSuperAdmin, userSocieties]);
 
   // Load Events when societyFilter changes (Cascading Dropdown)
   useEffect(() => {
@@ -236,7 +239,7 @@ export const ContractsListPage: React.FC = () => {
 
   const handleResetFilters = () => {
     setSearchQuery('');
-    setSocietyFilter(isSuperAdmin ? '' : selectedSocietyId || '');
+    setSocietyFilter(isSuperAdmin ? '' : selectedSocietyId || userSocieties[0]?.id || '');
     setEventFilter('');
     setVendorFilter('all');
     setLifecycleFilter('all');
@@ -416,10 +419,24 @@ export const ContractsListPage: React.FC = () => {
             title="View Details"
             onClick={() => {
               setSelectedContractId(row.id);
+              setDetailsInitialTab('overview');
               setDetailsModalOpen(true);
             }}
           >
             <Eye className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            title="Payment History"
+            onClick={() => {
+              setSelectedContractId(row.id);
+              setDetailsInitialTab('payments');
+              setDetailsModalOpen(true);
+            }}
+          >
+            <History className="w-3.5 h-3.5" />
           </button>
 
           <button
@@ -599,17 +616,25 @@ export const ContractsListPage: React.FC = () => {
           <div>
             <Select
               value={societyFilter}
+              disabled={!isSuperAdmin && userSocieties.length <= 1}
               onChange={(e) => {
                 setSocietyFilter(e.target.value);
                 setEventFilter('');
               }}
-              options={[
-                { value: '', label: 'All Societies' },
-                ...societies.map((s) => ({
-                  value: s.id,
-                  label: s.name,
-                })),
-              ]}
+              options={
+                isSuperAdmin
+                  ? [
+                      { value: '', label: 'All Societies' },
+                      ...societies.map((s) => ({
+                        value: s.id,
+                        label: s.name,
+                      })),
+                    ]
+                  : userSocieties.map((s) => ({
+                      value: s.id,
+                      label: s.name,
+                    }))
+              }
             />
           </div>
 
@@ -758,6 +783,7 @@ export const ContractsListPage: React.FC = () => {
         <ContractDetailsModal
           contractId={selectedContractId}
           isOpen={detailsModalOpen}
+          initialTab={detailsInitialTab}
           onClose={() => {
             setDetailsModalOpen(false);
             setSelectedContractId(null);

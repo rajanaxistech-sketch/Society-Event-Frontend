@@ -17,6 +17,8 @@ import {
   Mail,
   Phone,
   Lock,
+  Crown,
+  ShieldCheck,
 } from 'lucide-react';
 import { SocietyHierarchyData, societiesService, SocietyUserQuotaData } from '../../../api/societiesService';
 import { usersService } from '../../../api/usersService';
@@ -53,6 +55,11 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
   const [roleId, setRoleId] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Make Main Admin Modal
+  const [targetMainAdminUser, setTargetMainAdminUser] = useState<UserItem | null>(null);
+  const [isMainAdminModalOpen, setIsMainAdminModalOpen] = useState(false);
+  const [isSettingMainAdmin, setIsSettingMainAdmin] = useState(false);
 
   const fetchQuotaAndUsers = async () => {
     try {
@@ -151,6 +158,34 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
     }
   };
 
+  const handleSetMainAdmin = async () => {
+    if (!targetMainAdminUser) return;
+    try {
+      setIsSettingMainAdmin(true);
+      const res = await societiesService.setMainAdmin(society.id, targetMainAdminUser.id);
+      if (res.success) {
+        toast.success(`${targetMainAdminUser.full_name} is now the Main Admin of ${society.name}`);
+        setIsMainAdminModalOpen(false);
+        setTargetMainAdminUser(null);
+        await fetchQuotaAndUsers();
+      } else {
+        toast.error(res.message || 'Failed to update Main Admin');
+      }
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, 'Failed to update Main Admin'));
+    } finally {
+      setIsSettingMainAdmin(false);
+    }
+  };
+
+  const isUserMainAdmin = (user: UserItem): boolean => {
+    if (user.is_main_admin === true || user.isMainAdmin === true) return true;
+    const socMembership = user.user_societies?.find((us) => us.society_id === society.id);
+    return !!(socMembership?.is_main_admin || socMembership?.isMainAdmin);
+  };
+
+  const hasAnyMainAdmin = quotaData.users.some((u) => isUserMainAdmin(u));
+
   const getQuotaColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-rose-500';
     if (percentage >= 70) return 'bg-amber-500';
@@ -161,28 +196,57 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
     {
       key: 'full_name',
       header: 'User Name',
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
-            {row.full_name?.charAt(0) || 'U'}
+      render: (row) => {
+        const isMain = isUserMainAdmin(row);
+        return (
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className={`w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center shrink-0 ${
+                isMain ? 'bg-amber-100 text-amber-800 ring-2 ring-amber-400' : 'bg-indigo-100 text-indigo-700'
+              }`}>
+                {row.full_name?.charAt(0) || 'U'}
+              </div>
+              {isMain && (
+                <span className="absolute -top-1.5 -right-1 bg-amber-500 text-white rounded-full p-0.5 shadow-xs" title="Main Admin">
+                  <Crown className="w-2.5 h-2.5" />
+                </span>
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-slate-900 block">{row.full_name}</span>
+                {isMain && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+                    <Crown className="w-2.5 h-2.5 text-amber-600 fill-amber-500" />
+                    MAIN ADMIN
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] text-slate-400 block">{row.email}</span>
+            </div>
           </div>
-          <div>
-            <span className="font-bold text-slate-900 block">{row.full_name}</span>
-            <span className="text-[11px] text-slate-400 block">{row.email}</span>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'role_id',
       header: 'Assigned Role',
       render: (row) => {
         const roleName = row.role?.name || row.roles?.[0]?.name || 'Society Admin';
+        const isMain = isUserMainAdmin(row);
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-            <Shield className="w-3 h-3" />
-            {roleName}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+              <Shield className="w-3 h-3" />
+              {roleName}
+            </span>
+            {isMain && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                <Crown className="w-3 h-3 text-amber-600 fill-amber-500" />
+                Primary Admin
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -204,6 +268,44 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
       render: (row) => (
         <span className="text-xs text-slate-500">{formatDate(row.created_at)}</span>
       ),
+    },
+    {
+      key: 'actions' as any,
+      header: 'Admin Actions',
+      render: (row) => {
+        const isMain = isUserMainAdmin(row);
+        const roleName = row.role?.name || row.roles?.[0]?.name || '';
+        const isSocietyAdmin =
+          roleName.toLowerCase().includes('admin') || roleName.toLowerCase().includes('society');
+
+        if (isMain) {
+          return (
+            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200">
+              <Crown className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+              Main Admin
+            </div>
+          );
+        }
+
+        if (isSocietyAdmin && row.status === 'active') {
+          return (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400 font-medium text-xs shadow-2xs py-1 px-2.5 h-auto"
+              onClick={() => {
+                setTargetMainAdminUser(row);
+                setIsMainAdminModalOpen(true);
+              }}
+              leftIcon={<Crown className="w-3 h-3 text-amber-600" />}
+            >
+              Make Main Admin
+            </Button>
+          );
+        }
+
+        return <span className="text-xs text-slate-400">-</span>;
+      },
     },
   ];
 
@@ -303,6 +405,18 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
         size="md"
       >
         <div className="space-y-4 py-2">
+          {!hasAnyMainAdmin && (
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
+              <Crown className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 fill-amber-400" />
+              <div>
+                <p className="font-bold">First Admin Designation</p>
+                <p className="text-[11px] text-amber-700 mt-0.5">
+                  Since this society currently does not have a Main Admin, creating this Society Admin will automatically designate them as the <strong>Main Admin (Primary)</strong>.
+                </p>
+              </div>
+            </div>
+          )}
+
           <Input
             label="Full Name"
             placeholder="e.g. Anand Verma"
@@ -381,6 +495,71 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Creating User...' : 'Create Society User'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Set Main Admin Confirmation Modal */}
+      <Modal
+        isOpen={isMainAdminModalOpen}
+        onClose={() => {
+          if (!isSettingMainAdmin) {
+            setIsMainAdminModalOpen(false);
+            setTargetMainAdminUser(null);
+          }
+        }}
+        title="Designate Main Admin"
+        size="md"
+      >
+        <div className="space-y-4 py-2">
+          <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0 text-amber-700">
+              <Crown className="w-5 h-5 fill-amber-400" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-amber-950">
+                Transfer Main Admin Role to {targetMainAdminUser?.full_name}?
+              </h4>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                Designating <strong>{targetMainAdminUser?.full_name}</strong> ({targetMainAdminUser?.email}) as the Main Admin will make them the primary administrative contact for <strong>{society.name}</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-1.5">
+            <div className="flex items-center gap-2 text-slate-700 font-semibold">
+              <ShieldCheck className="w-4 h-4 text-indigo-600" />
+              <span>Hierarchical Rules:</span>
+            </div>
+            <ul className="list-disc list-inside space-y-1 pl-1 text-[11px]">
+              <li>Only <strong>one</strong> Main Admin can exist for this society at any time.</li>
+              <li>The current Main Admin will automatically transition to a regular Society Admin.</li>
+              <li>All existing society event configurations and admin rights remain preserved.</li>
+            </ul>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsMainAdminModalOpen(false);
+                setTargetMainAdminUser(null);
+              }}
+              disabled={isSettingMainAdmin}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+              onClick={handleSetMainAdmin}
+              disabled={isSettingMainAdmin}
+              leftIcon={<Crown className="w-3.5 h-3.5" />}
+            >
+              {isSettingMainAdmin ? 'Updating...' : 'Confirm & Set as Main Admin'}
             </Button>
           </div>
         </div>

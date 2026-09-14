@@ -22,6 +22,8 @@ import Select from '../../../components/ui/Select';
 import Textarea from '../../../components/ui/Textarea';
 import Button from '../../../components/ui/Button';
 import { useToast } from '../../../hooks/useToast';
+import { useAuth } from '../../../hooks/useAuth';
+import { usePermission } from '../../../hooks/usePermission';
 import { formatCurrency } from '../../../utils/formatters';
 import { extractErrorMessage } from '../../../utils/errorExtractor';
 import {
@@ -84,12 +86,16 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
   isMultiDayEvent = false,
 }) => {
   const toast = useToast();
+  const { user, selectedSocietyId: authSocietyId } = useAuth();
+  const { isSuperAdmin } = usePermission();
+  const userSocieties = user?.societies || [];
+  const defaultInitialSocietyId = societyId || authSocietyId || (!isSuperAdmin && userSocieties[0]?.id ? userSocieties[0].id : '');
   const isEdit = !!contract;
 
   // Standalone Society & Event selection
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
-  const [selectedSocietyId, setSelectedSocietyId] = useState<string>(societyId || '');
+  const [selectedSocietyId, setSelectedSocietyId] = useState<string>(defaultInitialSocietyId);
   const [selectedEventId, setSelectedEventId] = useState<string>(eventId || '');
   const [selectedEventDays, setSelectedEventDays] = useState<EventDayItem[]>(eventDays || []);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
@@ -144,7 +150,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
         vendorsService.getAll({ limit: 100 }),
         serviceGroupsService.getAll({ limit: 100 }),
         expenseCategoriesService.getAll({ limit: 100 }),
-        societiesService.getAll({ limit: 100 }),
+        isSuperAdmin ? societiesService.getAll({ limit: 100 }) : Promise.resolve({ success: true, data: userSocieties as any }),
       ])
         .then(([vRes, sgRes, ecRes, socRes]) => {
           if (vRes.success && vRes.data) {
@@ -165,7 +171,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
         })
         .finally(() => setIsLoadingMasters(false));
     }
-  }, [isOpen]);
+  }, [isOpen, isSuperAdmin, userSocieties]);
 
   // Fetch events when selectedSocietyId changes
   useEffect(() => {
@@ -211,16 +217,16 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
               expense_category_id: i.expense_category_id || undefined,
               quantity: Number(i.quantity) || 1,
               unit: i.unit || 'Nos',
-              unit_price: Number(i.unit_price) || 0,
+              unit_price: Number((i as any).unit_rate ?? (i as any).unit_price ?? 0),
               total_amount: Number(i.total_amount) || 0,
               description: i.description || '',
               schedules: i.schedules?.map((s) => ({
                 event_day_id: s.event_day_id || undefined,
-                day_date: s.day_date ? s.day_date.split('T')[0] : undefined,
-                quantity: Number(s.quantity) || 1,
+                day_date: (s as any).day_date || (s as any).service_date ? String((s as any).day_date || (s as any).service_date).split('T')[0] : undefined,
+                quantity: Number((s as any).quantity ?? (s as any).quantity_for_day ?? 1),
                 start_time: s.start_time || undefined,
                 end_time: s.end_time || undefined,
-                special_instructions: s.special_instructions || undefined,
+                special_instructions: (s as any).special_instructions || (s as any).notes || undefined,
               })),
             }))
           );
@@ -394,6 +400,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
           expense_category_id: i.expense_category_id || expenseCategoryId || undefined,
           quantity: Number(i.quantity) || 1,
           unit: i.unit || 'Nos',
+          unit_rate: Number(i.unit_price) || 0,
           unit_price: Number(i.unit_price) || 0,
           total_amount: Number(i.total_amount) || 0,
           description: i.description || undefined,
@@ -475,19 +482,26 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
                 <Select
                   label="Society"
                   required
-                  disabled={isEdit || (!!societyId && societies.length <= 1)}
+                  disabled={isEdit || (!isSuperAdmin && userSocieties.length <= 1)}
                   value={selectedSocietyId}
                   onChange={(e) => {
                     setSelectedSocietyId(e.target.value);
                     setSelectedEventId('');
                   }}
-                  options={[
-                    { value: '', label: '-- Select Society --' },
-                    ...societies.map((s) => ({
-                      value: s.id,
-                      label: `${s.name} ${s.code ? `(${s.code})` : ''}`,
-                    })),
-                  ]}
+                  options={
+                    isSuperAdmin
+                      ? [
+                          { value: '', label: '-- Select Society --' },
+                          ...societies.map((s) => ({
+                            value: s.id,
+                            label: `${s.name} ${s.code ? `(${s.code})` : ''}`,
+                          })),
+                        ]
+                      : userSocieties.map((s) => ({
+                          value: s.id,
+                          label: `${s.name} ${s.code ? `(${s.code})` : ''}`,
+                        }))
+                  }
                 />
               </div>
               <div>

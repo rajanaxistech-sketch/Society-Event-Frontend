@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { eventsService } from '../../api/eventsService';
 import { circularsService } from '../../api/circularsService';
 import { societiesService } from '../../api/societiesService';
+import { contractsService } from '../../api/contractsService';
 import { EventItem, CircularItem, SocietyItem } from '../../types';
 import { AppRoutes } from '../../constants/routes';
 import { encodeId } from '../../utils/idObfuscator';
@@ -41,6 +42,7 @@ export const SocietyAdminHomeScreen: React.FC = () => {
   const [society, setSociety] = useState<SocietyItem | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
   const [recentCirculars, setRecentCirculars] = useState<CircularItem[]>([]);
+  const [contractsCount, setContractsCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const getGreeting = () => {
@@ -58,10 +60,11 @@ export const SocietyAdminHomeScreen: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const [socRes, eventsRes, circRes] = await Promise.all([
+      const [socRes, eventsRes, circRes, contractsRes] = await Promise.all([
         societiesService.getById(selectedSocietyId).catch(() => null),
         eventsService.getAll({ societyId: selectedSocietyId, limit: 4, sortBy: 'start_date', sortOrder: 'asc' }).catch(() => null),
         circularsService.getAll({ societyId: selectedSocietyId, limit: 3, sortBy: 'created_at', sortOrder: 'desc' }).catch(() => null),
+        contractsService.list({ society_id: selectedSocietyId, limit: 1 }).catch(() => null),
       ]);
 
       if (socRes?.success && socRes.data) {
@@ -72,6 +75,9 @@ export const SocietyAdminHomeScreen: React.FC = () => {
       }
       if (circRes?.success && circRes.data) {
         setRecentCirculars(circRes.data);
+      }
+      if (contractsRes?.meta) {
+        setContractsCount(contractsRes.meta.total || 0);
       }
     } catch (err) {
       console.error('Failed to load society admin dashboard data', err);
@@ -188,6 +194,16 @@ export const SocietyAdminHomeScreen: React.FC = () => {
             icon={<Wallet className="w-4 h-4" />}
             iconBg="bg-emerald-50 text-emerald-600"
             onClick={() => navigate(AppRoutes.FLAT_COLLECTIONS)}
+          />
+
+          <ModuleGridCard
+            title="Contracts & Vendors"
+            description="Commercial agreements & payments"
+            icon={<FileText className="w-4 h-4" />}
+            iconBg="bg-indigo-50 text-indigo-600"
+            badge={contractsCount || undefined}
+            badgeColor="indigo"
+            onClick={() => navigate(AppRoutes.CONTRACTS)}
           />
 
           <ModuleGridCard

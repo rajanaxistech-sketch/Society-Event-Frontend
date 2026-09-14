@@ -55,6 +55,7 @@ interface ContractDetailsModalProps {
   onEdit?: (contract: ContractItemModel) => void;
   onContractUpdated?: (contract: ContractItemModel) => void;
   eventDays?: EventDayItem[];
+  initialTab?: string;
 }
 
 export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
@@ -64,13 +65,14 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
   onEdit,
   onContractUpdated,
   eventDays = [],
+  initialTab = 'overview',
 }) => {
   const toast = useToast();
   const { can } = usePermission();
 
   const [contract, setContract] = useState<ContractItemModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Sub-modals
   const [printModalOpen, setPrintModalOpen] = useState(false);
@@ -115,10 +117,13 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
   };
 
   useEffect(() => {
-    if (isOpen && contractId) {
-      fetchContract();
+    if (isOpen) {
+      setActiveTab(initialTab || 'overview');
+      if (contractId) {
+        fetchContract();
+      }
     }
-  }, [isOpen, contractId]);
+  }, [isOpen, contractId, initialTab]);
 
   // Handle Lifecycle Transitions
   const handleLifecycleAction = async () => {
@@ -757,14 +762,36 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
             </div>
           )}
 
-          {/* Tab 6: Payment Ledger */}
+          {/* Tab 5: Payment Ledger / Payment History */}
           {activeTab === 'payments' && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              {/* Payment Summary Header */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                  <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Contract Value</span>
+                  <span className="text-base font-bold text-slate-900">{formatCurrency(contract.total_amount)}</span>
+                </div>
+                <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3">
+                  <span className="text-[10px] text-emerald-700 font-semibold uppercase tracking-wider block">Total Disbursed</span>
+                  <span className="text-base font-bold text-emerald-700">{formatCurrency(contract.total_paid)}</span>
+                </div>
+                <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3">
+                  <span className="text-[10px] text-amber-700 font-semibold uppercase tracking-wider block">Balance Outstanding</span>
+                  <span className="text-base font-bold text-amber-700">{formatCurrency(contract.remaining_balance)}</span>
+                </div>
+                <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-3">
+                  <span className="text-[10px] text-indigo-700 font-semibold uppercase tracking-wider block">Payment Status</span>
+                  <span className="text-xs font-bold text-indigo-800 uppercase tracking-wide block mt-1">
+                    {contract.payment_status?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">Contract Payment Ledger</h4>
+                  <h4 className="text-xs font-bold text-slate-900">Transaction History & Receipts</h4>
                   <p className="text-[11px] text-slate-500">
-                    Paid: {formatCurrency(contract.total_paid)} / {formatCurrency(contract.total_amount)}
+                    Showing all disbursements recorded against {contract.contract_number}
                   </p>
                 </div>
                 {['approved', 'active', 'completed'].includes(contract.status) && (
@@ -787,6 +814,7 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
                       <th className="py-2.5 px-3">Amount</th>
                       <th className="py-2.5 px-3">Method</th>
                       <th className="py-2.5 px-3">Reference / Cheque</th>
+                      <th className="py-2.5 px-3">Recorded By</th>
                       <th className="py-2.5 px-3">Remarks</th>
                     </tr>
                   </thead>
@@ -797,18 +825,25 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
                           <td className="py-2.5 px-3 font-medium text-slate-800">{formatDate(pay.payment_date)}</td>
                           <td className="py-2.5 px-3 font-bold text-emerald-600">{formatCurrency(pay.amount)}</td>
                           <td className="py-2.5 px-3">
-                            <span className="font-semibold text-slate-700">{pay.payment_method}</span>
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                              {pay.payment_method?.replace(/_/g, ' ')}
+                            </span>
                           </td>
                           <td className="py-2.5 px-3 text-slate-600">
                             {pay.reference_number || (pay.cheque_number ? `Chq: ${pay.cheque_number}` : '--')}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-600">
+                            {(pay as any).recorder?.full_name || '--'}
                           </td>
                           <td className="py-2.5 px-3 text-slate-500">{pay.remarks || '--'}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="py-6 text-center text-slate-400">
-                          No payments recorded against this contract yet.
+                        <td colSpan={6} className="py-8 text-center text-slate-400">
+                          <CreditCard className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                          <p className="font-medium text-slate-600 text-xs">No payments recorded yet</p>
+                          <p className="text-[11px] text-slate-400">Record a payment to track disbursements for this contract.</p>
                         </td>
                       </tr>
                     )}

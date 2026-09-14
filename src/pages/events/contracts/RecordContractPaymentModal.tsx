@@ -76,6 +76,16 @@ export const RecordContractPaymentModal: React.FC<RecordContractPaymentModalProp
       return;
     }
 
+    if (contract.remaining_balance <= 0) {
+      toast.error('This contract has already been fully paid');
+      return;
+    }
+
+    if (payAmount > contract.remaining_balance) {
+      toast.error(`Payment amount (${formatCurrency(payAmount)}) cannot exceed outstanding balance (${formatCurrency(contract.remaining_balance)})`);
+      return;
+    }
+
     if (!paymentMethod) {
       toast.error('Please select a payment method');
       return;
@@ -138,6 +148,13 @@ export const RecordContractPaymentModal: React.FC<RecordContractPaymentModalProp
             <span className="font-bold text-amber-600 text-sm">{formatCurrency(contract.remaining_balance)}</span>
           </div>
         </div>
+
+        {contract.remaining_balance <= 0 && (
+          <div className="flex items-center gap-2 p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>This contract is fully paid. No further payments are due.</span>
+          </div>
+        )}
 
         {/* Amount & Date */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
