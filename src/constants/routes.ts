@@ -97,6 +97,8 @@ export const AppRoutes = {
   VENDORS: '/settings/vendors',
   VENDOR_CREATE: '/settings/vendors/create',
   VENDOR_EDIT: '/settings/vendors/:id/edit',
+  EXPENSE_CATEGORIES: '/settings/expense-categories',
+  INCOME_CATEGORIES: '/settings/income-categories',
   AUDIT_LOGS: '/audit-logs',
   AUDIT_LOG_DETAILS: '/audit-logs/:id',
 } as const;

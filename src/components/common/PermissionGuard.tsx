@@ -16,9 +16,9 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
   children,
   fallback = null,
 }) => {
-  const { can, canAny, canAll, isSuperAdmin } = usePermission();
+  const { can, canAny, canAll, isSuperAdmin, isAdmin } = usePermission();
 
-  if (isSuperAdmin) {
+  if (isSuperAdmin || isAdmin) {
     return <>{children}</>;
   }
 

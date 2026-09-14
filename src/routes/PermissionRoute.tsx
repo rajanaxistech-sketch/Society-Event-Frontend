@@ -9,9 +9,9 @@ export interface PermissionRouteProps {
 }
 
 export const PermissionRoute: React.FC<PermissionRouteProps> = ({ permission, children }) => {
-  const { can, isSuperAdmin } = usePermission();
+  const { can, isSuperAdmin, isAdmin } = usePermission();
 
-  if (!isSuperAdmin && !can(permission)) {
+  if (!isSuperAdmin && !isAdmin && !can(permission)) {
     return <Navigate to={AppRoutes.UNAUTHORIZED} replace />;
   }
 

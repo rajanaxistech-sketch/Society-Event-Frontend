@@ -23,4 +23,7 @@ export * from './rolesService';
 export * from './permissionsService';
 export * from './settingsService';
 export * from './vendorsService';
+export * from './expenseCategoriesService';
+export * from './incomeCategoriesService';
 export * from './auditLogsService';
+

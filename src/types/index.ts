@@ -1013,3 +1013,124 @@ export interface UpdateVendorInput {
   is_active?: boolean;
   status?: string;
 }
+
+// Expense Category Master Types (Setting Master)
+export interface ExpenseCategoryItem {
+  id: string;
+  societyId?: string | null;
+  society_id?: string | null;
+  society?: { id: string; name: string } | null;
+  name: string;
+  code?: string | null;
+  description?: string | null;
+  colorCode?: string | null;
+  color_code?: string | null;
+  displayOrder?: number;
+  display_order?: number;
+  isActive?: boolean;
+  is_active?: boolean;
+  status?: string;
+  contractsCount?: number;
+  itemsCount?: number;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+}
+
+export interface CreateExpenseCategoryInput {
+  name: string;
+  code?: string | null;
+  societyId?: string | null;
+  society_id?: string | null;
+  description?: string | null;
+  colorCode?: string | null;
+  color_code?: string | null;
+  displayOrder?: number;
+  display_order?: number;
+  isActive?: boolean;
+  is_active?: boolean;
+  status?: string;
+}
+
+export interface UpdateExpenseCategoryInput {
+  name?: string;
+  code?: string | null;
+  societyId?: string | null;
+  society_id?: string | null;
+  description?: string | null;
+  colorCode?: string | null;
+  color_code?: string | null;
+  displayOrder?: number;
+  display_order?: number;
+  isActive?: boolean;
+  is_active?: boolean;
+  status?: string;
+}
+
+// Income Category Master Types (Setting Master)
+export interface IncomeCategoryItem {
+  id: string;
+  societyId?: string | null;
+  society_id?: string | null;
+  society?: { id: string; name: string } | null;
+  name: string;
+  code?: string | null;
+  categoryType: 'collection' | 'advertisement' | 'donation' | 'other' | string;
+  category_type?: 'collection' | 'advertisement' | 'donation' | 'other' | string;
+  defaultAmount?: number;
+  default_amount?: number;
+  defaultSnackPasses?: number;
+  default_snack_passes?: number;
+  description?: string | null;
+  displayOrder?: number;
+  display_order?: number;
+  isActive?: boolean;
+  is_active?: boolean;
+  status?: string;
+  collectionsCount?: number;
+  sponsorsCount?: number;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+}
+
+export interface CreateIncomeCategoryInput {
+  name: string;
+  code?: string | null;
+  societyId?: string | null;
+  society_id?: string | null;
+  categoryType?: 'collection' | 'advertisement' | 'donation' | 'other' | string;
+  category_type?: 'collection' | 'advertisement' | 'donation' | 'other' | string;
+  defaultAmount?: number | null;
+  default_amount?: number | null;
+  defaultSnackPasses?: number | null;
+  default_snack_passes?: number | null;
+  description?: string | null;
+  displayOrder?: number;
+  display_order?: number;
+  isActive?: boolean;
+  is_active?: boolean;
+  status?: string;
+}
+
+export interface UpdateIncomeCategoryInput {
+  name?: string;
+  code?: string | null;
+  societyId?: string | null;
+  society_id?: string | null;
+  categoryType?: 'collection' | 'advertisement' | 'donation' | 'other' | string;
+  category_type?: 'collection' | 'advertisement' | 'donation' | 'other' | string;
+  defaultAmount?: number | null;
+  default_amount?: number | null;
+  defaultSnackPasses?: number | null;
+  default_snack_passes?: number | null;
+  description?: string | null;
+  displayOrder?: number;
+  display_order?: number;
+  isActive?: boolean;
+  is_active?: boolean;
+  status?: string;
+}
+

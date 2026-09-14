@@ -25,6 +25,8 @@ import {
   CreditCard,
   CheckCircle2,
   Sparkles,
+  Tag,
+  Coins,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -156,6 +158,20 @@ export const MobileAppLayout: React.FC = () => {
       to: AppRoutes.VENDORS,
       icon: Store,
       color: 'bg-indigo-50 text-indigo-700',
+    },
+    {
+      title: 'Expense Categories',
+      description: 'Vendor contract & item heads',
+      to: AppRoutes.EXPENSE_CATEGORIES,
+      icon: Tag,
+      color: 'bg-rose-50 text-rose-600',
+    },
+    {
+      title: 'Income Categories',
+      description: 'Collection & sponsorship heads',
+      to: AppRoutes.INCOME_CATEGORIES,
+      icon: Coins,
+      color: 'bg-emerald-50 text-emerald-700',
     },
   ];
 

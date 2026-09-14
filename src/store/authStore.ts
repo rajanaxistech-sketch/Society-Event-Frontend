@@ -93,13 +93,37 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user, isSuperAdmin } = get();
     if (!user) return false;
     if (isSuperAdmin()) return true;
-    return user.permissions?.includes(permission) || false;
+
+    if (user.permissions?.includes(permission)) return true;
+
+    const roleName = user.role?.name?.toLowerCase() || '';
+    const isAdmin =
+      roleName === 'admin' ||
+      roleName === 'society admin' ||
+      roleName === 'society_admin';
+
+    if (isAdmin) {
+      return true;
+    }
+
+    return false;
   },
 
   hasAnyPermission: (permissions: string[]) => {
     const { user, isSuperAdmin } = get();
     if (!user) return false;
     if (isSuperAdmin()) return true;
+
+    const roleName = user.role?.name?.toLowerCase() || '';
+    const isAdmin =
+      roleName === 'admin' ||
+      roleName === 'society admin' ||
+      roleName === 'society_admin';
+
+    if (isAdmin) {
+      return true;
+    }
+
     return permissions.some((p) => user.permissions?.includes(p));
   },
 
@@ -107,6 +131,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user, isSuperAdmin } = get();
     if (!user) return false;
     if (isSuperAdmin()) return true;
+
+    const roleName = user.role?.name?.toLowerCase() || '';
+    const isAdmin =
+      roleName === 'admin' ||
+      roleName === 'society admin' ||
+      roleName === 'society_admin';
+
+    if (isAdmin) {
+      return true;
+    }
+
     return permissions.every((p) => user.permissions?.includes(p));
   },
 }));

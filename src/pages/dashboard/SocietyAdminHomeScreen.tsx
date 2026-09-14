@@ -29,6 +29,8 @@ import {
   MapPin,
   Clock,
   RefreshCw,
+  Tag,
+  Coins,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -233,6 +235,22 @@ export const SocietyAdminHomeScreen: React.FC = () => {
             icon={<FileText className="w-4 h-4" />}
             iconBg="bg-purple-50 text-purple-600"
             onClick={() => navigate(AppRoutes.REPORTS_HUB)}
+          />
+
+          <ModuleGridCard
+            title="Expense Categories"
+            description="Contracts & event heads"
+            icon={<Tag className="w-4 h-4" />}
+            iconBg="bg-rose-50 text-rose-600"
+            onClick={() => navigate(AppRoutes.EXPENSE_CATEGORIES)}
+          />
+
+          <ModuleGridCard
+            title="Income Categories"
+            description="Collections & sponsor heads"
+            icon={<Coins className="w-4 h-4" />}
+            iconBg="bg-emerald-50 text-emerald-600"
+            onClick={() => navigate(AppRoutes.INCOME_CATEGORIES)}
           />
         </div>
       </div>

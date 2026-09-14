@@ -99,6 +99,8 @@ import SettingsPage from '../pages/settings/SettingsPage';
 import VendorListPage from '../pages/vendors/VendorListPage';
 import CreateVendorPage from '../pages/vendors/CreateVendorPage';
 import EditVendorPage from '../pages/vendors/EditVendorPage';
+import ExpenseCategoryListPage from '../pages/expense-categories/ExpenseCategoryListPage';
+import IncomeCategoryListPage from '../pages/income-categories/IncomeCategoryListPage';
 import AuditLogListPage from '../pages/audit-logs/AuditLogListPage';
 import AuditLogDetailsPage from '../pages/audit-logs/AuditLogDetailsPage';
 
@@ -634,6 +636,42 @@ export const AppRoutes: React.FC = () => {
             element={
               <PermissionRoute permission={Permissions.VENDOR_UPDATE}>
                 <EditVendorPage />
+              </PermissionRoute>
+            }
+          />
+
+          {/* Expense Categories (Setting Master) */}
+          <Route
+            path={Paths.EXPENSE_CATEGORIES}
+            element={
+              <PermissionRoute permission={Permissions.EXPENSE_CATEGORY_READ}>
+                <ExpenseCategoryListPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="/expense-categories"
+            element={
+              <PermissionRoute permission={Permissions.EXPENSE_CATEGORY_READ}>
+                <ExpenseCategoryListPage />
+              </PermissionRoute>
+            }
+          />
+
+          {/* Income Categories (Setting Master) */}
+          <Route
+            path={Paths.INCOME_CATEGORIES}
+            element={
+              <PermissionRoute permission={Permissions.INCOME_CATEGORY_READ}>
+                <IncomeCategoryListPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="/income-categories"
+            element={
+              <PermissionRoute permission={Permissions.INCOME_CATEGORY_READ}>
+                <IncomeCategoryListPage />
               </PermissionRoute>
             }
           />

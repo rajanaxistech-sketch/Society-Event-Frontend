@@ -116,7 +116,7 @@ export const Permissions = {
   CIRCULAR_DELETE: 'circular.delete',
   CIRCULAR_PUBLISH: 'circular.publish',
 
-  // System Settings & Vendors
+  // System Settings, Vendors & Category Masters
   SETTING_READ: 'setting.read',
   SETTING_UPDATE: 'setting.update',
   VENDOR_READ: 'vendor.read',
@@ -124,6 +124,16 @@ export const Permissions = {
   VENDOR_UPDATE: 'vendor.update',
   VENDOR_DELETE: 'vendor.delete',
   VENDOR_MANAGE: 'vendor.manage',
+  EXPENSE_CATEGORY_READ: 'expense_category.read',
+  EXPENSE_CATEGORY_CREATE: 'expense_category.create',
+  EXPENSE_CATEGORY_UPDATE: 'expense_category.update',
+  EXPENSE_CATEGORY_DELETE: 'expense_category.delete',
+  EXPENSE_CATEGORY_MANAGE: 'expense_category.manage',
+  INCOME_CATEGORY_READ: 'income_category.read',
+  INCOME_CATEGORY_CREATE: 'income_category.create',
+  INCOME_CATEGORY_UPDATE: 'income_category.update',
+  INCOME_CATEGORY_DELETE: 'income_category.delete',
+  INCOME_CATEGORY_MANAGE: 'income_category.manage',
 
   // Audit Logs
   AUDIT_READ: 'audit.read',

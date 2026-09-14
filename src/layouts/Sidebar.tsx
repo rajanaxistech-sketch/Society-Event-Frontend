@@ -17,6 +17,8 @@ import {
   Shield,
   Settings,
   Store,
+  Tag,
+  Coins,
   History,
   X,
   Sparkles,
@@ -36,7 +38,7 @@ interface NavSection {
 }
 
 export const Sidebar: React.FC = () => {
-  const { can, isSuperAdmin } = usePermission();
+  const { can, isSuperAdmin, isAdmin } = usePermission();
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
 
@@ -151,6 +153,18 @@ export const Sidebar: React.FC = () => {
           icon: <Store className="w-4 h-4" />,
           permission: Permissions.VENDOR_READ,
         },
+        {
+          label: 'Expense Categories',
+          to: AppRoutes.EXPENSE_CATEGORIES,
+          icon: <Tag className="w-4 h-4" />,
+          permission: Permissions.EXPENSE_CATEGORY_READ,
+        },
+        {
+          label: 'Income Categories',
+          to: AppRoutes.INCOME_CATEGORIES,
+          icon: <Coins className="w-4 h-4" />,
+          permission: Permissions.INCOME_CATEGORY_READ,
+        },
       ],
     },
   ];
@@ -201,9 +215,23 @@ export const Sidebar: React.FC = () => {
         {/* Navigation Items List */}
         <div className="flex-1 overflow-y-auto px-2 py-2.5 space-y-3">
           {navSections.map((section, sIdx) => {
-            const visibleItems = section.items.filter(
-              (item) => isSuperAdmin || !item.permission || can(item.permission)
-            );
+            const visibleItems = section.items.filter((item) => {
+              if (isSuperAdmin) return true;
+              if (!item.permission) return true;
+              if (can(item.permission)) return true;
+              // Admin or Society Admin can access Setting Master (Categories, Vendors) and Settings
+              if (
+                isAdmin &&
+                (section.title === 'SETTING MASTER' ||
+                  item.permission.startsWith('expense_category.') ||
+                  item.permission.startsWith('income_category.') ||
+                  item.permission.startsWith('vendor.') ||
+                  item.permission.startsWith('setting.'))
+              ) {
+                return true;
+              }
+              return false;
+            });
 
             if (visibleItems.length === 0) return null;
 
