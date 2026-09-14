@@ -360,9 +360,11 @@ export interface EventItem {
   updated_at?: string;
   society?: SocietyItem;
   event_configuration?: EventConfigurationItem;
+  event_days?: EventDayItem[];
   _count?: {
     event_collections?: number;
     event_items?: number;
+    contracts?: number;
     vendor_contracts?: number;
     sponsors?: number;
     food_items?: number;
@@ -1133,4 +1135,262 @@ export interface UpdateIncomeCategoryInput {
   is_active?: boolean;
   status?: string;
 }
+
+// ==========================================
+// Contract Management Module Types
+// ==========================================
+export type ContractStatus = 'draft' | 'pending_approval' | 'approved' | 'active' | 'completed' | 'cancelled' | 'expired';
+export type ContractPaymentStatus = 'unpaid' | 'partially_paid' | 'fully_paid' | 'overpaid';
+export type ContractPricingType = 'fixed' | 'quantity_based' | 'per_day' | 'per_person' | 'hourly';
+export type ContractDocumentType = 'quotation' | 'agreement' | 'work_order' | 'invoice' | 'pan_gst_proof' | 'completion_certificate' | 'other';
+
+export interface ContractItemSchedule {
+  id?: string;
+  contract_item_id?: string;
+  event_day_id?: string | null;
+  day_date?: string | null;
+  service_date?: string | null;
+  quantity?: number | null;
+  quantity_for_day?: number | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  special_instructions?: string | null;
+  day_cost?: number | null;
+  notes?: string | null;
+  is_completed?: boolean;
+  event_day?: {
+    id: string;
+    day_number: number;
+    display_name?: string | null;
+    date: string;
+  } | null;
+}
+
+export interface ContractLineItem {
+  id?: string;
+  contract_id?: string;
+  service_group_id?: string | null;
+  expense_category_id?: string | null;
+  item_name: string;
+  description?: string | null;
+  pricing_type?: ContractPricingType;
+  quantity: number;
+  unit?: string | null;
+  unit_price?: number;
+  unit_rate?: number;
+  number_of_days?: number;
+  discount_amount?: number;
+  tax_percentage?: number;
+  tax_amount?: number;
+  total_amount?: number;
+  display_order?: number;
+  status?: string;
+  service_group?: {
+    id: string;
+    name: string;
+  } | null;
+  expense_category?: {
+    id: string;
+    name: string;
+    color_code?: string;
+  } | null;
+  schedules?: ContractItemSchedule[];
+}
+
+export interface ContractDocumentItem {
+  id: string;
+  contract_id: string;
+  document_type: ContractDocumentType;
+  title: string;
+  file_name: string;
+  file_url: string;
+  file_type?: string | null;
+  file_size?: number | null;
+  uploaded_by?: string | null;
+  created_at: string;
+  uploader?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+}
+
+export interface ContractPaymentItem {
+  id: string;
+  contract_id: string;
+  event_id: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  reference_number?: string | null;
+  cheque_number?: string | null;
+  bank_name?: string | null;
+  cheque_date?: string | null;
+  remarks?: string | null;
+  attachment_url?: string | null;
+  recorded_by?: string | null;
+  status: string;
+  created_at: string;
+  recorder?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+}
+
+export interface ContractItemModel {
+  id: string;
+  society_id: string;
+  event_id: string;
+  vendor_id: string;
+  service_group_id?: string | null;
+  expense_category_id?: string | null;
+  contract_number: string;
+  title: string;
+  contract_type: string;
+  description?: string | null;
+  start_date: string;
+  end_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  is_multi_day: boolean;
+  sub_total_amount: number;
+  discount_amount: number;
+  tax_applicable: boolean;
+  tax_percentage?: number | null;
+  tax_amount: number;
+  total_amount: number;
+  advance_amount: number;
+  total_paid: number;
+  remaining_balance: number;
+  payment_terms?: string | null;
+  payment_status: ContractPaymentStatus;
+  scope_of_work?: string | null;
+  vendor_obligations?: string | null;
+  society_obligations?: string | null;
+  terms_and_conditions?: string | null;
+  cancellation_terms?: string | null;
+  penalty_terms?: string | null;
+  special_instructions?: string | null;
+  internal_notes?: string | null;
+  status: ContractStatus;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+  society?: {
+    id: string;
+    name: string;
+    code?: string;
+    address_line1?: string;
+    city?: string;
+  } | null;
+  vendor?: {
+    id: string;
+    vendor_name: string;
+    short_name: string;
+    mobile_no?: string;
+    email?: string;
+    address?: string;
+  } | null;
+  service_group?: {
+    id: string;
+    name: string;
+  } | null;
+  expense_category?: {
+    id: string;
+    name: string;
+    color_code?: string;
+  } | null;
+  event?: {
+    id: string;
+    name: string;
+    society_id: string;
+    start_date: string;
+    end_date?: string;
+    society?: {
+      id: string;
+      name: string;
+      address_line1?: string;
+      city?: string;
+    };
+    event_days?: {
+      id: string;
+      day_number: number;
+      display_name?: string | null;
+      date: string;
+    }[];
+  };
+  items?: ContractLineItem[];
+  documents?: ContractDocumentItem[];
+  payments?: ContractPaymentItem[];
+  creator?: { id: string; full_name: string; email: string } | null;
+  approver?: { id: string; full_name: string; email: string } | null;
+  _count?: {
+    items?: number;
+    documents?: number;
+    payments?: number;
+  };
+}
+
+export interface CreateContractInput {
+  society_id?: string;
+  event_id: string;
+  vendor_id: string;
+  service_group_id?: string | null;
+  expense_category_id?: string | null;
+  contract_number?: string;
+  title: string;
+  contract_type?: 'fixed_rate' | 'time_and_materials' | 'rate_contract' | string;
+  description?: string | null;
+  start_date: string;
+  end_date: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  is_multi_day?: boolean;
+  sub_total_amount?: number;
+  discount_amount?: number;
+  tax_applicable?: boolean;
+  tax_percentage?: number;
+  tax_amount?: number;
+  total_amount?: number;
+  advance_amount?: number;
+  payment_terms?: string | null;
+  scope_of_work?: string | null;
+  vendor_obligations?: string | null;
+  society_obligations?: string | null;
+  terms_and_conditions?: string | null;
+  cancellation_terms?: string | null;
+  penalty_terms?: string | null;
+  special_instructions?: string | null;
+  internal_notes?: string | null;
+  status?: ContractStatus;
+  items?: ContractLineItem[];
+}
+
+export interface UpdateContractInput extends Partial<CreateContractInput> {}
+
+export interface RecordContractPaymentInput {
+  amount: number;
+  payment_date?: string;
+  payment_method: string;
+  reference_number?: string | null;
+  cheque_number?: string | null;
+  bank_name?: string | null;
+  cheque_date?: string | null;
+  remarks?: string | null;
+  attachment_url?: string | null;
+}
+
+export interface ContractDashboardStats {
+  totalContracts: number;
+  activeContracts: number;
+  totalContractedValue: number;
+  totalPaidAmount: number;
+  totalOutstandingBalance: number;
+  byVendor: { vendorName: string; totalAmount: number; totalPaid: number }[];
+  byServiceGroup: { groupName: string; totalAmount: number }[];
+}
+
 

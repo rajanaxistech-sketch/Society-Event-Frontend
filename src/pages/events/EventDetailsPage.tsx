@@ -20,10 +20,7 @@ import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { getEventTheme } from '../../utils/eventTheme';
 
-// Sub-module tab components
 import { EventItemsTab } from './EventItemsTab';
-import { EventVendorsTab } from './EventVendorsTab';
-import { EventCollectionsPage } from './EventCollectionsPage';
 import { EventSponsorsPage } from './EventSponsorsPage';
 import { EventFoodPage } from './EventFoodPage';
 import { EventDressCodesPage } from './EventDressCodesPage';
@@ -33,7 +30,6 @@ import { EventCircularsPage } from './EventCircularsPage';
 import {
   ArrowLeft,
   Calendar,
-  Wallet,
   Users,
   Utensils,
   Shirt,
@@ -47,7 +43,6 @@ import {
   Clock,
   Building2,
   Layers,
-  Briefcase,
   DollarSign,
   TrendingUp,
   AlertCircle,
@@ -142,17 +137,7 @@ export const EventDetailsPage: React.FC = () => {
   const tabs: TabItem[] = [
     { id: 'overview', label: 'Event Overview', icon: <Calendar className="w-4 h-4" /> },
     { id: 'items', label: 'Items & Expenses', icon: <Layers className="w-4 h-4" />, count: dashboardData?.items?.total_count },
-    { id: 'vendors', label: 'Vendors & Contracts', icon: <Briefcase className="w-4 h-4" />, count: dashboardData?.vendors?.total_contracts },
   ];
-
-  if (event.is_navratri || config?.collection_enabled || counts.event_collections) {
-    tabs.push({
-      id: 'collections',
-      label: 'Flat Collections',
-      icon: <Wallet className="w-4 h-4" />,
-      count: counts.event_collections || dashboardData?.collections?.total_flats,
-    });
-  }
 
   if (config?.sponsorship_enabled || counts.sponsors) {
     tabs.push({
@@ -474,8 +459,6 @@ export const EventDetailsPage: React.FC = () => {
 
       {/* Sub-module Tab Views */}
       {activeTab === 'items' && <EventItemsTab eventId={id!} isNavratri={event.is_navratri} />}
-      {activeTab === 'vendors' && <EventVendorsTab eventId={id!} />}
-      {activeTab === 'collections' && <EventCollectionsPage eventId={id!} />}
       {activeTab === 'sponsors' && <EventSponsorsPage eventId={id!} />}
       {activeTab === 'food' && <EventFoodPage eventId={id!} />}
       {activeTab === 'dress-codes' && <EventDressCodesPage eventId={id!} />}

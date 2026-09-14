@@ -138,6 +138,17 @@ export const Permissions = {
   // Audit Logs
   AUDIT_READ: 'audit.read',
   AUDIT_LOG_READ: 'audit.read',
+
+  // Contracts & Work Orders
+  CONTRACT_READ: 'contract.read',
+  CONTRACT_CREATE: 'contract.create',
+  CONTRACT_UPDATE: 'contract.update',
+  CONTRACT_DELETE: 'contract.delete',
+  CONTRACT_APPROVE: 'contract.approve',
+  CONTRACT_COMPLETE: 'contract.complete',
+  CONTRACT_ITEM_MANAGE: 'contract_item.manage',
+  CONTRACT_DOCUMENT_UPLOAD: 'contract_document.upload',
+  CONTRACT_DOCUMENT_DELETE: 'contract_document.delete',
 } as const;
 
 export type PermissionCode = typeof Permissions[keyof typeof Permissions];

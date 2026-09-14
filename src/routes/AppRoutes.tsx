@@ -104,6 +104,7 @@ import ExpenseCategoryListPage from '../pages/expense-categories/ExpenseCategory
 import IncomeCategoryListPage from '../pages/income-categories/IncomeCategoryListPage';
 import AuditLogListPage from '../pages/audit-logs/AuditLogListPage';
 import AuditLogDetailsPage from '../pages/audit-logs/AuditLogDetailsPage';
+import ContractsListPage from '../pages/contracts/ContractsListPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -416,14 +417,16 @@ export const AppRoutes: React.FC = () => {
             }
           />
 
+          {/* Contracts Standalone Routes */}
           <Route
-            path={Paths.EVENT_COLLECTIONS}
+            path={Paths.CONTRACTS}
             element={
-              <PermissionRoute permission={Permissions.COLLECTION_READ}>
-                <EventCollectionsPage />
+              <PermissionRoute permission={Permissions.CONTRACT_READ}>
+                <ContractsListPage />
               </PermissionRoute>
             }
           />
+
           <Route
             path={Paths.EVENT_SPONSORS}
             element={

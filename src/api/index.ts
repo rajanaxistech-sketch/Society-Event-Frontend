@@ -26,4 +26,6 @@ export * from './vendorsService';
 export * from './expenseCategoriesService';
 export * from './incomeCategoriesService';
 export * from './auditLogsService';
+export * from './contractsService';
+export * from './eventVendorsService';
 

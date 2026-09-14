@@ -56,7 +56,6 @@ export const AppRoutes = {
   EVENT_EDIT: '/events/:id/edit',
   EVENT_CONFIG: '/events/:id/configuration',
   EVENT_CONFIGURATION: '/events/:id/configuration',
-  EVENT_COLLECTIONS: '/events/:id/collections',
   EVENT_COLLECTIONS_DASHBOARD: '/events/:id/collections/dashboard',
   EVENT_SPONSORS: '/events/:id/sponsors',
   EVENT_FOOD: '/events/:id/food',
@@ -67,6 +66,10 @@ export const AppRoutes = {
   // Flat Collections
   FLAT_COLLECTIONS: '/flat-collections',
   FLAT_COLLECTION_DETAILS: '/flat-collections/:id',
+
+  // Contracts
+  CONTRACTS: '/contracts',
+  CONTRACT_DETAILS: '/contracts/:id',
 
   // Circulars
   CIRCULARS: '/circulars',

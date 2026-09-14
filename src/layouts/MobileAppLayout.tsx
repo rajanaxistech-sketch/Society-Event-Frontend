@@ -111,6 +111,13 @@ export const MobileAppLayout: React.FC = () => {
       color: 'bg-teal-50 text-teal-600',
     },
     {
+      title: 'Contracts & Work Orders',
+      description: 'Vendor commercial agreements & payments',
+      to: AppRoutes.CONTRACTS,
+      icon: FileText,
+      color: 'bg-indigo-50 text-indigo-600',
+    },
+    {
       title: 'Payment Methods',
       description: 'UPI QR, Bank accounts & Cash',
       to: AppRoutes.PAYMENT_METHODS,

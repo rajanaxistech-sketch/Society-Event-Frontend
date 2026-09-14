@@ -98,6 +98,12 @@ export const Sidebar: React.FC = () => {
           permission: Permissions.COLLECTION_READ,
         },
         {
+          label: 'Contracts',
+          to: AppRoutes.CONTRACTS,
+          icon: <FileText className="w-4 h-4" />,
+          permission: Permissions.CONTRACT_READ,
+        },
+        {
           label: 'Payment Methods',
           to: AppRoutes.PAYMENT_METHODS,
           icon: <CreditCard className="w-4 h-4" />,
