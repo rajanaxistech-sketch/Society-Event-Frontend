@@ -93,8 +93,8 @@ export const CreateCircularPage: React.FC = () => {
       return false;
     }
 
-    if (selectedFile.size > 15 * 1024 * 1024) {
-      setFileError('File size exceeds the 15 MB limit.');
+    if (selectedFile.size > 30 * 1024 * 1024) {
+      setFileError('File size exceeds the 30 MB limit.');
       return false;
     }
 
@@ -131,8 +131,8 @@ export const CreateCircularPage: React.FC = () => {
     if (trimmed.length < 3) {
       return 'Circular name must be at least 3 characters';
     }
-    if (trimmed.length > 200) {
-      return 'Circular name cannot exceed 200 characters';
+    if (trimmed.length > 50) {
+      return 'Circular name cannot exceed 50 characters';
     }
     return '';
   };
@@ -142,6 +142,10 @@ export const CreateCircularPage: React.FC = () => {
 
     const titleErr = validateTitle(title);
     if (titleErr) newErrors.title = titleErr;
+
+    if (serialNumber.trim().length > 20) {
+      newErrors.serialNumber = 'Serial number cannot exceed 20 characters';
+    }
 
     if (isSuperAdmin && !societyId) {
       newErrors.societyId = 'Target society must be selected';
@@ -154,16 +158,16 @@ export const CreateCircularPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please enter the circular name.');
+      toast.error('Please check the form for errors.');
       return;
     }
 
     try {
       setIsSubmitting(true);
       const formData = new FormData();
-      formData.append('title', title.trim());
+      formData.append('title', title.trim().slice(0, 50));
       if (serialNumber.trim()) {
-        formData.append('serial_number', serialNumber.trim());
+        formData.append('serial_number', serialNumber.trim().slice(0, 20));
       }
       formData.append('status', status);
 
@@ -241,17 +245,29 @@ export const CreateCircularPage: React.FC = () => {
           <div className="space-y-3.5">
             {/* Field 1: Serial Number */}
             <div>
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1 mb-1">
-                <Hash className="w-3.5 h-3.5 text-indigo-500" />
-                <span>1. Circular Serial Number</span>
-                <span className="text-slate-400 font-normal text-[11px]">(e.g. CIRC-01, 01)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Hash className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>1. Circular Serial Number</span>
+                  <span className="text-slate-400 font-normal text-[11px]">(e.g. CIRC-01)</span>
+                </label>
+                <span className={`text-[10px] font-medium ${serialNumber.length >= 20 ? 'text-amber-600 font-semibold' : 'text-slate-400'}`}>
+                  {serialNumber.length}/20
+                </span>
+              </div>
               <Input
                 placeholder="e.g. CIRC-01 or 001"
                 value={serialNumber}
-                maxLength={50}
-                onChange={(e) => setSerialNumber(e.target.value)}
-                helperText="Identifier number for this circular notice"
+                maxLength={20}
+                onChange={(e) => {
+                  const val = e.target.value.slice(0, 20);
+                  setSerialNumber(val);
+                  if (errors.serialNumber) {
+                    setErrors((prev) => ({ ...prev, serialNumber: '' }));
+                  }
+                }}
+                error={errors.serialNumber}
+                helperText={!errors.serialNumber ? 'Identifier number for this circular notice (max 20 characters)' : undefined}
               />
             </div>
 
@@ -262,16 +278,16 @@ export const CreateCircularPage: React.FC = () => {
                   <span>2. Circular Name</span>
                   <span className="text-red-500">*</span>
                 </label>
-                <span className="text-[10px] text-slate-400 font-medium">
-                  {title.length}/200
+                <span className={`text-[10px] font-medium ${title.length >= 50 ? 'text-amber-600 font-semibold' : 'text-slate-400'}`}>
+                  {title.length}/50
                 </span>
               </div>
               <Input
-                placeholder="e.g. Navratri 2026 Collection & Garba Guidelines"
+                placeholder="e.g. Navratri 2026 Guidelines"
                 value={title}
-                maxLength={200}
+                maxLength={50}
                 onChange={(e) => {
-                  const val = e.target.value;
+                  const val = e.target.value.slice(0, 50);
                   setTitle(val);
                   if (errors.title) {
                     const err = validateTitle(val);
@@ -283,7 +299,7 @@ export const CreateCircularPage: React.FC = () => {
                   if (err) setErrors((prev) => ({ ...prev, title: err }));
                 }}
                 error={errors.title}
-                helperText={!errors.title ? 'Official heading or topic of the circular' : undefined}
+                helperText={!errors.title ? 'Official heading or topic of the circular (max 50 characters)' : undefined}
               />
             </div>
 
@@ -316,31 +332,53 @@ export const CreateCircularPage: React.FC = () => {
                     Click to select Circular PDF or drag & drop here
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Supported format: <span className="font-semibold text-rose-600">PDF Document</span> (Max 15 MB)
+                    Supported format: <span className="font-semibold text-rose-600">PDF Document</span> (Max 30 MB)
                   </p>
                 </div>
               ) : (
-                <div className="p-3 rounded-xl bg-indigo-50/40 border border-indigo-200 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
+                <div className="p-3 rounded-xl bg-indigo-50/50 border border-indigo-200 flex items-center justify-between gap-3 overflow-hidden shadow-2xs">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-9 h-9 rounded-lg bg-rose-50 border border-rose-200/70 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
                       <FileCheck className="w-5 h-5 text-rose-600" />
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-900 line-clamp-1">{file.name}</p>
-                      <p className="text-[10.5px] text-slate-500">{formatFileSize(file.size)} &bull; Ready to upload</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-900 truncate" title={file.name}>
+                        {file.name}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 mt-0.5">
+                        <span className="font-semibold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded text-[10px]">
+                          PDF
+                        </span>
+                        <span>&bull;</span>
+                        <span>{formatFileSize(file.size)}</span>
+                        <span>&bull;</span>
+                        <span className="text-emerald-600 font-medium flex items-center gap-0.5">
+                          <CheckCircle2 className="w-3 h-3" /> Ready
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFile(null);
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }}
-                    className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100/60 rounded-md transition-colors cursor-pointer"
+                    >
+                      Change
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                      className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      title="Remove file"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -353,52 +391,6 @@ export const CreateCircularPage: React.FC = () => {
             </div>
           </div>
         </Card>
-
-        {/* Association Context (Understated) */}
-        <div className="p-3 bg-slate-50/80 border border-slate-200 rounded-xl space-y-2.5">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-            Scope & Association
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {isSuperAdmin ? (
-              <Select
-                label="Target Society"
-                requiredIndicator
-                value={societyId}
-                onChange={(e) => {
-                  setSocietyId(e.target.value);
-                  setEventId('');
-                  if (errors.societyId) setErrors((err) => ({ ...err, societyId: '' }));
-                }}
-                options={societies.map((s) => ({ label: s.name, value: s.id }))}
-                error={errors.societyId}
-              />
-            ) : (
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Society</label>
-                <div className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 h-8 flex items-center">
-                  {societies.find((s) => s.id === societyId)?.name ||
-                    user?.societies?.[0]?.name ||
-                    'Assigned Society'}
-                </div>
-              </div>
-            )}
-
-            <Select
-              label="Associated Event (Optional)"
-              value={eventId}
-              onChange={(e) => setEventId(e.target.value)}
-              options={[
-                { label: 'None (General Society Notice)', value: '' },
-                ...events.map((e) => ({
-                  label: `${e.name} (${e.status.toUpperCase()})`,
-                  value: e.id,
-                })),
-              ]}
-            />
-          </div>
-        </div>
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2 pt-1">

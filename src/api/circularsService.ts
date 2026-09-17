@@ -17,6 +17,7 @@ export const circularsService = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 300000,
     });
     return response.data;
   },
@@ -26,6 +27,7 @@ export const circularsService = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 300000,
     });
     return response.data;
   },

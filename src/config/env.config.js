@@ -84,7 +84,7 @@ export const envConfig = Object.freeze({
   isStage: currentEnv === ENVIRONMENTS.STAGE,
   isLive: currentEnv === ENVIRONMENTS.LIVE,
   apiUrl,
-  apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT || "30000", 10),
+  apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT || "300000", 10),
   appName: process.env.REACT_APP_NAME || "Society Event Management",
   appVersion: process.env.REACT_APP_VERSION || "1.0.0",
   debug: currentEnv !== ENVIRONMENTS.LIVE,
