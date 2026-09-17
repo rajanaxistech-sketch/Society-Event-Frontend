@@ -152,6 +152,11 @@ export const CircularDetailsPage: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
+                {circular.serial_number && (
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    #{circular.serial_number}
+                  </span>
+                )}
                 <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">{circular.title}</h1>
                 <StatusBadge status={circular.status} size="sm" />
               </div>

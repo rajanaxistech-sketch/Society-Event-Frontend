@@ -660,8 +660,9 @@ export interface CircularItem {
   id: string;
   society_id: string;
   event_id?: string | null;
+  serial_number?: string | null;
   title: string;
-  description: string;
+  description?: string | null;
   file_name?: string | null;
   file_url?: string | null;
   file_type?: string | null;

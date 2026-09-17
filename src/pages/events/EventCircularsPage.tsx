@@ -6,8 +6,6 @@ import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
 import { Permissions } from '../../constants/permissions';
 import { AppRoutes } from '../../constants/routes';
-import Card from '../../components/ui/Card';
-import Table, { Column } from '../../components/ui/Table';
 import Pagination from '../../components/ui/Pagination';
 import Button from '../../components/ui/Button';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -21,16 +19,16 @@ import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { getFileUrl } from '../../utils/fileHelper';
 import {
   Plus,
-  Eye,
   Edit2,
   Trash2,
-  ScrollText,
   FileText,
-  Image as ImageIcon,
   Download,
   Send,
   EyeOff,
   RefreshCw,
+  ExternalLink,
+  Calendar,
+  Hash,
 } from 'lucide-react';
 
 interface EventCircularsPageProps {
@@ -49,7 +47,7 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
   const { can, isResident } = usePermission();
 
   const [circulars, setCirculars] = useState<CircularItem[]>([]);
-  const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 12, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   // Modals
@@ -137,7 +135,7 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleOpenCircular = (item: CircularItem) => {
+  const handleOpenPdf = (item: CircularItem) => {
     if (item.file_url) {
       window.open(getFileUrl(item.file_url), '_blank', 'noopener,noreferrer');
     } else {
@@ -145,253 +143,221 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
     }
   };
 
-  const columns: Column<CircularItem>[] = [
-    {
-      key: 'title',
-      header: 'Title & Notice Details',
-      render: (item) => (
-        <div className="flex items-start gap-3 py-1">
-          <div className="p-2 rounded-xl bg-purple-50 text-purple-600 shrink-0 mt-0.5 border border-purple-100">
-            {item.file_type === 'pdf' ? (
-              <FileText className="w-4 h-4 text-rose-500" />
-            ) : item.file_url ? (
-              <ImageIcon className="w-4 h-4 text-purple-600" />
-            ) : (
-              <ScrollText className="w-4 h-4 text-slate-500" />
-            )}
-          </div>
-          <div>
-            <span
-              onClick={() => handleOpenCircular(item)}
-              className="font-bold text-slate-900 hover:text-indigo-600 transition-colors cursor-pointer text-xs line-clamp-1"
-              title={item.file_url ? 'Click to open document in new tab' : 'Click to view'}
-            >
-              {item.title}
-            </span>
-            <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{item.description}</p>
-          </div>
+  return (
+    <div className="space-y-3">
+      {/* Sleek Minimalist Header */}
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-800">
+            Circulars ({meta.total || circulars.length})
+          </span>
         </div>
-      ),
-    },
-    {
-      key: 'attachment',
-      header: 'Attachment',
-      render: (item) =>
-        item.file_url ? (
-          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-            <a
-              href={getFileUrl(item.file_url)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-700 transition-colors"
-              title="Open document in new tab"
-            >
-              {item.file_type || 'FILE'}
-            </a>
-            {item.file_size && (
-              <span className="text-[10px] text-slate-400">({formatFileSize(item.file_size)})</span>
-            )}
-            <a
-              href={getFileUrl(item.file_url)}
-              download={item.file_name || 'circular'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-400 hover:text-indigo-600 p-1"
-              title="Download"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </a>
-          </div>
-        ) : (
-          <span className="text-xs text-slate-400">—</span>
-        ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (item) => <StatusBadge status={item.status} size="sm" />,
-    },
-    {
-      key: 'published_at',
-      header: 'Published / Date',
-      render: (item) => (
-        <span className="text-xs text-slate-700 font-medium">
-          {item.published_at ? formatDate(item.published_at) : formatDate(item.created_at)}
-        </span>
-      ),
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      align: 'right',
-      render: (item) => (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleOpenCircular(item)}
-            title={item.file_url ? 'Open in New Tab' : 'View Details'}
-            className="p-1 text-slate-500 hover:text-indigo-600"
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={fetchCirculars}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+            title="Refresh"
           >
-            <Eye className="w-3.5 h-3.5" />
-          </Button>
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
 
           {!isResident && (
-            <>
-              <PermissionGuard permission={Permissions.CIRCULAR_PUBLISH}>
-                {item.status === 'published' ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setStatusTarget({ item, action: 'unpublish' })}
-                    title="Unpublish"
-                    className="p-1 text-amber-500 hover:text-amber-700"
-                  >
-                    <EyeOff className="w-3.5 h-3.5" />
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setStatusTarget({ item, action: 'publish' })}
-                    title="Publish"
-                    className="p-1 text-emerald-600 hover:text-emerald-700"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-              </PermissionGuard>
-
-              <PermissionGuard permission={Permissions.CIRCULAR_UPDATE}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate(`/circulars/${encodeId(item.id)}/edit`)}
-                  title="Edit"
-                  className="p-1 text-slate-500 hover:text-indigo-600"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </Button>
-              </PermissionGuard>
-
-              <PermissionGuard permission={Permissions.CIRCULAR_DELETE}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDeleteTarget(item)}
-                  title="Delete"
-                  className="p-1 text-rose-500 hover:text-rose-700"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </PermissionGuard>
-            </>
+            <PermissionGuard permission={Permissions.CIRCULAR_CREATE}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() =>
+                  navigate(
+                    `${AppRoutes.CIRCULAR_CREATE}?eventId=${encodeId(eventId)}${
+                      propSocietyId ? `&societyId=${encodeId(propSocietyId)}` : ''
+                    }`
+                  )
+                }
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
+                className="py-1 px-2.5 text-xs font-bold shadow-2xs"
+              >
+                Add Circular
+              </Button>
+            </PermissionGuard>
           )}
-        </div>
-      ),
-    },
-  ];
-
-  return (
-    <div className="space-y-4">
-      {/* Event Guidelines & Announcements Header Banner */}
-      <div className="p-4 rounded-xl border border-indigo-200 bg-linear-to-r from-indigo-50/80 via-purple-50/30 to-white shadow-2xs">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
-            <ScrollText className="w-5 h-5" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-extrabold text-sm text-slate-900">
-              Official Festival Guidelines & Circulars
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Stay informed with official circulars regarding daily Maha Aarti schedules (7:30 PM & 10:30 PM), guest parking allocations, and clubhouse safety discipline.
-            </p>
-          </div>
         </div>
       </div>
 
-      <Card
-        title="Event Circulars & Announcements"
-        subtitle="Notices, schedule changes, dress code reminders, and official announcements."
-        headerAction={
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchCirculars}
-              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-            >
-              Refresh
-            </Button>
-            {!isResident && (
-              <PermissionGuard permission={Permissions.CIRCULAR_CREATE}>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() =>
-                    navigate(
-                      `${AppRoutes.CIRCULAR_CREATE}?eventId=${encodeId(eventId)}${
-                        propSocietyId ? `&societyId=${encodeId(propSocietyId)}` : ''
-                      }`
-                    )
-                  }
-                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="py-12 flex justify-center items-center">
+          <Spinner size="md" label="Loading circulars..." />
+        </div>
+      ) : circulars.length === 0 ? (
+        <EmptyState
+          icon={<FileText className="w-8 h-8 text-slate-300" />}
+          title="No circulars available"
+          description="Official circulars and PDF notices for this event will appear here."
+          action={
+            !isResident && can(Permissions.CIRCULAR_CREATE) ? (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() =>
+                  navigate(
+                    `${AppRoutes.CIRCULAR_CREATE}?eventId=${encodeId(eventId)}${
+                      propSocietyId ? `&societyId=${encodeId(propSocietyId)}` : ''
+                    }`
+                  )
+                }
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
+                Create Circular
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        /* Minimalist Card Listing */
+        <div className="space-y-2.5">
+          {circulars.map((item, index) => {
+            const serialNo = item.serial_number || `CIRC-${String(index + 1).padStart(2, '0')}`;
+            const isPdf = item.file_type === 'pdf' || item.file_url?.toLowerCase().endsWith('.pdf');
+
+            return (
+              <div
+                key={item.id}
+                className="bg-white border border-slate-200/90 hover:border-indigo-200 rounded-xl p-3.5 transition-all shadow-2xs hover:shadow-xs group"
+              >
+                {/* Card Top: Serial Number Badge & Status / Date */}
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      <Hash className="w-3 h-3 text-indigo-500" />
+                      {serialNo}
+                    </span>
+                    <span className="text-[10.5px] text-slate-400 font-medium flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(item.published_at || item.created_at)}
+                    </span>
+                  </div>
+
+                  {!isResident && (
+                    <StatusBadge status={item.status} size="sm" />
+                  )}
+                </div>
+
+                {/* Card Middle: Circular Name */}
+                <h3
+                  onClick={() => handleOpenPdf(item)}
+                  className="font-bold text-[13.5px] sm:text-sm text-slate-900 group-hover:text-indigo-600 transition-colors cursor-pointer leading-snug mb-3"
+                  title={item.file_url ? 'Click to open PDF' : 'Click to view'}
                 >
-                  Add Event Circular
-                </Button>
-              </PermissionGuard>
-            )}
-          </div>
-        }
-      >
-        {isLoading ? (
-          <div className="py-12 flex justify-center items-center">
-            <Spinner size="md" label="Loading event circulars..." />
-          </div>
-        ) : circulars.length === 0 ? (
-          <EmptyState
-            icon={<ScrollText className="w-8 h-8 text-slate-300" />}
-            title="No event circulars published"
-            description="Official event guidelines, collection notices, and schedule announcements for this event will appear here."
-            action={
-              !isResident && can(Permissions.CIRCULAR_CREATE) ? (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() =>
-                    navigate(
-                      `${AppRoutes.CIRCULAR_CREATE}?eventId=${encodeId(eventId)}${
-                        propSocietyId ? `&societyId=${encodeId(propSocietyId)}` : ''
-                      }`
-                    )
-                  }
-                  leftIcon={<Plus className="w-4 h-4" />}
-                >
-                  Create Circular for this Event
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <div className="overflow-hidden">
-            <Table columns={columns} data={circulars} />
-            {meta.totalPages > 1 && (
-              <div className="pt-4 border-t border-slate-100">
-                <Pagination
-                  meta={meta}
-                  onPageChange={(p) => setMeta((m) => ({ ...m, page: p }))}
-                />
+                  {item.title}
+                </h3>
+
+                {/* Card Bottom: PDF Action & Admin Controls */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                  {/* Circular PDF Action */}
+                  {item.file_url ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPdf(item)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors cursor-pointer"
+                        title="Open PDF"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-rose-500" />
+                        <span>View PDF</span>
+                        <ExternalLink className="w-3 h-3 text-indigo-400" />
+                      </button>
+
+                      {item.file_size && (
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {formatFileSize(item.file_size)}
+                        </span>
+                      )}
+
+                      <a
+                        href={getFileUrl(item.file_url)}
+                        download={item.file_name || `Circular_${serialNo}.pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+                        title="Download PDF"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-slate-400 font-medium">No PDF Attached</span>
+                  )}
+
+                  {/* Admin Action Buttons */}
+                  {!isResident && (
+                    <div className="flex items-center gap-1">
+                      <PermissionGuard permission={Permissions.CIRCULAR_PUBLISH}>
+                        {item.status === 'published' ? (
+                          <button
+                            type="button"
+                            onClick={() => setStatusTarget({ item, action: 'unpublish' })}
+                            title="Unpublish"
+                            className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded"
+                          >
+                            <EyeOff className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setStatusTarget({ item, action: 'publish' })}
+                            title="Publish"
+                            className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </PermissionGuard>
+
+                      <PermissionGuard permission={Permissions.CIRCULAR_UPDATE}>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/circulars/${encodeId(item.id)}/edit`)}
+                          title="Edit"
+                          className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      </PermissionGuard>
+
+                      <PermissionGuard permission={Permissions.CIRCULAR_DELETE}>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(item)}
+                          title="Delete"
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </PermissionGuard>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        )}
-      </Card>
+            );
+          })}
+
+          {meta.totalPages > 1 && (
+            <div className="pt-2">
+              <Pagination
+                meta={meta}
+                onPageChange={(p) => setMeta((m) => ({ ...m, page: p }))}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmDialog
         isOpen={Boolean(deleteTarget)}
-        title="Delete Event Circular"
+        title="Delete Circular"
         message={`Are you sure you want to delete "${deleteTarget?.title}"?`}
         confirmLabel={isDeleting ? 'Deleting...' : 'Delete'}
         cancelLabel="Cancel"
@@ -403,7 +369,7 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
       {/* Publish Confirmation Modal */}
       <ConfirmDialog
         isOpen={Boolean(statusTarget)}
-        title={statusTarget?.action === 'publish' ? 'Publish Event Circular' : 'Unpublish Circular'}
+        title={statusTarget?.action === 'publish' ? 'Publish Circular' : 'Unpublish Circular'}
         message={
           statusTarget?.action === 'publish'
             ? `Publishing "${statusTarget?.item.title}" will make it immediately visible to all eligible society residents.`
@@ -420,3 +386,4 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
 };
 
 export default EventCircularsPage;
+

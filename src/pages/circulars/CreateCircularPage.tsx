@@ -10,7 +10,6 @@ import { AppRoutes } from '../../constants/routes';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import Textarea from '../../components/ui/Textarea';
 import Select from '../../components/ui/Select';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
@@ -18,12 +17,13 @@ import {
   ArrowLeft,
   UploadCloud,
   FileText,
-  Image as ImageIcon,
   X,
   ScrollText,
   Sparkles,
   CheckCircle2,
   AlertCircle,
+  Hash,
+  FileCheck,
 } from 'lucide-react';
 
 export const CreateCircularPage: React.FC = () => {
@@ -40,13 +40,15 @@ export const CreateCircularPage: React.FC = () => {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form State
+  // 3 Primary Fields + Context
+  const [serialNumber, setSerialNumber] = useState('');
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+
+  // Context & Status
   const [societyId, setSocietyId] = useState(initialSocietyId);
   const [eventId, setEventId] = useState(initialEventId);
   const [status, setStatus] = useState<'draft' | 'published'>('published');
-  const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -87,12 +89,12 @@ export const CreateCircularPage: React.FC = () => {
     const ext = selectedFile.name.split('.').pop()?.toLowerCase() || '';
 
     if (!allowedExts.includes(ext)) {
-      setFileError('Only PDF, PNG, JPG and JPEG files are allowed.');
+      setFileError('Only PDF and image files are allowed.');
       return false;
     }
 
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      setFileError('File size exceeds the 10 MB limit.');
+    if (selectedFile.size > 15 * 1024 * 1024) {
+      setFileError('File size exceeds the 15 MB limit.');
       return false;
     }
 
@@ -124,27 +126,13 @@ export const CreateCircularPage: React.FC = () => {
   const validateTitle = (val: string): string => {
     const trimmed = val.trim();
     if (!trimmed) {
-      return 'Circular title is required';
+      return 'Circular name is required';
     }
     if (trimmed.length < 3) {
-      return 'Circular title must be at least 3 characters';
+      return 'Circular name must be at least 3 characters';
     }
     if (trimmed.length > 200) {
-      return 'Circular title cannot exceed 200 characters';
-    }
-    return '';
-  };
-
-  const validateDescription = (val: string): string => {
-    const trimmed = val.trim();
-    if (!trimmed) {
-      return 'Notice content & instructions are required';
-    }
-    if (trimmed.length < 5) {
-      return 'Notice content must be at least 5 characters';
-    }
-    if (trimmed.length > 5000) {
-      return 'Notice content cannot exceed 5000 characters';
+      return 'Circular name cannot exceed 200 characters';
     }
     return '';
   };
@@ -154,9 +142,6 @@ export const CreateCircularPage: React.FC = () => {
 
     const titleErr = validateTitle(title);
     if (titleErr) newErrors.title = titleErr;
-
-    const descErr = validateDescription(description);
-    if (descErr) newErrors.description = descErr;
 
     if (isSuperAdmin && !societyId) {
       newErrors.societyId = 'Target society must be selected';
@@ -169,7 +154,7 @@ export const CreateCircularPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fix the validation errors before submitting.');
+      toast.error('Please enter the circular name.');
       return;
     }
 
@@ -177,7 +162,9 @@ export const CreateCircularPage: React.FC = () => {
       setIsSubmitting(true);
       const formData = new FormData();
       formData.append('title', title.trim());
-      formData.append('description', description.trim());
+      if (serialNumber.trim()) {
+        formData.append('serial_number', serialNumber.trim());
+      }
       formData.append('status', status);
 
       if (societyId) {
@@ -195,9 +182,13 @@ export const CreateCircularPage: React.FC = () => {
         toast.success(
           status === 'published'
             ? `Circular "${res.data.title}" published successfully!`
-            : `Circular "${res.data.title}" saved as draft.`
+            : `Circular "${res.data.title}" saved.`
         );
-        navigate(`/circulars/${encodeId(res.data.id)}`);
+        if (eventId) {
+          navigate(`/events/${encodeId(eventId)}?tab=circulars`);
+        } else {
+          navigate(AppRoutes.CIRCULARS);
+        }
       } else {
         toast.error(res.message || 'Failed to create circular');
       }
@@ -215,7 +206,7 @@ export const CreateCircularPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-3.5">
+    <div className="max-w-3xl mx-auto space-y-3.5">
       {/* Header */}
       <div className="flex items-center gap-2.5">
         <Button
@@ -232,37 +223,47 @@ export const CreateCircularPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">
-              Create Official Circular
+              Add Circular
             </h1>
             <p className="text-[11px] text-slate-500">
-              Draft and publish circulars, collections, and event instructions for society members
+              Upload official circular notice with Serial Number, Name, and PDF
             </p>
           </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
+        {/* Core 3 Fields Card */}
         <Card
           title="Circular Information"
-          subtitle="Provide the notice title, details, and target association"
+          subtitle="Fill in the 3 required fields to publish an official circular"
         >
-          <div className="space-y-3">
-            {/* Title */}
+          <div className="space-y-3.5">
+            {/* Field 1: Serial Number */}
+            <div>
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1 mb-1">
+                <Hash className="w-3.5 h-3.5 text-indigo-500" />
+                <span>1. Circular Serial Number</span>
+                <span className="text-slate-400 font-normal text-[11px]">(e.g. CIRC-01, 01)</span>
+              </label>
+              <Input
+                placeholder="e.g. CIRC-01 or 001"
+                value={serialNumber}
+                maxLength={50}
+                onChange={(e) => setSerialNumber(e.target.value)}
+                helperText="Identifier number for this circular notice"
+              />
+            </div>
+
+            {/* Field 2: Circular Name */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                  Circular Title <span className="text-red-500">*</span>
+                  <span>2. Circular Name</span>
+                  <span className="text-red-500">*</span>
                 </label>
-                <span
-                  className={`text-[10px] font-medium ${
-                    title.length > 200
-                      ? 'text-red-600 font-bold'
-                      : title.length >= 180
-                      ? 'text-amber-600'
-                      : 'text-slate-400'
-                  }`}
-                >
-                  {title.length}/200 characters
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {title.length}/200
                 </span>
               </div>
               <Input
@@ -282,199 +283,122 @@ export const CreateCircularPage: React.FC = () => {
                   if (err) setErrors((prev) => ({ ...prev, title: err }));
                 }}
                 error={errors.title}
-                helperText={!errors.title ? 'A clear, descriptive title visible on the resident feed (Max 200 characters)' : undefined}
+                helperText={!errors.title ? 'Official heading or topic of the circular' : undefined}
               />
             </div>
 
-            {/* Scope: Society & Event */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {isSuperAdmin ? (
-                <Select
-                  label="Target Society"
-                  requiredIndicator
-                  value={societyId}
-                  onChange={(e) => {
-                    setSocietyId(e.target.value);
-                    setEventId('');
-                    if (errors.societyId) setErrors((err) => ({ ...err, societyId: '' }));
-                  }}
-                  options={societies.map((s) => ({ label: s.name, value: s.id }))}
-                  error={errors.societyId}
-                />
-              ) : (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Society</label>
-                  <div className="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 h-8 sm:h-9 flex items-center">
-                    {societies.find((s) => s.id === societyId)?.name ||
-                      user?.societies?.[0]?.name ||
-                      'Assigned Society'}
+            {/* Field 3: Circular PDF */}
+            <div>
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1 mb-1">
+                <FileText className="w-3.5 h-3.5 text-rose-500" />
+                <span>3. Circular PDF Document</span>
+              </label>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf,.png,.jpg,.jpeg"
+                className="hidden"
+              />
+
+              {!file ? (
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/30 hover:bg-indigo-50/60 transition-all rounded-xl p-4 sm:p-5 flex flex-col items-center justify-center text-center cursor-pointer group"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-white text-indigo-600 shadow-2xs flex items-center justify-center group-hover:scale-105 transition-transform mb-1.5">
+                    <UploadCloud className="w-4 h-4 text-indigo-600" />
                   </div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-800">
+                    Click to select Circular PDF or drag & drop here
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Supported format: <span className="font-semibold text-rose-600">PDF Document</span> (Max 15 MB)
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-indigo-50/40 border border-indigo-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
+                      <FileCheck className="w-5 h-5 text-rose-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 line-clamp-1">{file.name}</p>
+                      <p className="text-[10.5px] text-slate-500">{formatFileSize(file.size)} &bull; Ready to upload</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               )}
 
-              <Select
-                label="Associated Event (Optional)"
-                value={eventId}
-                onChange={(e) => setEventId(e.target.value)}
-                options={[
-                  { label: 'None (General Society Notice)', value: '' },
-                  ...events.map((e) => ({
-                    label: `${e.name} (${e.status.toUpperCase()})`,
-                    value: e.id,
-                  })),
-                ]}
-                helperText="Link this circular directly to a specific event such as Navratri"
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                  Notice Content & Instructions <span className="text-red-500">*</span>
-                </label>
-                <span
-                  className={`text-[10px] font-medium ${
-                    description.length > 5000
-                      ? 'text-red-600 font-bold'
-                      : description.length >= 4800
-                      ? 'text-amber-600'
-                      : 'text-slate-400'
-                  }`}
-                >
-                  {description.length}/5000 characters
-                </span>
-              </div>
-              <Textarea
-                placeholder="Enter the official details, requirements, collection deadlines, or important announcements for residents..."
-                value={description}
-                maxLength={5000}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setDescription(val);
-                  if (errors.description) {
-                    const err = validateDescription(val);
-                    setErrors((prev) => ({ ...prev, description: err }));
-                  }
-                }}
-                onBlur={() => {
-                  const err = validateDescription(description);
-                  if (err) setErrors((prev) => ({ ...prev, description: err }));
-                }}
-                error={errors.description}
-                rows={4}
-              />
+              {fileError && (
+                <div className="flex items-center gap-1.5 text-red-600 text-[11px] font-semibold bg-red-50 p-2 rounded-lg border border-red-200 mt-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{fileError}</span>
+                </div>
+              )}
             </div>
           </div>
         </Card>
 
-        {/* Attachment Upload Card */}
-        <Card
-          title="Document / Image Attachment"
-          subtitle="Upload official signed notice in PDF, PNG, JPG, or JPEG format (Max 10 MB)"
-        >
-          <div className="space-y-2.5">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".pdf,.png,.jpg,.jpeg"
-              className="hidden"
-            />
+        {/* Association Context (Understated) */}
+        <div className="p-3 bg-slate-50/80 border border-slate-200 rounded-xl space-y-2.5">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+            Scope & Association
+          </span>
 
-            {!file ? (
-              <div
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 hover:bg-indigo-50/70 transition-all rounded-xl p-4 sm:p-5 flex flex-col items-center justify-center text-center cursor-pointer group"
-              >
-                <div className="w-9 h-9 rounded-lg bg-white text-indigo-600 shadow-2xs flex items-center justify-center group-hover:scale-105 transition-transform mb-1.5">
-                  <UploadCloud className="w-4 h-4" />
-                </div>
-                <p className="text-xs sm:text-sm font-bold text-slate-800">
-                  Click to select file or drag & drop here
-                </p>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Supported formats: <span className="font-semibold text-indigo-600">PDF, PNG, JPG, JPEG</span> (Up to 10 MB)
-                </p>
-              </div>
-            ) : (
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
-                    {file.name.endsWith('.pdf') ? (
-                      <FileText className="w-4 h-4 text-rose-600" />
-                    ) : (
-                      <ImageIcon className="w-4 h-4 text-indigo-600" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-900 line-clamp-1">{file.name}</p>
-                    <p className="text-[10px] text-slate-500">{formatFileSize(file.size)}</p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFile(null);
-                    if (fileInputRef.current) fileInputRef.current.value = '';
-                  }}
-                  className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {fileError && (
-              <div className="flex items-center gap-1.5 text-red-600 text-[11px] font-semibold bg-red-50 p-2 rounded-lg border border-red-200">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{fileError}</span>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Publication Status Card */}
-        <Card title="Publication Status" subtitle="Choose whether to publish immediately or save as a draft">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div
-              onClick={() => setStatus('published')}
-              className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                status === 'published'
-                  ? 'border-indigo-600 bg-indigo-50/50 shadow-soft'
-                  : 'border-slate-200 hover:border-slate-300 bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm font-bold text-slate-900">Publish Immediately</span>
-                {status === 'published' && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
+            {isSuperAdmin ? (
+              <Select
+                label="Target Society"
+                requiredIndicator
+                value={societyId}
+                onChange={(e) => {
+                  setSocietyId(e.target.value);
+                  setEventId('');
+                  if (errors.societyId) setErrors((err) => ({ ...err, societyId: '' }));
+                }}
+                options={societies.map((s) => ({ label: s.name, value: s.id }))}
+                error={errors.societyId}
+              />
+            ) : (
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Society</label>
+                <div className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 h-8 flex items-center">
+                  {societies.find((s) => s.id === societyId)?.name ||
+                    user?.societies?.[0]?.name ||
+                    'Assigned Society'}
+                </div>
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Notice is officially released and immediately visible to eligible society residents.
-              </p>
-            </div>
+            )}
 
-            <div
-              onClick={() => setStatus('draft')}
-              className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                status === 'draft'
-                  ? 'border-indigo-600 bg-indigo-50/50 shadow-soft'
-                  : 'border-slate-200 hover:border-slate-300 bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm font-bold text-slate-900">Save as Draft</span>
-                {status === 'draft' && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Notice will only be visible to administrators for review before publishing.
-              </p>
-            </div>
+            <Select
+              label="Associated Event (Optional)"
+              value={eventId}
+              onChange={(e) => setEventId(e.target.value)}
+              options={[
+                { label: 'None (General Society Notice)', value: '' },
+                ...events.map((e) => ({
+                  label: `${e.name} (${e.status.toUpperCase()})`,
+                  value: e.id,
+                })),
+              ]}
+            />
           </div>
-        </Card>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2 pt-1">
@@ -482,7 +406,7 @@ export const CreateCircularPage: React.FC = () => {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => navigate(AppRoutes.CIRCULARS)}
+            onClick={() => navigate(-1)}
             disabled={isSubmitting}
           >
             Cancel
@@ -494,7 +418,7 @@ export const CreateCircularPage: React.FC = () => {
             isLoading={isSubmitting}
             leftIcon={<Sparkles className="w-3.5 h-3.5" />}
           >
-            {status === 'published' ? 'Publish Circular' : 'Save Draft'}
+            Save & Publish Circular
           </Button>
         </div>
       </form>
@@ -503,3 +427,4 @@ export const CreateCircularPage: React.FC = () => {
 };
 
 export default CreateCircularPage;
+

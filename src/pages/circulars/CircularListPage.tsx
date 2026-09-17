@@ -189,12 +189,21 @@ export const CircularListPage: React.FC = () => {
 
   const adminColumns: Column<CircularItem>[] = [
     {
+      key: 'serial_number',
+      header: 'Serial No.',
+      render: (item) => (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100">
+          {item.serial_number || '—'}
+        </span>
+      ),
+    },
+    {
       key: 'title',
-      header: 'Title & Summary',
+      header: 'Circular Name',
       render: (item) => (
         <div className="flex items-center gap-2.5 py-0.5">
           <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 shrink-0 flex items-center justify-center border border-indigo-100/80">
-            {item.file_type === 'pdf' ? (
+            {item.file_type === 'pdf' || item.file_url?.toLowerCase().endsWith('.pdf') ? (
               <FileText className="w-3.5 h-3.5 text-rose-500" />
             ) : item.file_url ? (
               <ImageIcon className="w-3.5 h-3.5 text-indigo-500" />
@@ -217,9 +226,6 @@ export const CircularListPage: React.FC = () => {
                 </span>
               )}
             </div>
-            {item.description && (
-              <p className="text-[11px] text-slate-400 truncate max-w-md">{item.description}</p>
-            )}
           </div>
         </div>
       ),
@@ -503,9 +509,9 @@ export const CircularListPage: React.FC = () => {
       ) : !isSuperAdmin ? (
         /* ================= MOBILE / RESIDENT CARDS GRID ================= */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
-          {circulars.map((item) => {
+          {circulars.map((item, index) => {
             const hasNewTag = isRecent(item.published_at);
-            const isPdf = item.file_type === 'pdf';
+            const serialNo = item.serial_number || `CIRC-${String(index + 1).padStart(2, '0')}`;
 
             return (
               <Card
@@ -513,18 +519,20 @@ export const CircularListPage: React.FC = () => {
                 className="flex flex-col justify-between hover:shadow-card-hover transition-all duration-200 border border-slate-200/80 rounded-xl group"
               >
                 <div>
-                  {/* Top Bar with Event Tag & New indicator & Status */}
+                  {/* Top Bar with Serial No, Event Tag & New indicator & Status */}
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    {item.event ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        <Sparkles className="w-2.5 h-2.5 text-indigo-500" />
-                        {item.event.name}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        #{serialNo}
                       </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-600">
-                        General Notice
-                      </span>
-                    )}
+
+                      {item.event && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                          <Sparkles className="w-2.5 h-2.5 text-purple-500" />
+                          {item.event.name}
+                        </span>
+                      )}
+                    </div>
 
                     <div className="flex items-center gap-1">
                       {canManage && <StatusBadge status={item.status} size="sm" />}
@@ -544,13 +552,6 @@ export const CircularListPage: React.FC = () => {
                   >
                     {item.title}
                   </h3>
-
-                  {/* Description */}
-                  {item.description && (
-                    <p className="text-[11px] text-slate-500 line-clamp-3 mt-1 font-medium leading-relaxed">
-                      {item.description}
-                    </p>
-                  )}
                 </div>
 
                 {/* Footer with Metadata & Actions */}
@@ -581,27 +582,38 @@ export const CircularListPage: React.FC = () => {
                         </button>
                       </>
                     )}
-                    {item.file_url && (
-                      <a
-                        href={getFileUrl(item.file_url)}
-                        download={item.file_name || 'circular'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1 rounded text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                        title="Download Attachment"
+                    {item.file_url ? (
+                      <>
+                        <a
+                          href={getFileUrl(item.file_url)}
+                          download={item.file_name || `Circular_${serialNo}.pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1 rounded text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                          title="Download PDF"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleOpenCircular(item)}
+                          rightIcon={<ExternalLink className="w-2.5 h-2.5" />}
+                          className="text-[11px] font-bold py-0.5 px-2"
+                        >
+                          PDF
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenCircular(item)}
+                        className="text-[11px] font-bold py-0.5 px-2"
                       >
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
+                        View
+                      </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenCircular(item)}
-                      rightIcon={<ExternalLink className="w-2.5 h-2.5" />}
-                      className="text-[11px] font-bold py-0.5 px-2"
-                    >
-                      View
-                    </Button>
                   </div>
                 </div>
               </Card>

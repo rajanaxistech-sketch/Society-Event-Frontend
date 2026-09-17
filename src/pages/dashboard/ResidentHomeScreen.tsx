@@ -152,123 +152,115 @@ export const ResidentHomeScreen: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Primary Event Hero Banner */}
-            <div className="bg-event-hero rounded-2xl p-4 text-white shadow-purple-glow relative overflow-hidden">
-              <div className="inline-block bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10.5px] font-bold tracking-wider mb-2 uppercase border border-white/20">
-                {isNavratri ? 'Grand Cultural Festival' : 'Community Event'}
-              </div>
-              <h3 className="text-[18px] font-extrabold tracking-tight leading-tight mb-2">
-                {primaryEvent.name}
-              </h3>
-              <div className="flex items-center gap-1.5 text-xs text-white/90 mb-3 font-medium">
-                <Calendar className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  {formatDate(primaryEvent.start_date)}
-                  {primaryEvent.end_date && primaryEvent.end_date !== primaryEvent.start_date
-                    ? ` – ${formatDate(primaryEvent.end_date)} (${durationDays} Days)`
-                    : ` (${durationDays} Day)`}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {isNavratri ? (
-                  <>
-                    <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
-                      ✨ Dandiya & Garba
-                    </span>
-                    <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
-                      🌸 Daily Mahaprasad
-                    </span>
-                  </>
-                ) : (
-                  <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
-                    📍 {primaryEvent.venue || 'Society Premises'}
+            {/* Unified Navratri Event Container Card */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-sm">
+              {/* Compact Event Banner / Header */}
+              <div className="bg-event-hero p-3 text-white relative">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full text-[9.5px] font-bold tracking-wider uppercase border border-white/20">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    <span>{isNavratri ? 'Cultural Festival' : 'Active Event'}</span>
+                  </div>
+                  <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded-full text-white/95">
+                    {durationDays} Days
                   </span>
-                )}
-              </div>
-            </div>
-
-            {/* Event Modules Section Header */}
-            <div className="px-0.5 pt-0.5">
-              <span className="text-[12px] font-extrabold text-slate-900 tracking-wider uppercase block">
-                EVENT MODULES
-              </span>
-              <p className="text-[11.5px] text-slate-500 mt-0.5 font-medium">
-                Select a module to manage event operations
-              </p>
-            </div>
-
-            {/* EXACT 3 MODULE CARDS DIRECTLY IN HOME PAGE */}
-            <div className="space-y-2.5">
-              {/* 1. Circulars & Notices */}
-              <div
-                onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=circulars`)}
-                className="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
-              >
-                <div className="w-[48px] h-[48px] rounded-xl bg-purple-50 group-hover:bg-purple-600 text-purple-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-2xs">
-                  <ScrollText className="w-5 h-5" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
-                    <h4 className="font-bold text-slate-900 text-[14px] group-hover:text-indigo-600 transition-colors truncate">
-                      Circulars & Notices
-                    </h4>
-                    <span className="bg-purple-50 text-purple-700 text-[10.5px] font-bold px-2 py-0.5 rounded-full border border-purple-200 shrink-0">
-                      {circularsCount} Updates
+
+                <h3 className="text-[15.5px] font-bold tracking-tight text-white mb-1 leading-snug">
+                  {primaryEvent.name}
+                </h3>
+
+                <div className="flex items-center justify-between text-[11px] text-white/90 font-medium flex-wrap gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 shrink-0 opacity-90" />
+                    <span>
+                      {formatDate(primaryEvent.start_date)}
+                      {primaryEvent.end_date && primaryEvent.end_date !== primaryEvent.start_date
+                        ? ` – ${formatDate(primaryEvent.end_date)}`
+                        : ''}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 truncate">
-                    Event schedules, parking & guidelines
-                  </p>
+                  {isNavratri && (
+                    <span className="text-[10px] bg-black/20 px-2 py-0.5 rounded-full font-medium">
+                      ✨ Dandiya • 🌸 Mahaprasad
+                    </span>
+                  )}
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors shrink-0" />
               </div>
 
-              {/* 2. Flat Collections (Seat Map) */}
-              <div
-                onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=collections`)}
-                className="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
-              >
-                <div className="w-[48px] h-[48px] rounded-xl bg-emerald-50 group-hover:bg-emerald-600 text-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-2xs">
-                  <DollarSign className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
-                    <h4 className="font-bold text-slate-900 text-[14px] group-hover:text-emerald-700 transition-colors truncate">
-                      Flat Collections
-                    </h4>
-                    <span className="bg-emerald-50 text-emerald-700 text-[10.5px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
-                      Seat Map
-                    </span>
+              {/* Integrated Event Menu List (Directly under the heading) */}
+              <div className="divide-y divide-slate-100 bg-white">
+                {/* 1. Circulars & Notices */}
+                <div
+                  onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=circulars`)}
+                  className="p-3 flex items-center gap-3 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                    <ScrollText className="w-4 h-4" />
                   </div>
-                  <p className="text-xs text-slate-500 truncate">
-                    Interactive tower, floor & flat payments
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <h4 className="font-bold text-slate-800 text-[13px] group-hover:text-indigo-600 transition-colors truncate">
+                        Circulars & Notices
+                      </h4>
+                      <span className="bg-purple-50 text-purple-700 text-[9.5px] font-bold px-1.5 py-0.5 rounded-full border border-purple-200 shrink-0">
+                        {circularsCount} Updates
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      Event schedules, parking & guidelines
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors shrink-0" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
-              </div>
 
-              {/* 3. Food Menu */}
-              <div
-                onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=food`)}
-                className="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-xs hover:border-rose-300 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
-              >
-                <div className="w-[48px] h-[48px] rounded-xl bg-rose-50 group-hover:bg-rose-600 text-rose-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-2xs">
-                  <Utensils className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
-                    <h4 className="font-bold text-slate-900 text-[14px] group-hover:text-rose-700 transition-colors truncate">
-                      Food Menu
-                    </h4>
-                    <span className="bg-rose-50 text-rose-700 text-[10.5px] font-bold px-2 py-0.5 rounded-full border border-rose-200 shrink-0">
-                      {foodItemsCount} Items
-                    </span>
+                {/* 2. Flat Collections (Seat Map) */}
+                <div
+                  onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=collections`)}
+                  className="p-3 flex items-center gap-3 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                    <DollarSign className="w-4 h-4" />
                   </div>
-                  <p className="text-xs text-slate-500 truncate">
-                    {isNavratri ? '9-Day delicacies & Prasad schedule' : 'Day-wise delicacies & live menu'}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <h4 className="font-bold text-slate-800 text-[13px] group-hover:text-emerald-700 transition-colors truncate">
+                        Flat Collections
+                      </h4>
+                      <span className="bg-emerald-50 text-emerald-700 text-[9.5px] font-bold px-1.5 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                        Seat Map
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      Interactive tower, floor & flat payments
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-rose-600 transition-colors shrink-0" />
+
+                {/* 3. Food Menu */}
+                <div
+                  onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=food`)}
+                  className="p-3 flex items-center gap-3 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                    <Utensils className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <h4 className="font-bold text-slate-800 text-[13px] group-hover:text-rose-700 transition-colors truncate">
+                        Food Menu
+                      </h4>
+                      <span className="bg-rose-50 text-rose-700 text-[9.5px] font-bold px-1.5 py-0.5 rounded-full border border-rose-200 shrink-0">
+                        {foodItemsCount} Items
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      {isNavratri ? '9-Day delicacies & Prasad schedule' : 'Day-wise delicacies & live menu'}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition-colors shrink-0" />
+                </div>
               </div>
             </div>
 
