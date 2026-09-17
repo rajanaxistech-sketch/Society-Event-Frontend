@@ -213,60 +213,58 @@ export const MobileAppLayout: React.FC = () => {
       {/* Mobile Device Canvas Frame */}
       <div className="w-full max-w-[440px] h-screen h-[100dvh] sm:h-auto sm:min-h-[94vh] sm:max-h-[94vh] sm:rounded-[32px] sm:shadow-2xl sm:border sm:border-slate-200/80 bg-[#F8F7FC] flex flex-col overflow-hidden relative">
         {/* Top Mobile App Header */}
-        <header className="h-14 bg-white border-b border-slate-200/80 px-3.5 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-2xs">
-          {/* Society Badge / Selector */}
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-soft">
-              <Sparkles className="w-4 h-4" />
+        <header className="h-[58px] bg-white border-b border-slate-200/80 px-3.5 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-xs">
+          {/* Society Branding */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100 shadow-2xs">
+              <Building2 className="w-4 h-4 text-indigo-600" />
             </div>
             <div
               className="min-w-0 cursor-pointer flex-1"
               onClick={() => setProfileDrawerOpen(true)}
             >
               <div className="flex items-center gap-1">
-                <span className="font-extrabold text-xs text-slate-900 truncate leading-tight">
-                  {currentSociety?.name || 'Society Portal'}
+                <span className="font-bold text-[13px] text-slate-900 truncate leading-tight tracking-tight">
+                  {currentSociety?.name || 'Palm Meadows Co-op Housing Society'}
                 </span>
-                {societies.length > 1 && <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />}
+                {societies.length > 1 && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
               </div>
-              <p className="text-[10px] text-indigo-600 font-semibold truncate leading-none mt-0.5">
-                {user?.role?.name || (isResident ? 'Resident' : 'Society Admin')}
+              <p className="text-[11px] text-indigo-600 font-semibold truncate leading-none mt-0.5">
+                {isResident ? 'Resident' : 'Admin'}
               </p>
             </div>
           </div>
 
           {/* Header Action Buttons */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Notifications Bell */}
             <button
               type="button"
               onClick={() => setNotificationsOpen(true)}
-              className="w-8 h-8 rounded-xl bg-slate-100/90 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center transition-colors active:scale-95 relative border border-slate-200/60"
+              className="w-8.5 h-8.5 rounded-full bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center transition-colors active:scale-95 relative"
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              {recentNotices.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-white" />
-              )}
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-1.5 ring-white" />
             </button>
 
             {/* Profile Avatar Button */}
             <button
               type="button"
               onClick={() => setProfileDrawerOpen(true)}
-              className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-2xs hover:opacity-95 transition-opacity active:scale-95"
+              className="w-8.5 h-8.5 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs hover:opacity-95 transition-opacity active:scale-95"
               aria-label="User Profile"
             >
-              {user?.fullName?.charAt(0) || 'U'}
+              {user?.fullName?.charAt(0) || (isResident ? 'R' : 'A')}
             </button>
           </div>
         </header>
 
         {/* Scrollable Main Content Viewport */}
         <main
-          className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:px-3.5 sm:py-3.5 space-y-3.5 no-scrollbar bg-[#F8F7FC] relative"
+          className="flex-1 overflow-y-auto overflow-x-hidden px-3.5 py-3.5 space-y-3.5 no-scrollbar bg-[#F8FAFC] relative"
           style={{
-            paddingBottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
+            paddingBottom: 'calc(5.2rem + env(safe-area-inset-bottom, 0px))',
           }}
         >
           <Outlet />
@@ -274,7 +272,7 @@ export const MobileAppLayout: React.FC = () => {
 
         {/* Persistent Fixed Mobile Bottom Navigation */}
         <nav
-          className="fixed sm:absolute bottom-0 left-0 right-0 z-40 max-w-[440px] mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 flex items-center justify-around shadow-lg"
+          className="fixed sm:absolute bottom-0 left-0 right-0 z-40 max-w-[440px] mx-auto bg-white/98 backdrop-blur-md border-t border-slate-200/80 px-2 grid grid-cols-5 items-center shadow-lg"
           style={{
             paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             height: 'calc(4rem + env(safe-area-inset-bottom, 0px))',
@@ -289,9 +287,9 @@ export const MobileAppLayout: React.FC = () => {
                 end={item.to === AppRoutes.DASHBOARD}
                 className={({ isActive }) =>
                   clsx(
-                    'flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-200 min-w-[56px]',
+                    'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200',
                     isActive
-                      ? 'text-indigo-600 font-bold scale-105'
+                      ? 'text-indigo-600 font-bold'
                       : 'text-slate-400 hover:text-slate-600 font-medium'
                   )
                 }
@@ -300,13 +298,13 @@ export const MobileAppLayout: React.FC = () => {
                   <>
                     <div
                       className={clsx(
-                        'w-8 h-7 flex items-center justify-center rounded-lg transition-colors',
-                        isActive ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500'
+                        'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
+                        isActive ? 'text-indigo-600' : 'text-slate-400'
                       )}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-[19px] h-[19px]" />
                     </div>
-                    <span className="text-[10px] leading-tight mt-0.5">{item.label}</span>
+                    <span className="text-[10.5px] leading-tight mt-0.5">{item.label}</span>
                   </>
                 )}
               </NavLink>
@@ -318,19 +316,19 @@ export const MobileAppLayout: React.FC = () => {
             type="button"
             onClick={() => setMoreDrawerOpen(true)}
             className={clsx(
-              'flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-200 min-w-[56px]',
-              moreDrawerOpen ? 'text-indigo-600 font-bold scale-105' : 'text-slate-400 hover:text-slate-600 font-medium'
+              'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200',
+              moreDrawerOpen ? 'text-indigo-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'
             )}
           >
             <div
               className={clsx(
-                'w-8 h-7 flex items-center justify-center rounded-lg transition-colors',
-                moreDrawerOpen ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500'
+                'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
+                moreDrawerOpen ? 'text-indigo-600' : 'text-slate-400'
               )}
             >
-              <Grid className="w-4 h-4" />
+              <Grid className="w-[19px] h-[19px]" />
             </div>
-            <span className="text-[10px] leading-tight mt-0.5">More</span>
+            <span className="text-[10.5px] leading-tight mt-0.5">More</span>
           </button>
         </nav>
       </div>

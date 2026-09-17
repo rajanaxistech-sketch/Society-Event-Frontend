@@ -57,7 +57,7 @@ const DEFAULT_CONTRACT_TYPES = [
 
 export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => {
   const toast = useToast();
-  const { can } = usePermission();
+  const { can, isResident } = usePermission();
 
   const [contracts, setContracts] = useState<EventContractItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -92,6 +92,8 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
   const [chequeDate, setChequeDate] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [dayNumber, setDayNumber] = useState<number | null>(null);
+  const [isAdvance, setIsAdvance] = useState<boolean>(false);
   const [isRecordingPayment, setIsRecordingPayment] = useState(false);
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<PaymentMethodItem[]>([]);
 
@@ -270,6 +272,8 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
     setChequeDate('');
     setReferenceNumber('');
     setRemarks('');
+    setDayNumber(null);
+    setIsAdvance(false);
     setPaymentModalOpen(true);
     fetchPaymentMethods();
   };
@@ -306,6 +310,8 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
         cheque_date: paymentMethod === 'CHEQUE' && chequeDate ? chequeDate : null,
         reference_number: referenceNumber || null,
         remarks: remarks || null,
+        day_number: dayNumber || null,
+        is_advance: isAdvance,
       });
 
       if (res.success) {
@@ -357,183 +363,253 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
     }
   };
 
-  const columns: Column<EventContractItem>[] = [
-    {
-      key: 'vendor',
-      header: 'Vendor & Service Type',
-      render: (row) => (
-        <div>
-          <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-            <span>{row.vendor_name}</span>
-          </div>
-          <span className="text-[11px] font-semibold text-indigo-700 block mt-0.5">{row.contract_type}</span>
-          {row.contact_person && (
-            <span className="text-[10px] text-slate-400 block mt-0.5">Contact: {row.contact_person}</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'contact',
-      header: 'Contact Info',
-      render: (row) => (
-        <div className="text-[11px] space-y-0.5">
-          {row.mobile_number && (
-            <div className="flex items-center gap-1 text-slate-700">
-              <Phone className="w-3 h-3 text-slate-400" />
-              <span>{row.mobile_number}</span>
+  const columns: Column<EventContractItem>[] = useMemo(() => {
+    if (isResident) {
+      return [
+        {
+          key: 'vendor',
+          header: 'Vendor & Service Type',
+          render: (row) => (
+            <div>
+              <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                <span>{row.vendor_name}</span>
+              </div>
+              <span className="text-[11px] font-semibold text-indigo-700 block mt-0.5">{row.contract_type}</span>
+              {row.contact_person && (
+                <span className="text-[10px] text-slate-400 block mt-0.5">Contact: {row.contact_person}</span>
+              )}
             </div>
-          )}
-          {row.email && (
-            <div className="flex items-center gap-1 text-slate-500">
-              <Mail className="w-3 h-3 text-slate-400" />
-              <span>{row.email}</span>
+          ),
+        },
+        {
+          key: 'contact',
+          header: 'Contact Info',
+          render: (row) => (
+            <div className="text-[11px] space-y-0.5">
+              {row.mobile_number && (
+                <div className="flex items-center gap-1 text-slate-700">
+                  <Phone className="w-3 h-3 text-slate-400" />
+                  <span>{row.mobile_number}</span>
+                </div>
+              )}
+              {row.email && (
+                <div className="flex items-center gap-1 text-slate-500">
+                  <Mail className="w-3 h-3 text-slate-400" />
+                  <span>{row.email}</span>
+                </div>
+              )}
+              {!row.mobile_number && !row.email && <span className="text-slate-400">—</span>}
             </div>
-          )}
-          {!row.mobile_number && !row.email && <span className="text-slate-400">—</span>}
-        </div>
-      ),
-    },
-    {
-      key: 'contract_amount',
-      header: 'Contract Amount',
-      align: 'right',
-      render: (row) => (
-        <CurrencyDisplay amount={row.contract_amount} className="font-bold text-slate-900" />
-      ),
-    },
-    {
-      key: 'total_paid',
-      header: 'Total Paid',
-      align: 'right',
-      render: (row) => <CurrencyDisplay amount={row.total_paid} trend="positive" />,
-    },
-    {
-      key: 'remaining_balance',
-      header: 'Balance Remaining',
-      align: 'right',
-      render: (row) => (
-        <CurrencyDisplay
-          amount={row.remaining_balance}
-          trend={Number(row.remaining_balance) > 0 ? 'negative' : 'neutral'}
-          className="font-extrabold"
-        />
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      align: 'center',
-      render: (row) => <StatusBadge status={row.status} size="sm" />,
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      align: 'right',
-      render: (row) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => openHistoryModal(row)}
-            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
-            title="View Payment History"
-          >
-            <History className="w-3.5 h-3.5" />
-          </button>
-          <PermissionGuard permission={Permissions.PAYMENT_CREATE}>
-            {Number(row.remaining_balance) > 0 ? (
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => openPaymentModal(row)}
-                className="text-[11px] h-7 px-2"
-              >
-                Pay
-              </Button>
-            ) : (
-              <span className="text-[11px] text-emerald-600 font-bold px-2 py-0.5 bg-emerald-50 rounded">
-                Settled
-              </span>
+          ),
+        },
+        {
+          key: 'description',
+          header: 'Service Description & Dates',
+          render: (row) => (
+            <div className="text-xs text-slate-600 max-w-sm">
+              <span>{row.description || 'Confirmed event vendor / service contractor'}</span>
+              {(row.start_date || row.end_date) && (
+                <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">
+                  {row.start_date ? formatDate(row.start_date) : ''} {row.end_date ? `to ${formatDate(row.end_date)}` : ''}
+                </span>
+              )}
+            </div>
+          ),
+        },
+        {
+          key: 'status',
+          header: 'Status',
+          align: 'center',
+          render: (row) => <StatusBadge status={row.status} size="sm" />,
+        },
+      ];
+    }
+
+    return [
+      {
+        key: 'vendor',
+        header: 'Vendor & Service Type',
+        render: (row) => (
+          <div>
+            <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+              <span>{row.vendor_name}</span>
+            </div>
+            <span className="text-[11px] font-semibold text-indigo-700 block mt-0.5">{row.contract_type}</span>
+            {row.contact_person && (
+              <span className="text-[10px] text-slate-400 block mt-0.5">Contact: {row.contact_person}</span>
             )}
-          </PermissionGuard>
-          <PermissionGuard permission={Permissions.EVENT_UPDATE}>
+          </div>
+        ),
+      },
+      {
+        key: 'contact',
+        header: 'Contact Info',
+        render: (row) => (
+          <div className="text-[11px] space-y-0.5">
+            {row.mobile_number && (
+              <div className="flex items-center gap-1 text-slate-700">
+                <Phone className="w-3 h-3 text-slate-400" />
+                <span>{row.mobile_number}</span>
+              </div>
+            )}
+            {row.email && (
+              <div className="flex items-center gap-1 text-slate-500">
+                <Mail className="w-3 h-3 text-slate-400" />
+                <span>{row.email}</span>
+              </div>
+            )}
+            {!row.mobile_number && !row.email && <span className="text-slate-400">—</span>}
+          </div>
+        ),
+      },
+      {
+        key: 'contract_amount',
+        header: 'Contract Amount',
+        align: 'right',
+        render: (row) => (
+          <CurrencyDisplay amount={row.contract_amount} className="font-bold text-slate-900" />
+        ),
+      },
+      {
+        key: 'total_paid',
+        header: 'Total Paid',
+        align: 'right',
+        render: (row) => <CurrencyDisplay amount={row.total_paid} trend="positive" />,
+      },
+      {
+        key: 'remaining_balance',
+        header: 'Balance Remaining',
+        align: 'right',
+        render: (row) => (
+          <CurrencyDisplay
+            amount={row.remaining_balance}
+            trend={Number(row.remaining_balance) > 0 ? 'negative' : 'neutral'}
+            className="font-extrabold"
+          />
+        ),
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        align: 'center',
+        render: (row) => <StatusBadge status={row.status} size="sm" />,
+      },
+      {
+        key: 'actions',
+        header: 'Actions',
+        align: 'right',
+        render: (row) => (
+          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
-              onClick={() => openEditModal(row)}
+              onClick={() => openHistoryModal(row)}
               className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Edit Contract"
+              title="View Payment History"
             >
-              <Edit2 className="w-3.5 h-3.5" />
+              <History className="w-3.5 h-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => setContractToDelete(row)}
-              className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-colors"
-              title="Delete Contract"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </PermissionGuard>
-        </div>
-      ),
-    },
-  ];
+            <PermissionGuard permission={Permissions.PAYMENT_CREATE}>
+              {Number(row.remaining_balance) > 0 ? (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => openPaymentModal(row)}
+                  className="text-[11px] h-7 px-2"
+                >
+                  Pay
+                </Button>
+              ) : (
+                <span className="text-[11px] text-emerald-600 font-bold px-2 py-0.5 bg-emerald-50 rounded">
+                  Settled
+                </span>
+              )}
+            </PermissionGuard>
+            <PermissionGuard permission={Permissions.EVENT_UPDATE}>
+              <button
+                type="button"
+                onClick={() => openEditModal(row)}
+                className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+                title="Edit Contract"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setContractToDelete(row)}
+                className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-colors"
+                title="Delete Contract"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </PermissionGuard>
+          </div>
+        ),
+      },
+    ];
+  }, [isResident, availablePaymentMethods]);
 
   return (
     <div className="space-y-3.5">
-      {/* Financial Overview Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Contracts</span>
-            <Building2 className="w-4 h-4 text-indigo-600" />
+      {/* Financial Overview Cards - Admins only */}
+      {!isResident && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Contracts</span>
+              <Building2 className="w-4 h-4 text-indigo-600" />
+            </div>
+            <div className="mt-1">
+              <span className="text-lg sm:text-xl font-extrabold text-slate-900">{summary.count}</span>
+              <span className="text-[10px] text-slate-400 ml-2">Vendors / Contractors</span>
+            </div>
           </div>
-          <div className="mt-1">
-            <span className="text-lg sm:text-xl font-extrabold text-slate-900">{summary.count}</span>
-            <span className="text-[10px] text-slate-400 ml-2">Vendors / Contractors</span>
-          </div>
-        </div>
 
-        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Contract Value</span>
-            <Receipt className="w-4 h-4 text-blue-600" />
+          <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Contract Value</span>
+              <Receipt className="w-4 h-4 text-blue-600" />
+            </div>
+            <div className="mt-1">
+              <CurrencyDisplay amount={summary.totalValue} className="text-lg sm:text-xl font-extrabold text-slate-900" />
+            </div>
           </div>
-          <div className="mt-1">
-            <CurrencyDisplay amount={summary.totalValue} className="text-lg sm:text-xl font-extrabold text-slate-900" />
-          </div>
-        </div>
 
-        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Paid</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Paid</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div className="mt-1">
+              <CurrencyDisplay amount={summary.totalPaid} trend="positive" className="text-lg sm:text-xl font-extrabold" />
+            </div>
           </div>
-          <div className="mt-1">
-            <CurrencyDisplay amount={summary.totalPaid} trend="positive" className="text-lg sm:text-xl font-extrabold" />
-          </div>
-        </div>
 
-        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pending Balance</span>
-            <Clock className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="mt-1">
-            <CurrencyDisplay
-              amount={summary.totalPending}
-              trend={summary.totalPending > 0 ? 'negative' : 'neutral'}
-              className="text-lg sm:text-xl font-extrabold"
-            />
+          <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pending Balance</span>
+              <Clock className="w-4 h-4 text-amber-600" />
+            </div>
+            <div className="mt-1">
+              <CurrencyDisplay
+                amount={summary.totalPending}
+                trend={summary.totalPending > 0 ? 'negative' : 'neutral'}
+                className="text-lg sm:text-xl font-extrabold"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Table Card */}
       <Card
         title="Vendors, Agencies & Contractor Directory"
-        subtitle="Manage event service contracts, advance disbursements, installment payments, and outstanding balances."
+        subtitle={
+          isResident
+            ? 'List of booked vendors, event decorators, catering agencies, and partners.'
+            : 'Manage event service contracts, advance disbursements, installment payments, and outstanding balances.'
+        }
         headerAction={
           <div className="flex items-center gap-1.5 flex-wrap">
             <Button
@@ -551,7 +627,7 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
                 onClick={openCreateModal}
                 leftIcon={<Plus className="w-3.5 h-3.5" />}
               >
-                + Add Vendor / Contract
+                Add Vendor Contract
               </Button>
             </PermissionGuard>
           </div>
@@ -561,7 +637,7 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
           columns={columns}
           data={contracts}
           isLoading={isLoading}
-          emptyText="No vendor contracts registered for this event."
+          emptyText="No vendor contracts configured for this event."
         />
       </Card>
 
@@ -569,13 +645,14 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
       <Modal
         isOpen={contractModalOpen}
         onClose={() => setContractModalOpen(false)}
-        title={editingContract ? `Edit Contract: ${editingContract.vendor_name}` : 'Create Vendor / Contractor Record'}
-        description="Establish formal contract terms, scope, payment milestones, and agreed fees."
+        title={editingContract ? 'Edit Vendor Contract' : 'Create Vendor Contract'}
+        description="Configure event vendor, agreed commercials, scope, and contact person."
+        size="lg"
       >
-        <form onSubmit={handleSaveContract} className="space-y-3.5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <form onSubmit={handleSaveContract} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
-              label="Contract / Service Type"
+              label="Contract / Service Category"
               requiredIndicator
               value={contractType}
               onChange={(e) => setContractType(e.target.value)}
@@ -589,17 +666,17 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
 
             {contractType === 'Other Event-related Contract' ? (
               <Input
-                label="Custom Contract Type Name"
-                placeholder="e.g. Drone Light Show Agency"
+                label="Custom Service Type"
                 requiredIndicator
+                placeholder="e.g. Dhol Tasha Troupe"
                 value={customType}
                 onChange={(e) => setCustomType(e.target.value)}
               />
             ) : (
               <Input
                 label="Vendor / Agency Name"
-                placeholder="e.g. Om Sound & Event Management"
                 requiredIndicator
+                placeholder="e.g. Swagath Decorators Pvt Ltd"
                 value={vendorName}
                 onChange={(e) => setVendorName(e.target.value)}
               />
@@ -609,17 +686,17 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
           {contractType === 'Other Event-related Contract' && (
             <Input
               label="Vendor / Agency Name"
-              placeholder="e.g. Om Sound & Event Management"
               requiredIndicator
+              placeholder="e.g. Swagath Decorators Pvt Ltd"
               value={vendorName}
               onChange={(e) => setVendorName(e.target.value)}
             />
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Input
               label="Contact Person"
-              placeholder="e.g. Rajeshbhai Patel"
+              placeholder="e.g. Rajesh Sharma"
               value={contactPerson}
               onChange={(e) => setContactPerson(e.target.value)}
             />
@@ -632,65 +709,62 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
             <Input
               label="Email Address"
               type="email"
-              placeholder="vendor@example.com"
+              placeholder="e.g. contact@vendor.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              label="Total Contract Amount (₹)"
-              type="number"
-              placeholder="e.g. 100000"
-              requiredIndicator
-              value={contractAmount}
-              onChange={(e) => setContractAmount(e.target.value)}
-            />
-            {!editingContract && (
-              <Input
-                label="Initial Advance Payment (₹)"
-                type="number"
-                placeholder="e.g. 30000 (optional)"
-                value={advancePayment}
-                onChange={(e) => setAdvancePayment(e.target.value)}
-                helperText="Advance payment entry will be created automatically"
-              />
-            )}
-          </div>
+          <Textarea
+            label="Service Scope & Deliverables"
+            placeholder="Detailed deliverable specs, schedule, setup timing..."
+            rows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Contract Start Date"
+              label="Start Date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
             <Input
-              label="Contract End Date"
+              label="End Date"
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
 
-          <Textarea
-            label="Service Scope / Description"
-            placeholder="Equipment provided, setup timelines, staffing count..."
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Agreed Contract Amount (₹)"
+              type="number"
+              requiredIndicator
+              placeholder="e.g. 150000"
+              value={contractAmount}
+              onChange={(e) => setContractAmount(e.target.value)}
+            />
+            <Input
+              label="Initial Advance Promised (₹)"
+              type="number"
+              placeholder="e.g. 25000"
+              value={advancePayment}
+              onChange={(e) => setAdvancePayment(e.target.value)}
+            />
+          </div>
 
           <Textarea
-            label="Internal Notes / Payment Terms"
-            placeholder="50% before event, 50% post wrap-up..."
-            rows={1}
+            label="Internal Notes / Terms"
+            placeholder="Payment milestones, cancellation clauses, power supply requirements..."
+            rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -735,6 +809,51 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
               </span>
             </div>
           </div>
+
+          {/* Day 1–9 Allocation Pills */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Service Day Allocation (Optional)
+            </label>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setDayNumber(null)}
+                className={`px-2.5 py-1 text-xs rounded-lg font-bold border transition-all ${
+                  dayNumber === null
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                General / Full
+              </button>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDayNumber(d)}
+                  className={`px-2.5 py-1 text-xs rounded-lg font-bold border transition-all ${
+                    dayNumber === d
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  Day {d}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Advance Toggle Checkbox */}
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 bg-indigo-50/60 p-2.5 rounded-lg border border-indigo-100">
+            <input
+              type="checkbox"
+              checked={isAdvance}
+              onChange={(e) => setIsAdvance(e.target.checked)}
+              className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+            />
+            <span>Mark as Advance / Retainer Payout</span>
+          </label>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input

@@ -134,6 +134,31 @@ export const collectionsService = {
     return response.data;
   },
 
+  getMatrix: async (eventId: string): Promise<ApiResponse<any>> => {
+    const response = await axiosClient.get<ApiResponse<any>>(`/events/${eventId}/collections/matrix`);
+    return response.data;
+  },
+
+  payFlat: async (
+    eventId: string,
+    flatId: string,
+    payload: {
+      amount?: number;
+      payment_method: string;
+      transaction_reference?: string | null;
+      notes?: string | null;
+      cheque_number?: string | null;
+      bank_name?: string | null;
+      cheque_date?: string | null;
+    }
+  ): Promise<ApiResponse<any>> => {
+    const response = await axiosClient.post<ApiResponse<any>>(
+      `/events/${eventId}/collections/${flatId}/pay`,
+      payload
+    );
+    return response.data;
+  },
+
   getDashboardByEvent: async (eventId: string): Promise<ApiResponse<EventCollectionsDashboardData>> => {
     const response = await axiosClient.get<ApiResponse<EventCollectionsDashboardData>>(
       `/events/${eventId}/collections/dashboard`

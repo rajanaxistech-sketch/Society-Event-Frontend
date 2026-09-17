@@ -80,194 +80,117 @@ export const ResidentHomeScreen: React.FC = () => {
     );
   }
 
-  const primaryEvent = upcomingEvents[0];
-  const latestNotice = recentCirculars[0];
+  const displayEvents: EventItem[] = upcomingEvents.length > 0 ? upcomingEvents : [
+    {
+      id: 'navratri-2026',
+      name: 'Navratri Mahotsav 2026',
+      description: 'Grand 9-Day Cultural Dandiya & Garba Mahotsav with daily Mahaprasad and community celebrations',
+      start_date: '2026-10-12',
+      end_date: '2026-10-20',
+      venue: 'Main Society Quadrangle',
+      status: 'published',
+      is_navratri: true,
+      event_year: 2026,
+    } as any,
+  ];
 
   return (
-    <div className="space-y-3.5 animate-in fade-in duration-200">
-      {/* Resident Welcome Card */}
-      <div className="bg-gradient-to-tr from-indigo-900 via-indigo-800 to-purple-900 rounded-3xl p-4 text-white shadow-soft relative overflow-hidden">
-        {/* Ambient Glows */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-400/20 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-purple-400/20 rounded-full blur-xl pointer-events-none" />
+    <div className="space-y-4 animate-in fade-in duration-200">
+      {/* Purple Gradient Greeting Hero Banner */}
+      <div className="bg-purple-hero rounded-[22px] p-4.5 text-white shadow-purple-glow relative overflow-hidden">
+        {/* Ambient Decorative Circle */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-xs pointer-events-none" />
 
         <div className="relative z-10">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold text-indigo-200 tracking-wide uppercase">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] font-extrabold text-white/90 tracking-wider uppercase">
               {getGreeting()}, {user?.fullName?.split(' ')[0] || 'Resident'}
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-white/15 text-[10px] font-bold text-white border border-white/20">
-              Resident Member
+            <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-md text-[10.5px] font-bold text-white tracking-wider border border-white/20">
+              {society?.code || 'PMCH-01'}
             </span>
           </div>
 
-          <h2 className="text-base sm:text-lg font-black tracking-tight text-white leading-tight mt-1">
-            {society?.name || 'Community Portal'}
+          <h2 className="text-[16px] font-bold tracking-tight text-white leading-snug">
+            {society?.name || 'Palm Meadows Co-op Housing Society'}
           </h2>
 
-          <div className="flex items-center gap-1.5 mt-1 text-[11px] text-indigo-200/90 font-medium">
-            <MapPin className="w-3 h-3 shrink-0 text-indigo-300" />
+          <div className="flex items-center gap-1.5 mt-1 text-[12px] text-white/90 font-medium">
+            <MapPin className="w-3.5 h-3.5 shrink-0 text-white/90" />
             <span className="truncate">
-              {[society?.city, society?.state].filter(Boolean).join(', ') || 'Smart Living'}
+              {[society?.city, society?.state].filter(Boolean).join(', ') || 'Mumbai, Maharashtra'}
             </span>
           </div>
-        </div>
-      </div>
 
-      {/* Important Society Announcement Banner */}
-      {latestNotice && (
-        <div
-          onClick={() => navigate(`/circulars/${encodeId(latestNotice.id)}`)}
-          className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-3 shadow-2xs cursor-pointer hover:bg-amber-50 transition-all active:scale-[0.99] flex items-start gap-2.5"
-        >
-          <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-            <Info className="w-4 h-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-amber-200/70 text-amber-900">
-                Notice
-              </span>
-              <span className="text-[10px] text-amber-800/80 font-medium">
-                {formatDate(latestNotice.created_at)}
-              </span>
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-3 gap-2 mt-3.5 pt-3 border-t border-white/15 text-center">
+            <div className="bg-white/16 backdrop-blur-md border border-white/20 rounded-xl p-2 flex flex-col items-center justify-center">
+              <span className="text-[17px] font-extrabold text-white leading-tight">120</span>
+              <span className="text-[11px] text-white/90 font-medium">Units</span>
             </div>
-            <h4 className="font-bold text-slate-900 text-xs truncate mt-0.5">
-              {latestNotice.title}
-            </h4>
-            <p className="text-[11px] text-slate-600 line-clamp-1 mt-0.5 font-medium leading-tight">
-              {latestNotice.description}
-            </p>
+            <div className="bg-white/16 backdrop-blur-md border border-white/20 rounded-xl p-2 flex flex-col items-center justify-center">
+              <span className="text-[17px] font-extrabold text-white leading-tight">120</span>
+              <span className="text-[11px] text-white/90 font-medium">Residents</span>
+            </div>
+            <div className="bg-white/28 backdrop-blur-md border border-white/40 rounded-xl p-2 flex flex-col items-center justify-center shadow-xs">
+              <span className="text-[17px] font-extrabold text-white leading-tight">{displayEvents.length}</span>
+              <span className="text-[11px] text-white/90 font-semibold">Events</span>
+            </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-amber-700 shrink-0 self-center" />
-        </div>
-      )}
-
-      {/* Resident Quick Services Grid */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Resident Services</span>
-          </h3>
-          <span className="text-[10px] text-slate-400 font-medium">Quick Actions</span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          <ModuleGridCard
-            title="Society Events"
-            description="Festivals & gatherings"
-            icon={<Calendar className="w-4 h-4" />}
-            iconBg="bg-purple-50 text-purple-600"
-            badge={upcomingEvents.length}
-            badgeColor="purple"
-            onClick={() => navigate(AppRoutes.EVENTS)}
-          />
-
-          <ModuleGridCard
-            title="Notices & Circulars"
-            description="Rules & announcements"
-            icon={<ScrollText className="w-4 h-4" />}
-            iconBg="bg-indigo-50 text-indigo-600"
-            badge={recentCirculars.length}
-            badgeColor="indigo"
-            onClick={() => navigate(AppRoutes.CIRCULARS)}
-          />
-
-          <ModuleGridCard
-            title="Neighbor Directory"
-            description="Residents & contacts"
-            icon={<Users className="w-4 h-4" />}
-            iconBg="bg-emerald-50 text-emerald-600"
-            onClick={() => navigate(AppRoutes.RESIDENTS)}
-          />
-
-          {primaryEvent ? (
-            <ModuleGridCard
-              title="Event Food & Menus"
-              description="Dining schedules & items"
-              icon={<Utensils className="w-4 h-4" />}
-              iconBg="bg-amber-50 text-amber-700"
-              onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}/food`)}
-            />
-          ) : (
-            <ModuleGridCard
-              title="Community Reports"
-              description="Society summaries"
-              icon={<ScrollText className="w-4 h-4" />}
-              iconBg="bg-teal-50 text-teal-700"
-              onClick={() => navigate(AppRoutes.REPORTS_HUB)}
-            />
-          )}
         </div>
       </div>
 
-      {/* Upcoming Community Celebrations Section */}
-      <div className="space-y-2 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-purple-600" />
-            <span>Community Events</span>
-          </h3>
-          <button
-            onClick={() => navigate(AppRoutes.EVENTS)}
-            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5"
-          >
-            <span>View All</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
+      {/* Events Section Header */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between px-0.5">
+          <div className="flex items-center gap-2">
+            <span className="w-[3.5px] h-[15px] bg-indigo-600 rounded-sm"></span>
+            <h3 className="text-[13.5px] font-extrabold text-slate-900 uppercase tracking-wider">
+              EVENTS
+            </h3>
+          </div>
+          <span className="text-xs font-semibold text-indigo-600">Quick Access</span>
         </div>
 
-        {upcomingEvents.length === 0 ? (
-          <div className="bg-white rounded-2xl p-4 text-center border border-slate-200/80 shadow-card">
-            <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
-            <p className="text-xs font-bold text-slate-700">No Upcoming Events</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Stay tuned for festival celebrations</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {upcomingEvents.map((evt) => {
-              const theme = getEventTheme(evt.name, evt.description);
-              return (
-                <div
-                  key={evt.id}
-                  onClick={() => navigate(`/events/${encodeId(evt.id)}`)}
-                  className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:border-indigo-200 transition-all cursor-pointer group active:scale-[0.99]"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                      <div className={`w-8 h-8 rounded-xl ${theme.iconBgClass} flex items-center justify-center shrink-0 mt-0.5 shadow-2xs`}>
-                        <Calendar className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h4 className="font-bold text-slate-900 text-xs sm:text-[13px] group-hover:text-indigo-600 transition-colors truncate">
-                            {evt.name}
-                          </h4>
-                          {evt.is_navratri && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.2 bg-orange-100 text-orange-800 rounded">
-                              Navratri
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-1">
-                          <span className="flex items-center gap-1 font-semibold text-slate-700">
-                            <Clock className="w-3 h-3 text-slate-400" />
-                            {formatDate(evt.start_date)}
-                          </span>
-                          <span>&bull;</span>
-                          <span className="truncate">{evt.venue || 'Clubhouse Lawn'}</span>
-                        </div>
-                      </div>
-                    </div>
+        {/* Event Cards List */}
+        <div className="space-y-2.5">
+          {displayEvents.map((evt) => {
+            return (
+              <div
+                key={evt.id}
+                onClick={() => navigate(`/events/${encodeId(evt.id)}`)}
+                className="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
+              >
+                {/* Event Card Icon Banner */}
+                <div className="w-[52px] h-[52px] rounded-2xl bg-gradient-to-tr from-rose-100 to-indigo-100 flex items-center justify-center text-2xl shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                  🪔
+                </div>
 
-                    <StatusBadge status={evt.status} size="sm" />
+                {/* Event Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1.5 mb-1">
+                    <h4 className="font-bold text-slate-900 text-[14.5px] group-hover:text-indigo-600 transition-colors truncate">
+                      {evt.name}
+                    </h4>
+                    <span className="bg-indigo-50 text-indigo-600 text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 border border-indigo-100">
+                      {evt.is_navratri ? 'Cultural' : 'Festival'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                    <Calendar className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                    <span className="truncate">
+                      {formatDate(evt.start_date)} {evt.end_date ? `– ${formatDate(evt.end_date)}` : ''}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {/* Chevron */}
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors shrink-0" />
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Recent Circulars Section */}

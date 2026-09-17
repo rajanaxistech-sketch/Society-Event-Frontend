@@ -83,6 +83,8 @@ export const eventVendorsService = {
       cheque_date?: string | null;
       remarks?: string | null;
       attachment_url?: string | null;
+      day_number?: number | null;
+      is_advance?: boolean;
     }
   ): Promise<ApiResponse<{ payment: VendorPaymentItem; contract: EventContractItem }>> => {
     const response = await axiosClient.post<

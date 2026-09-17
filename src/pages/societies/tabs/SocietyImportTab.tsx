@@ -43,8 +43,11 @@ export const SocietyImportTab: React.FC<SocietyImportTabProps> = ({
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isCommitted, setIsCommitted] = useState(false);
+  const [batchId, setBatchId] = useState<string | null>(null);
+  const [batchStats, setBatchStats] = useState<{ total: number; valid: number; invalid: number } | null>(null);
   const [previewRows, setPreviewRows] = useState<ParsedRowPreview[]>([]);
 
   const handleDownloadTemplate = async () => {
@@ -80,69 +83,83 @@ export const SocietyImportTab: React.FC<SocietyImportTabProps> = ({
     }
   };
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     setSelectedFile(file);
     setIsCommitted(false);
+    setBatchId(null);
+    setBatchStats(null);
+    setPreviewRows([]);
 
-    // Generate smart preview parsed rows from the first block or mock parsed rows
-    const firstBlockName = blocks[0]?.name || 'Block A';
-    const sampleRows: ParsedRowPreview[] = [
-      {
-        block: firstBlockName,
-        floor: 1,
-        flat: '101',
-        ownerName: 'Vikram Malhotra',
-        phone: '9820123456',
-        email: 'vikram.m@example.com',
-        status: 'valid',
-      },
-      {
-        block: firstBlockName,
-        floor: 1,
-        flat: '102',
-        ownerName: 'Sunita Sharma',
-        phone: '9820987654',
-        email: 'sunita.s@example.com',
-        status: 'valid',
-      },
-      {
-        block: firstBlockName,
-        floor: 2,
-        flat: '201',
-        ownerName: 'Rajesh Nair',
-        phone: '9811223344',
-        email: 'rajesh.n@example.com',
-        status: 'valid',
-      },
-      {
-        block: firstBlockName,
-        floor: 2,
-        flat: '202',
-        ownerName: 'Priya Joshi',
-        phone: '9822334455',
-        email: 'priya.j@example.com',
-        status: 'valid',
-      },
-    ];
+    try {
+      setIsValidating(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('society_id', society.id);
 
-    setPreviewRows(sampleRows);
-    toast.success(`Loaded "${file.name}" with ${sampleRows.length} sample preview rows.`);
+      const res = await importsService.uploadExcel(formData);
+      if (res.success && res.data) {
+        const batch = res.data;
+        setBatchId(batch.id);
+        setBatchStats({
+          total: batch.total_rows || 0,
+          valid: batch.valid_rows || 0,
+          invalid: batch.invalid_rows || 0,
+        });
+
+        // Fetch staged preview rows from backend
+        const previewRes = await importsService.previewRows(batch.id, { limit: 100 });
+        const items = (previewRes as any).data?.rows || (previewRes as any).rows || previewRes.data || [];
+        
+        if (Array.isArray(items) && items.length > 0) {
+          const mapped: ParsedRowPreview[] = items.map((r: any) => {
+            const raw = r.raw_data || {};
+            const norm = r.normalized_data || {};
+            return {
+              block: raw.block_name || norm.block_name || 'Block A',
+              floor: raw.floor_number ?? norm.floor_number ?? 1,
+              flat: raw.flat_number || norm.flat_number || raw.bungalow_number || '',
+              ownerName: raw.resident_name || norm.resident_name || (raw.relationship_to_owner === 'Vacant' ? '(Vacant)' : '-'),
+              phone: raw.resident_phone || norm.resident_phone || '-',
+              email: raw.resident_email || norm.resident_email || '-',
+              status: r.validation_status === 'valid' ? 'valid' : 'error',
+              message: r.error_messages ? r.error_messages.join(', ') : undefined,
+            };
+          });
+          setPreviewRows(mapped);
+        }
+
+        if ((batch.invalid_rows || 0) > 0) {
+          toast.warning(`File uploaded: ${batch.valid_rows} valid rows, ${batch.invalid_rows} rows with validation errors.`);
+        } else {
+          toast.success(`File validated successfully: ${batch.valid_rows} rows ready for import.`);
+        }
+      } else {
+        toast.error(res.message || 'Failed to parse file');
+      }
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, 'Failed to upload and validate file'));
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   const handleCommitImport = async () => {
-    if (!selectedFile) return;
+    if (!batchId) {
+      toast.error('No validated import batch found to commit');
+      return;
+    }
 
     try {
       setIsUploading(true);
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('society_id', society.id);
+      const res = await importsService.commit(batchId);
 
-      await importsService.uploadExcel(formData).catch(() => null);
-
-      setIsCommitted(true);
-      toast.success('Owner database import committed successfully!');
-      onRefresh();
+      if (res.success) {
+        setIsCommitted(true);
+        toast.success('Owner and flat records successfully imported and committed!');
+        onRefresh();
+      } else {
+        toast.error(res.message || 'Import commit failed');
+      }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Import commit failed'));
     } finally {
@@ -222,7 +239,7 @@ export const SocietyImportTab: React.FC<SocietyImportTabProps> = ({
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">{selectedFile.name}</h4>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {(selectedFile.size / 1024).toFixed(1)} KB &bull; Ready for validation & commit
+                    {(selectedFile.size / 1024).toFixed(1)} KB &bull; {isValidating ? 'Validating spreadsheet rows...' : batchStats ? `${batchStats.valid} valid of ${batchStats.total} rows ready` : 'Ready for validation & commit'}
                   </p>
                   <label
                     htmlFor="file-upload"
@@ -252,67 +269,86 @@ export const SocietyImportTab: React.FC<SocietyImportTabProps> = ({
           </div>
 
           {/* Validation & Preview Grid */}
-          {selectedFile && previewRows.length > 0 && (
+          {selectedFile && (previewRows.length > 0 || isValidating) && (
             <div className="space-y-4 pt-4 border-t border-slate-100 animate-fadeIn">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Data Validation & Preview ({previewRows.length} Rows Detected)
+                    Data Validation & Preview ({previewRows.length} Rows Parsed)
                   </h4>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  All {previewRows.length} Rows Validated
-                </span>
+                {isValidating ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                    Validating Rows...
+                  </span>
+                ) : batchStats && batchStats.invalid > 0 ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    {batchStats.valid} Valid / {batchStats.invalid} Invalid Rows
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    All {previewRows.length} Rows Validated
+                  </span>
+                )}
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                    <tr>
-                      <th className="py-2.5 px-3">Status</th>
-                      <th className="py-2.5 px-3">Block</th>
-                      <th className="py-2.5 px-3">Floor</th>
-                      <th className="py-2.5 px-3">Flat No</th>
-                      <th className="py-2.5 px-3">Owner Full Name</th>
-                      <th className="py-2.5 px-3">Phone</th>
-                      <th className="py-2.5 px-3">Email</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {previewRows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/50">
-                        <td className="py-2.5 px-3">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                            <Check className="w-3 h-3" />
-                            Valid
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 font-bold text-slate-900">{row.block}</td>
-                        <td className="py-2.5 px-3 text-slate-600">F{row.floor}</td>
-                        <td className="py-2.5 px-3 font-bold text-indigo-600">{row.flat}</td>
-                        <td className="py-2.5 px-3 text-slate-800">{row.ownerName}</td>
-                        <td className="py-2.5 px-3 text-slate-600">{row.phone}</td>
-                        <td className="py-2.5 px-3 text-slate-500">{row.email}</td>
+              {previewRows.length > 0 && (
+                <div className="overflow-x-auto rounded-xl border border-slate-200 max-h-96">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider sticky top-0 z-10 shadow-2xs">
+                      <tr>
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3">Block</th>
+                        <th className="py-2.5 px-3">Floor</th>
+                        <th className="py-2.5 px-3">Flat No</th>
+                        <th className="py-2.5 px-3">Owner Full Name</th>
+                        <th className="py-2.5 px-3">Phone</th>
+                        <th className="py-2.5 px-3">Email</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {previewRows.map((row, idx) => (
+                        <tr key={idx} className={row.status === 'valid' ? 'hover:bg-slate-50/50' : 'bg-rose-50/30 hover:bg-rose-50/50'}>
+                          <td className="py-2.5 px-3">
+                            {row.status === 'valid' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                <Check className="w-3 h-3" />
+                                Valid
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200" title={row.message}>
+                                <XCircle className="w-3 h-3" />
+                                Error
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 font-bold text-slate-900">{row.block}</td>
+                          <td className="py-2.5 px-3 text-slate-600">F{row.floor}</td>
+                          <td className="py-2.5 px-3 font-bold text-indigo-600">{row.flat}</td>
+                          <td className="py-2.5 px-3 text-slate-800">{row.ownerName}</td>
+                          <td className="py-2.5 px-3 text-slate-600">{row.phone}</td>
+                          <td className="py-2.5 px-3 text-slate-500">{row.email}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Commit Action Bar */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs text-slate-600">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>
-                    Ready to commit: {previewRows.length} resident records will be linked to their units.
+                    Ready to commit: {batchStats ? batchStats.valid : previewRows.length} valid records will be linked to their units in {society.name}.
                   </span>
                 </div>
 
                 <Button
                   variant="primary"
                   onClick={handleCommitImport}
-                  disabled={isUploading || isCommitted}
+                  disabled={isValidating || isUploading || isCommitted || !batchId || (batchStats !== null && batchStats.valid === 0)}
                   leftIcon={
                     isCommitted ? (
                       <Check className="w-4 h-4" />
@@ -326,6 +362,8 @@ export const SocietyImportTab: React.FC<SocietyImportTabProps> = ({
                     ? 'Import Completed!'
                     : isUploading
                     ? 'Importing Database...'
+                    : isValidating
+                    ? 'Validating File...'
                     : 'Commit & Import Data'}
                 </Button>
               </div>
