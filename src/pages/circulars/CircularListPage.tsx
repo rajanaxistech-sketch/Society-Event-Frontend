@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { circularsService } from '../../api/circularsService';
 import { societiesService } from '../../api/societiesService';
-import { eventsService } from '../../api/eventsService';
-import { CircularItem, PaginationMeta, SocietyItem, EventItem } from '../../types';
+import { CircularItem, PaginationMeta, SocietyItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
 import { useAuth } from '../../hooks/useAuth';
@@ -51,16 +50,13 @@ export const CircularListPage: React.FC = () => {
 
   const urlParams = new URLSearchParams(location.search);
   const initialSocietyId = decodeId(urlParams.get('societyId') || '') || selectedSocietyId || '';
-  const initialEventId = decodeId(urlParams.get('eventId') || '');
 
   const [circulars, setCirculars] = useState<CircularItem[]>([]);
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
-  const [events, setEvents] = useState<EventItem[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 12, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
-  const [eventFilter, setEventFilter] = useState(initialEventId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState(isResident ? 'published_at' : 'created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -78,13 +74,10 @@ export const CircularListPage: React.FC = () => {
     }
   }, [selectedSocietyId, isSuperAdmin]);
 
-  // Load societies & events for filters
+  // Load societies for filters
   useEffect(() => {
     societiesService.getAll({ limit: 100 }).then((res) => {
       if (res.success && res.data) setSocieties(res.data);
-    });
-    eventsService.getAll({ limit: 100 }).then((res) => {
-      if (res.success && res.data) setEvents(res.data);
     });
   }, []);
 
@@ -96,7 +89,6 @@ export const CircularListPage: React.FC = () => {
         limit: meta.limit,
         search: search || undefined,
         societyId: societyFilter || undefined,
-        eventId: eventFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
         sortOrder,
@@ -115,7 +107,7 @@ export const CircularListPage: React.FC = () => {
 
   useEffect(() => {
     fetchCirculars();
-  }, [meta.page, meta.limit, societyFilter, eventFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, societyFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -425,19 +417,6 @@ export const CircularListPage: React.FC = () => {
                 />
               </div>
             )}
-            <div className="w-48">
-              <Select
-                value={eventFilter}
-                onChange={(e) => {
-                  setEventFilter(e.target.value);
-                  setMeta((m) => ({ ...m, page: 1 }));
-                }}
-                options={[
-                  { label: 'All Events & General', value: '' },
-                  ...events.map((e) => ({ label: e.name, value: e.id })),
-                ]}
-              />
-            </div>
             {!isResident && (
               <div className="w-36">
                 <Select
@@ -458,14 +437,13 @@ export const CircularListPage: React.FC = () => {
           </div>
         }
         actions={
-          (search || (isSuperAdmin && societyFilter) || eventFilter || statusFilter) ? (
+          (search || (isSuperAdmin && societyFilter) || statusFilter) ? (
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
                 setSearch('');
                 setSocietyFilter(initialSocietyId);
-                setEventFilter('');
                 setStatusFilter('');
                 setMeta((m) => ({ ...m, page: 1 }));
               }}
