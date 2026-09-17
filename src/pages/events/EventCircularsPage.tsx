@@ -60,45 +60,6 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
 
   const fetchCirculars = async () => {
     if (!eventId) return;
-    if (eventId === 'navratri-2026') {
-      setCirculars([
-        {
-          id: 'circ-1',
-          title: 'Parking Arrangement & Quadrangle Restrictions',
-          description: 'Visitor vehicles strictly barred from inner society quadrangle between 6:00 PM and 12:30 AM daily. Please guide guests to Basement B2 designated visitor slots.',
-          status: 'published',
-          created_at: '2026-10-10T10:00:00Z',
-          published_at: '2026-10-10T10:00:00Z',
-        } as any,
-        {
-          id: 'circ-2',
-          title: 'Generator Backup & Electrical Safety Schedule',
-          description: 'Society DG backup generator will run continuously from 7:00 PM to 1:00 AM on all 9 dandiya nights to ensure uninterrupted sound, stage lighting, and elevator operations.',
-          status: 'published',
-          created_at: '2026-10-09T10:00:00Z',
-          published_at: '2026-10-09T10:00:00Z',
-        } as any,
-        {
-          id: 'circ-3',
-          title: 'Dandiya Night Sound Norms & Timings',
-          description: 'Loudspeaker and live DJ performances will conclude promptly at 10:00 PM in accordance with municipal guidelines. Acoustic traditional Garba circle may continue till 11:00 PM.',
-          status: 'published',
-          created_at: '2026-10-08T10:00:00Z',
-          published_at: '2026-10-08T10:00:00Z',
-        } as any,
-        {
-          id: 'circ-4',
-          title: 'Security & Resident Wristband Mandate',
-          description: 'Society entry wristbands are mandatory for all residents and registered guests. Wristbands can be collected from the Estate Office between 10:00 AM – 7:00 PM.',
-          status: 'published',
-          created_at: '2026-10-07T10:00:00Z',
-          published_at: '2026-10-07T10:00:00Z',
-        } as any,
-      ]);
-      setMeta({ page: 1, limit: 10, total: 4, totalPages: 1 });
-      setIsLoading(false);
-      return;
-    }
 
     try {
       setIsLoading(true);
@@ -107,42 +68,12 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
         limit: meta.limit,
       });
 
-      if (res.success && res.data && res.data.length > 0) {
+      if (res.success && res.data) {
         setCirculars(res.data);
         if (res.meta) setMeta(res.meta);
-      } else {
-        // Fallback Navratri circulars
-        setCirculars([
-          {
-            id: 'circ-1',
-            title: 'Parking Arrangement & Quadrangle Restrictions',
-            description: 'Visitor vehicles strictly barred from inner society quadrangle between 6:00 PM and 12:30 AM daily. Please guide guests to Basement B2 designated visitor slots.',
-            status: 'published',
-            created_at: '2026-10-10T10:00:00Z',
-            published_at: '2026-10-10T10:00:00Z',
-          } as any,
-          {
-            id: 'circ-2',
-            title: 'Generator Backup & Electrical Safety Schedule',
-            description: 'Society DG backup generator will run continuously from 7:00 PM to 1:00 AM on all 9 dandiya nights to ensure uninterrupted sound, stage lighting, and elevator operations.',
-            status: 'published',
-            created_at: '2026-10-09T10:00:00Z',
-            published_at: '2026-10-09T10:00:00Z',
-          } as any,
-        ]);
-        setMeta({ page: 1, limit: 10, total: 2, totalPages: 1 });
       }
     } catch (err: any) {
-      // Fallback
-      setCirculars([
-        {
-          id: 'circ-1',
-          title: 'Parking Arrangement & Quadrangle Restrictions',
-          description: 'Visitor vehicles strictly barred from inner society quadrangle between 6:00 PM and 12:30 AM daily.',
-          status: 'published',
-          created_at: '2026-10-10T10:00:00Z',
-        } as any,
-      ]);
+      toast.error(extractErrorMessage(err, 'Failed to fetch circulars'));
     } finally {
       setIsLoading(false);
     }

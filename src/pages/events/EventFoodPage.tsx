@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { foodService } from '../../api/foodService';
-import { FoodItemEntity, PaginationMeta } from '../../types';
+import { eventsService } from '../../api/eventsService';
+import { FoodItemEntity, PaginationMeta, EventItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
 import { Permissions } from '../../constants/permissions';
@@ -54,6 +55,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   const toast = useToast();
   const { can, isResident } = usePermission();
 
+  const [event, setEvent] = useState<EventItem | null>(null);
   const [foodItems, setFoodItems] = useState<FoodItemEntity[]>([]);
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 30, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -76,6 +78,32 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   // Delete State
   const [deleteTarget, setDeleteTarget] = useState<FoodItemEntity | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (eventId) {
+      eventsService.getById(eventId).then((res) => {
+        if (res.success && res.data) {
+          setEvent(res.data);
+        }
+      }).catch(() => {});
+    }
+  }, [eventId]);
+
+  const isNavratri = event?.is_navratri || event?.name?.toLowerCase().includes('navratri');
+
+  const daysList = useMemo(() => {
+    if (isNavratri) return NAVRATRI_FOOD_DAYS;
+    if (!event) return [];
+    const start = new Date(event.start_date);
+    const end = event.end_date ? new Date(event.end_date) : start;
+    const diffDays = Math.max(1, Math.round(Math.max(0, end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    if (diffDays <= 1) return [];
+    return Array.from({ length: diffDays }, (_, i) => ({
+      day: i + 1,
+      title: `Day ${i + 1}`,
+      delicacy: `Day ${i + 1} Menu`,
+    }));
+  }, [event, isNavratri]);
 
   const fetchFoodItems = async () => {
     if (!eventId) return;
@@ -281,54 +309,58 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
   return (
     <div className="space-y-4">
-      {/* 9-Day Festival Menu Tabs */}
-      <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-            <Utensils className="w-4 h-4 text-indigo-600" />
-            9-Day Festive Menu & Prasad Schedule
-          </span>
-          <span className="text-[11px] text-slate-500 font-medium">Filter by celebration day</span>
-        </div>
+      {/* Dynamic Festival / Celebration Menu Tabs */}
+      {daysList.length > 0 && (
+        <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Utensils className="w-4 h-4 text-indigo-600" />
+              {isNavratri ? '9-Day Festive Menu & Prasad Schedule' : `${daysList.length}-Day Food Schedule`}
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium">Filter by celebration day</span>
+          </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
-          <button
-            type="button"
-            onClick={() => setSelectedDayTab(null)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-              selectedDayTab === null
-                ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            All Menu Items
-          </button>
-          {NAVRATRI_FOOD_DAYS.map((d) => {
-            const isSelected = selectedDayTab === d.day;
-            return (
-              <button
-                key={d.day}
-                type="button"
-                onClick={() => setSelectedDayTab(d.day)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
-                  isSelected
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <span>Day {d.day}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-500'
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            <button
+              type="button"
+              onClick={() => setSelectedDayTab(null)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                selectedDayTab === null
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              All Menu Items
+            </button>
+            {daysList.map((d) => {
+              const isSelected = selectedDayTab === d.day;
+              return (
+                <button
+                  key={d.day}
+                  type="button"
+                  onClick={() => setSelectedDayTab(d.day)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
-                  {d.delicacy.split('&')[0].trim()}
-                </span>
-              </button>
-            );
-          })}
+                  <span>Day {d.day}</span>
+                  {d.delicacy && (
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
+                      {d.delicacy.split('&')[0].trim()}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Catering Card */}
       <Card

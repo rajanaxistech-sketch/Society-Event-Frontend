@@ -272,13 +272,6 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
   const fetchMatrix = async () => {
     if (!eventId) return;
-    if (eventId === 'navratri-2026') {
-      const mock = generateMockMatrix();
-      setMatrixData(mock);
-      setSelectedFloorNumber(4);
-      setIsLoadingMatrix(false);
-      return;
-    }
 
     try {
       setIsLoadingMatrix(true);

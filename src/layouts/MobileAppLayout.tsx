@@ -236,23 +236,23 @@ export const MobileAppLayout: React.FC = () => {
           </div>
 
           {/* Header Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0">
             {/* Notifications Bell */}
             <button
               type="button"
               onClick={() => setNotificationsOpen(true)}
-              className="w-8.5 h-8.5 rounded-full bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center transition-colors active:scale-95 relative"
+              className="w-9 h-9 rounded-full bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 flex items-center justify-center transition-all duration-150 active:scale-95 relative shadow-2xs"
               aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-1.5 ring-white" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
             </button>
 
             {/* Profile Avatar Button */}
             <button
               type="button"
               onClick={() => setProfileDrawerOpen(true)}
-              className="w-8.5 h-8.5 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-xs hover:opacity-95 transition-opacity active:scale-95"
+              className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-2xs ring-2 ring-indigo-50 hover:ring-indigo-100 hover:opacity-95 transition-all duration-150 active:scale-95 shrink-0"
               aria-label="User Profile"
             >
               {user?.fullName?.charAt(0) || (isResident ? 'R' : 'A')}

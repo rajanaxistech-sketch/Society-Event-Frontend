@@ -2,37 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { eventsService } from '../../api/eventsService';
-import { circularsService } from '../../api/circularsService';
 import { societiesService } from '../../api/societiesService';
-import { contractsService } from '../../api/contractsService';
-import { EventItem, CircularItem, SocietyItem } from '../../types';
-import { AppRoutes } from '../../constants/routes';
+import { EventItem, SocietyItem } from '../../types';
 import { encodeId } from '../../utils/idObfuscator';
 import { formatDate } from '../../utils/formatters';
-import { getEventTheme } from '../../utils/eventTheme';
-import { ModuleGridCard } from '../../components/mobile/MobileCard';
-import StatusBadge from '../../components/common/StatusBadge';
 import Spinner from '../../components/ui/Spinner';
 import {
-  ScrollText,
   Calendar,
-  Layers,
-  Home as HomeIcon,
-  Building2,
-  Users,
-  CreditCard,
-  FileText,
-  UploadCloud,
   ChevronRight,
-  Plus,
-  ArrowUpRight,
-  Sparkles,
   MapPin,
-  Clock,
-  RefreshCw,
-  Tag,
-  Coins,
-  Wallet,
+  ScrollText,
+  DollarSign,
+  Utensils,
+  Sparkles,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -41,8 +23,6 @@ export const SocietyAdminHomeScreen: React.FC = () => {
 
   const [society, setSociety] = useState<SocietyItem | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
-  const [recentCirculars, setRecentCirculars] = useState<CircularItem[]>([]);
-  const [contractsCount, setContractsCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const getGreeting = () => {
@@ -60,11 +40,9 @@ export const SocietyAdminHomeScreen: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const [socRes, eventsRes, circRes, contractsRes] = await Promise.all([
+      const [socRes, eventsRes] = await Promise.all([
         societiesService.getById(selectedSocietyId).catch(() => null),
-        eventsService.getAll({ societyId: selectedSocietyId, limit: 4, sortBy: 'start_date', sortOrder: 'asc' }).catch(() => null),
-        circularsService.getAll({ societyId: selectedSocietyId, limit: 3, sortBy: 'created_at', sortOrder: 'desc' }).catch(() => null),
-        contractsService.list({ society_id: selectedSocietyId, limit: 1 }).catch(() => null),
+        eventsService.getAll({ societyId: selectedSocietyId, limit: 10, sortBy: 'start_date', sortOrder: 'asc' }).catch(() => null),
       ]);
 
       if (socRes?.success && socRes.data) {
@@ -72,12 +50,6 @@ export const SocietyAdminHomeScreen: React.FC = () => {
       }
       if (eventsRes?.success && eventsRes.data) {
         setUpcomingEvents(eventsRes.data);
-      }
-      if (circRes?.success && circRes.data) {
-        setRecentCirculars(circRes.data);
-      }
-      if (contractsRes?.meta) {
-        setContractsCount(contractsRes.meta.total || 0);
       }
     } catch (err) {
       console.error('Failed to load society admin dashboard data', err);
@@ -101,193 +73,232 @@ export const SocietyAdminHomeScreen: React.FC = () => {
   const counts = society?._count || {};
   const totalUnits = (counts.flats || 0) + (counts.bungalows || 0);
 
-  // If no upcoming events in DB, provide default Navratri Mahotsav event for seamless demo flow
-  const displayEvents: EventItem[] = upcomingEvents.length > 0 ? upcomingEvents : [
-    {
-      id: 'navratri-2026',
-      name: 'Navratri Mahotsav 2026',
-      description: 'Grand 9-Day Cultural Dandiya & Garba Mahotsav with daily Mahaprasad and community celebrations',
-      start_date: '2026-10-12',
-      end_date: '2026-10-20',
-      venue: 'Main Society Quadrangle',
-      status: 'published',
-      is_navratri: true,
-      event_year: 2026,
-    } as any,
-  ];
+  const displayEvents: EventItem[] = upcomingEvents;
+  const primaryEvent = displayEvents.length > 0 ? displayEvents[0] : null;
+  const additionalEvents = displayEvents.slice(1);
+
+  // Calculate event duration in days
+  const calculateDurationDays = (startStr?: string | null, endStr?: string | null) => {
+    if (!startStr) return 1;
+    const start = new Date(startStr);
+    const end = endStr ? new Date(endStr) : start;
+    const diffTime = Math.max(0, end.getTime() - start.getTime());
+    return Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1);
+  };
+
+  const isNavratri = primaryEvent ? (primaryEvent.is_navratri || primaryEvent.name?.toLowerCase().includes('navratri')) : false;
+  const durationDays = primaryEvent ? calculateDurationDays(primaryEvent.start_date, primaryEvent.end_date) : 1;
+  const primaryCounts = primaryEvent?._count || {};
+  const circularsCount = primaryCounts.circulars ?? 0;
+  const foodItemsCount = primaryCounts.food_items ?? 0;
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-200">
+    <div className="space-y-4 animate-in fade-in duration-200 pb-4">
       {/* Purple Gradient Greeting Hero Banner */}
-      <div className="bg-purple-hero rounded-[22px] p-4.5 text-white shadow-purple-glow relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#4338CA] via-[#6366F1] to-[#7C3AED] rounded-[20px] p-[18px] pb-[16px] text-white shadow-[0_10px_25px_-5px_rgba(79,70,229,0.3)] relative overflow-hidden">
         {/* Ambient Decorative Circle */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-xs pointer-events-none" />
+        <div className="absolute -top-10 -right-10 w-[130px] h-[130px] bg-white/10 rounded-full pointer-events-none" />
 
         <div className="relative z-10">
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <span className="text-[11px] font-extrabold text-white/90 tracking-wider uppercase">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-[11px] font-bold text-white/90 uppercase tracking-[0.8px]">
               {getGreeting()}, {user?.fullName?.split(' ')[0] || 'Raj'}
             </span>
-            <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-md text-[10.5px] font-bold text-white tracking-wider border border-white/20">
+            <span className="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-[6px] text-[10.5px] font-bold text-white tracking-[0.5px] border border-white/20 shrink-0">
               {society?.code || 'PMCH-01'}
             </span>
           </div>
 
-          <h2 className="text-[16px] font-bold tracking-tight text-white leading-snug">
+          <h2 className="text-[16.5px] font-bold tracking-tight text-white leading-snug break-words mb-1.5">
             {society?.name || 'Palm Meadows Co-op Housing Society'}
           </h2>
 
-          <div className="flex items-center gap-1.5 mt-1 text-[12px] text-white/90 font-medium">
-            <MapPin className="w-3.5 h-3.5 shrink-0 text-white/90" />
+          <div className="flex items-center gap-1.5 text-[12px] text-white/85 font-medium mb-3.5">
+            <MapPin className="w-3.5 h-3.5 shrink-0 text-white/85" />
             <span className="truncate">
               {[society?.city, society?.state].filter(Boolean).join(', ') || 'Mumbai, Maharashtra'}
             </span>
           </div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-3 gap-2 mt-3.5 pt-3 border-t border-white/15 text-center">
-            <div className="bg-white/16 backdrop-blur-md border border-white/20 rounded-xl p-2 flex flex-col items-center justify-center">
-              <span className="text-[17px] font-extrabold text-white leading-tight">{totalUnits || 0}</span>
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/15 text-center">
+            <div className="bg-white/16 backdrop-blur-md border border-white/20 rounded-[12px] py-2.5 px-1 flex flex-col items-center justify-center gap-0.5">
+              <span className="text-[18px] font-extrabold text-white leading-none">{totalUnits || 0}</span>
               <span className="text-[11px] text-white/90 font-medium">Units</span>
             </div>
-            <div className="bg-white/16 backdrop-blur-md border border-white/20 rounded-xl p-2 flex flex-col items-center justify-center">
-              <span className="text-[17px] font-extrabold text-white leading-tight">{counts.persons || 0}</span>
+            <div className="bg-white/16 backdrop-blur-md border border-white/20 rounded-[12px] py-2.5 px-1 flex flex-col items-center justify-center gap-0.5">
+              <span className="text-[18px] font-extrabold text-white leading-none">{counts.persons || 0}</span>
               <span className="text-[11px] text-white/90 font-medium">Residents</span>
             </div>
-            <div className="bg-white/28 backdrop-blur-md border border-white/40 rounded-xl p-2 flex flex-col items-center justify-center shadow-xs">
-              <span className="text-[17px] font-extrabold text-white leading-tight">{displayEvents.length}</span>
-              <span className="text-[11px] text-white/90 font-semibold">Events</span>
+            <div className="bg-white/28 backdrop-blur-md border border-white/40 rounded-[12px] py-2.5 px-1 flex flex-col items-center justify-center gap-0.5 shadow-xs">
+              <span className="text-[18px] font-extrabold text-white leading-none">{displayEvents.length}</span>
+              <span className="text-[11px] text-white/95 font-bold">Events</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Events Section Header */}
-      <div className="space-y-2.5">
+      {/* Events Section */}
+      <div className="space-y-3 pt-1">
         <div className="flex items-center justify-between px-0.5">
           <div className="flex items-center gap-2">
-            <span className="w-[3.5px] h-[15px] bg-indigo-600 rounded-sm"></span>
-            <h3 className="text-[13.5px] font-extrabold text-slate-900 uppercase tracking-wider">
+            <span className="w-[3.5px] h-[15px] bg-[#4F46E5] rounded-full"></span>
+            <h3 className="text-[13px] font-extrabold text-slate-900 uppercase tracking-[0.6px]">
               EVENTS
             </h3>
           </div>
-          <span className="text-xs font-semibold text-indigo-600">Quick Access</span>
+          <span className="text-[11.5px] font-semibold text-[#4F46E5]">Active Festival</span>
         </div>
 
-        {/* Event Cards List */}
-        <div className="space-y-2.5">
-          {displayEvents.map((evt) => {
-            return (
-              <div
-                key={evt.id}
-                onClick={() => navigate(`/events/${encodeId(evt.id)}`)}
-                className="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
-              >
-                {/* Event Card Icon Banner */}
-                <div className="w-[52px] h-[52px] rounded-2xl bg-gradient-to-tr from-rose-100 to-indigo-100 flex items-center justify-center text-2xl shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
-                  🪔
-                </div>
-
-                {/* Event Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1.5 mb-1">
-                    <h4 className="font-bold text-slate-900 text-[14.5px] group-hover:text-indigo-600 transition-colors truncate">
-                      {evt.name}
-                    </h4>
-                    <span className="bg-indigo-50 text-indigo-600 text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 border border-indigo-100">
-                      {evt.is_navratri ? 'Cultural' : 'Festival'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <Calendar className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span className="truncate">
-                      {formatDate(evt.start_date)} {evt.end_date ? `– ${formatDate(evt.end_date)}` : ''}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Chevron */}
-                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors shrink-0" />
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Recent Circulars Section */}
-      <div className="space-y-2 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-            <ScrollText className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Recent Circulars & Notices</span>
-          </h3>
-          <button
-            onClick={() => navigate(AppRoutes.CIRCULARS)}
-            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5"
-          >
-            <span>View All</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
-
-        {recentCirculars.length === 0 ? (
-          <div className="bg-white rounded-2xl p-4 text-center border border-slate-200/80 shadow-card">
-            <ScrollText className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
-            <p className="text-xs font-bold text-slate-700">No Circulars Published</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Publish important society circulars & notices</p>
+        {!primaryEvent ? (
+          <div className="bg-white border border-slate-200/90 rounded-[18px] p-6 text-center shadow-sm">
+            <p className="text-xs text-slate-500 font-medium">No events scheduled for this society yet.</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {recentCirculars.map((circ) => (
-              <div
-                key={circ.id}
-                onClick={() => navigate(`/circulars/${encodeId(circ.id)}`)}
-                className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-card hover:border-indigo-200 transition-all cursor-pointer group active:scale-[0.99]"
-              >
-                <div className="flex items-start gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                    <ScrollText className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-1">
-                      <h4 className="font-bold text-slate-900 text-xs group-hover:text-indigo-600 transition-colors truncate">
-                        {circ.title}
-                      </h4>
-                      <StatusBadge status={circ.status} size="sm" />
-                    </div>
-                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5 font-medium leading-tight">
-                      {circ.description}
-                    </p>
-                    <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
-                      <span>{formatDate(circ.created_at)}</span>
-                      <span className="font-semibold text-indigo-600 flex items-center gap-0.5">
-                        Read Notice <ArrowUpRight className="w-2.5 h-2.5" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
+          <div className="space-y-4">
+            {/* Primary Event Hero Banner */}
+            <div className="bg-event-hero rounded-2xl p-4 text-white shadow-purple-glow relative overflow-hidden">
+              <div className="inline-block bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10.5px] font-bold tracking-wider mb-2 uppercase border border-white/20">
+                {isNavratri ? 'Grand Cultural Festival' : 'Community Event'}
               </div>
-            ))}
+              <h3 className="text-[18px] font-extrabold tracking-tight leading-tight mb-2">
+                {primaryEvent.name}
+              </h3>
+              <div className="flex items-center gap-1.5 text-xs text-white/90 mb-3 font-medium">
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  {formatDate(primaryEvent.start_date)}
+                  {primaryEvent.end_date && primaryEvent.end_date !== primaryEvent.start_date
+                    ? ` – ${formatDate(primaryEvent.end_date)} (${durationDays} Days)`
+                    : ` (${durationDays} Day)`}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {isNavratri ? (
+                  <>
+                    <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
+                      ✨ Dandiya & Garba
+                    </span>
+                    <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
+                      🌸 Daily Mahaprasad
+                    </span>
+                  </>
+                ) : (
+                  <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
+                    📍 {primaryEvent.venue || 'Society Premises'}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Event Modules Section Header */}
+            <div className="px-0.5 pt-0.5">
+              <span className="text-[12px] font-extrabold text-slate-900 tracking-wider uppercase block">
+                EVENT MODULES
+              </span>
+              <p className="text-[11.5px] text-slate-500 mt-0.5 font-medium">
+                Select a module to manage event operations
+              </p>
+            </div>
+
+            {/* EXACT 3 MODULE CARDS DIRECTLY IN HOME PAGE */}
+            <div className="space-y-2.5">
+              {/* 1. Circulars & Notices */}
+              <div
+                onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=circulars`)}
+                className="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
+              >
+                <div className="w-[48px] h-[48px] rounded-xl bg-purple-50 group-hover:bg-purple-600 text-purple-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                  <ScrollText className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                    <h4 className="font-bold text-slate-900 text-[14px] group-hover:text-indigo-600 transition-colors truncate">
+                      Circulars & Notices
+                    </h4>
+                    <span className="bg-purple-50 text-purple-700 text-[10.5px] font-bold px-2 py-0.5 rounded-full border border-purple-200 shrink-0">
+                      {circularsCount} Updates
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 truncate">
+                    Event schedules, parking & guidelines
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors shrink-0" />
+              </div>
+
+              {/* 2. Flat Collections (Seat Map) */}
+              <div
+                onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=collections`)}
+                className="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
+              >
+                <div className="w-[48px] h-[48px] rounded-xl bg-emerald-50 group-hover:bg-emerald-600 text-emerald-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                    <h4 className="font-bold text-slate-900 text-[14px] group-hover:text-emerald-700 transition-colors truncate">
+                      Flat Collections
+                    </h4>
+                    <span className="bg-emerald-50 text-emerald-700 text-[10.5px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                      Seat Map
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 truncate">
+                    Interactive tower, floor & flat payments
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
+              </div>
+
+              {/* 3. Food Menu */}
+              <div
+                onClick={() => navigate(`/events/${encodeId(primaryEvent.id)}?tab=food`)}
+                className="bg-white border border-slate-200/90 rounded-2xl p-3.5 flex items-center gap-3.5 shadow-xs hover:border-rose-300 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]"
+              >
+                <div className="w-[48px] h-[48px] rounded-xl bg-rose-50 group-hover:bg-rose-600 text-rose-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                  <Utensils className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                    <h4 className="font-bold text-slate-900 text-[14px] group-hover:text-rose-700 transition-colors truncate">
+                      Food Menu
+                    </h4>
+                    <span className="bg-rose-50 text-rose-700 text-[10.5px] font-bold px-2 py-0.5 rounded-full border border-rose-200 shrink-0">
+                      {foodItemsCount} Items
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 truncate">
+                    {isNavratri ? '9-Day delicacies & Prasad schedule' : 'Day-wise delicacies & live menu'}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-rose-600 transition-colors shrink-0" />
+              </div>
+            </div>
+
+            {/* Additional Events List (if any) */}
+            {additionalEvents.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <span className="text-[11.5px] font-bold text-slate-700 uppercase tracking-wider block">
+                  Other Events
+                </span>
+                {additionalEvents.map((evt) => (
+                  <div
+                    key={evt.id}
+                    onClick={() => navigate(`/events/${encodeId(evt.id)}`)}
+                    className="bg-white border border-slate-200/90 rounded-xl p-3 flex items-center justify-between gap-3 shadow-2xs hover:border-indigo-300 cursor-pointer"
+                  >
+                    <div>
+                      <h5 className="font-bold text-slate-900 text-xs">{evt.name}</h5>
+                      <span className="text-[11px] text-slate-500">{formatDate(evt.start_date)}</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
-      </div>
-
-      {/* Bulk Import Floating Quick Tip Card */}
-      <div
-        onClick={() => navigate(AppRoutes.IMPORTS)}
-        className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-3 border border-indigo-100 flex items-center justify-between gap-2.5 cursor-pointer hover:border-indigo-200 transition-colors"
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-white text-indigo-600 flex items-center justify-center shrink-0 shadow-2xs">
-            <UploadCloud className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-indigo-950 truncate">Need to import spreadsheet data?</p>
-            <p className="text-[10px] text-indigo-600 font-medium truncate">Upload flats & resident rosters in bulk</p>
-          </div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-indigo-400 shrink-0" />
       </div>
     </div>
   );

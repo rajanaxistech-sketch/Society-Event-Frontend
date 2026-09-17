@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { eventsService } from '../../api/eventsService';
 import { EventItem, EventDashboardData } from '../../types';
 import { useToast } from '../../hooks/useToast';
@@ -58,14 +58,28 @@ export const EventDetailsPage: React.FC = () => {
   const { id: rawId } = useParams<{ id: string }>();
   const id = decodeId(rawId);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
   const { can } = usePermission();
 
   const [event, setEvent] = useState<EventItem | null>(null);
   const [dashboardData, setDashboardData] = useState<EventDashboardData | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const initialTab = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId }, { replace: true });
+  };
 
   // Publish Modal
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
@@ -73,28 +87,6 @@ export const EventDetailsPage: React.FC = () => {
 
   const fetchEvent = async () => {
     if (!id) return;
-    if (id === 'navratri-2026') {
-      // Direct mock support for prototype demo event
-      setEvent({
-        id: 'navratri-2026',
-        name: 'Navratri Mahotsav 2026',
-        description: 'Grand 9-Day Cultural Festival celebration with daily Mahaprasad, traditional Garba & Dandiya Raas, and community prasad dining.',
-        start_date: '2026-10-12',
-        end_date: '2026-10-20',
-        venue: 'Main Society Quadrangle',
-        status: 'published',
-        is_navratri: true,
-        event_year: 2026,
-        default_collection_amount: 2500,
-        society: { name: 'Palm Meadows Co-op Housing Society' } as any,
-        _count: { circulars: 4, event_collections: 120, food_items: 9 } as any,
-      } as any);
-      setDashboardData({
-        collections: { total_flats: 120, paid_count: 86, total_collected: 215000, target_amount: 300000 },
-      } as any);
-      setIsLoading(false);
-      return;
-    }
 
     try {
       setIsLoading(true);
@@ -107,42 +99,14 @@ export const EventDetailsPage: React.FC = () => {
       if (res.success && res.data) {
         setEvent(res.data);
       } else {
-        // Fallback default Navratri event
-        setEvent({
-          id: id || 'navratri-2026',
-          name: 'Navratri Mahotsav 2026',
-          description: 'Grand 9-Day Cultural Festival celebration with daily Mahaprasad, traditional Garba & Dandiya Raas.',
-          start_date: '2026-10-12',
-          end_date: '2026-10-20',
-          venue: 'Main Society Quadrangle',
-          status: 'published',
-          is_navratri: true,
-          event_year: 2026,
-          default_collection_amount: 2500,
-          society: { name: 'Palm Meadows Co-op Housing Society' } as any,
-          _count: { circulars: 4, event_collections: 120, food_items: 9 } as any,
-        } as any);
+        setError(res.message || 'Event not found');
       }
 
       if (dashRes && dashRes.success && dashRes.data) {
         setDashboardData(dashRes.data);
       }
     } catch (err: any) {
-      // If error occurs, supply fallback event for seamless presentation
-      setEvent({
-        id: id || 'navratri-2026',
-        name: 'Navratri Mahotsav 2026',
-        description: 'Grand 9-Day Cultural Festival celebration with daily Mahaprasad, traditional Garba & Dandiya Raas.',
-        start_date: '2026-10-12',
-        end_date: '2026-10-20',
-        venue: 'Main Society Quadrangle',
-        status: 'published',
-        is_navratri: true,
-        event_year: 2026,
-        default_collection_amount: 2500,
-        society: { name: 'Palm Meadows Co-op Housing Society' } as any,
-        _count: { circulars: 4, event_collections: 120, food_items: 9 } as any,
-      } as any);
+      setError(extractErrorMessage(err, 'Failed to load event details'));
     } finally {
       setIsLoading(false);
     }
@@ -153,10 +117,7 @@ export const EventDetailsPage: React.FC = () => {
   }, [id]);
 
   const handlePublish = async () => {
-    if (!id || id === 'navratri-2026') {
-      toast.success('Event published successfully!');
-      return;
-    }
+    if (!id) return;
     try {
       setIsPublishing(true);
       const res = await eventsService.publish(id);
@@ -182,19 +143,34 @@ export const EventDetailsPage: React.FC = () => {
     );
   }
 
-  if (error && !event) {
+  if (error || !event) {
     return <ErrorState message={error || 'Event record not found'} onRetry={fetchEvent} />;
   }
 
   const currentEvent = event!;
   const counts = currentEvent._count || {};
+  const isNavratri = currentEvent.is_navratri || currentEvent.name?.toLowerCase().includes('navratri');
+
+  // Calculate event duration in days
+  const calculateDurationDays = (startStr?: string | null, endStr?: string | null) => {
+    if (!startStr) return 1;
+    const start = new Date(startStr);
+    const end = endStr ? new Date(endStr) : start;
+    const diffTime = Math.max(0, end.getTime() - start.getTime());
+    return Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1);
+  };
+
+  const durationDays = calculateDurationDays(currentEvent.start_date, currentEvent.end_date);
+  const circularsCount = counts.circulars ?? 0;
+  const collectionsCount = counts.event_collections ?? dashboardData?.collections?.total_flats ?? 0;
+  const foodItemsCount = counts.food_items ?? 0;
 
   // Construct the 3 primary requested tabs (+ overview)
   const tabs: TabItem[] = [
     { id: 'overview', label: 'Event Hub', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'circulars', label: 'Circulars & Notices', icon: <ScrollText className="w-4 h-4" />, count: counts.circulars || 4 },
+    { id: 'circulars', label: 'Circulars & Notices', icon: <ScrollText className="w-4 h-4" />, count: circularsCount },
     { id: 'collections', label: 'Flat Collections (Seat Map)', icon: <DollarSign className="w-4 h-4" /> },
-    { id: 'food', label: 'Food Menu', icon: <Utensils className="w-4 h-4" />, count: counts.food_items || 9 },
+    { id: 'food', label: 'Food Menu', icon: <Utensils className="w-4 h-4" />, count: foodItemsCount },
   ];
 
   return (
@@ -217,10 +193,10 @@ export const EventDetailsPage: React.FC = () => {
 
         <div className="text-center flex flex-col items-center">
           <h2 className="text-[15px] font-bold text-slate-900 tracking-tight leading-tight">
-            {activeTab === 'overview' ? 'Navratri' : activeTab === 'circulars' ? 'Circulars & Notices' : activeTab === 'collections' ? 'Flat Collections' : 'Food Menu'}
+            {activeTab === 'overview' ? currentEvent.name : activeTab === 'circulars' ? 'Circulars & Notices' : activeTab === 'collections' ? 'Flat Collections' : 'Food Menu'}
           </h2>
           <span className="text-[11px] font-semibold text-slate-500">
-            {activeTab === 'overview' ? 'Event Management' : 'Navratri 2026'}
+            {activeTab === 'overview' ? (currentEvent.venue || 'Event Management') : currentEvent.name}
           </span>
         </div>
 
@@ -236,22 +212,35 @@ export const EventDetailsPage: React.FC = () => {
           {/* Event Hero Banner */}
           <div className="bg-event-hero rounded-2xl p-4 text-white shadow-purple-glow relative overflow-hidden">
             <div className="inline-block bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10.5px] font-bold tracking-wider mb-2 uppercase border border-white/20">
-              Grand Cultural Festival
+              {isNavratri ? 'Grand Cultural Festival' : 'Community Event'}
             </div>
             <h3 className="text-[18px] font-extrabold tracking-tight leading-tight mb-2">
-              {currentEvent.name || 'Navratri Mahotsav 2026'}
+              {currentEvent.name}
             </h3>
             <div className="flex items-center gap-1.5 text-xs text-white/90 mb-3 font-medium">
               <Calendar className="w-3.5 h-3.5 shrink-0" />
-              <span>12 Oct – 20 Oct 2026 (9 Days)</span>
+              <span>
+                {formatDate(currentEvent.start_date)}
+                {currentEvent.end_date && currentEvent.end_date !== currentEvent.start_date
+                  ? ` – ${formatDate(currentEvent.end_date)} (${durationDays} Days)`
+                  : ` (${durationDays} Day)`}
+              </span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
-                ✨ Dandiya & Garba
-              </span>
-              <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
-                🌸 Daily Mahaprasad
-              </span>
+              {isNavratri ? (
+                <>
+                  <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
+                    ✨ Dandiya & Garba
+                  </span>
+                  <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
+                    🌸 Daily Mahaprasad
+                  </span>
+                </>
+              ) : (
+                <span className="bg-black/20 border border-white/20 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white">
+                  📍 {currentEvent.venue || 'Society Premises'}
+                </span>
+              )}
             </div>
           </div>
 
@@ -281,7 +270,7 @@ export const EventDetailsPage: React.FC = () => {
                     Circulars & Notices
                   </h4>
                   <span className="bg-purple-50 text-purple-700 text-[10.5px] font-bold px-2 py-0.5 rounded-full border border-purple-200 shrink-0">
-                    {counts.circulars || 4} Updates
+                    {circularsCount} Updates
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 truncate">
@@ -329,11 +318,11 @@ export const EventDetailsPage: React.FC = () => {
                     Food Menu
                   </h4>
                   <span className="bg-rose-50 text-rose-700 text-[10.5px] font-bold px-2 py-0.5 rounded-full border border-rose-200 shrink-0">
-                    Daily Prasad
+                    {foodItemsCount} Items
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 truncate">
-                  Day-wise delicacies & live item addition
+                  {isNavratri ? '9-Day delicacies & Prasad schedule' : 'Day-wise delicacies & live menu'}
                 </p>
               </div>
               <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-rose-600 transition-colors shrink-0" />
