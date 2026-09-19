@@ -33,6 +33,7 @@ import { formatDate, formatCurrency } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { getEventTheme } from '../../utils/eventTheme';
+import { getFileUrl } from '../../utils/fileHelper';
 import { UpiProofCapture } from '../../components/common/UpiProofCapture';
 import {
   Plus,
@@ -400,7 +401,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setTransactionReference('');
     setPayNotes('');
     setProofFile(null);
-    setProofPreviewUrl(null);
+    setProofPreviewUrl(flat.proofUrl || flat.proof_url || null);
     setChequeNumber('');
     setBankName('');
     setChequeDate('');
@@ -530,7 +531,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         amount: enteredAmount,
         payment_method: payMethod,
         transaction_reference: transactionReference || undefined,
-        proof_url: uploadedProofUrl,
+        proof_url: uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || undefined),
         notes: payNotes || undefined,
         cheque_number: chequeNumber || undefined,
         bank_name: bankName || undefined,
@@ -625,15 +626,20 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : expAmt)));
     setCustomExpectedFee(String(expAmt));
     setIsEditingExpectedFee(false);
-    setPayMethod((prev) => (availablePaymentMethods.some((m) => m.code === prev) ? prev : availablePaymentMethods[0]?.code || 'UPI'));
-    setPayDate(new Date().toISOString().split('T')[0]);
-    setChequeNumber('');
-    setBankName('');
-    setChequeDate('');
-    setTransactionReference('');
-    setPayNotes('');
+    const existingMethod = col.payments?.[0]?.payment_method?.code;
+    if (existingMethod) {
+      setPayMethod(existingMethod);
+    } else {
+      setPayMethod((prev) => (availablePaymentMethods.some((m) => m.code === prev) ? prev : availablePaymentMethods[0]?.code || 'UPI'));
+    }
+    setPayDate(col.payments?.[0]?.payment_date ? col.payments[0].payment_date.split('T')[0] : new Date().toISOString().split('T')[0]);
+    setChequeNumber(col.payments?.[0]?.cheque_number || '');
+    setBankName(col.payments?.[0]?.bank_name || '');
+    setChequeDate(col.payments?.[0]?.cheque_date ? col.payments[0].cheque_date.split('T')[0] : '');
+    setTransactionReference(col.payments?.[0]?.transaction_reference || '');
+    setPayNotes(col.payments?.[0]?.notes || '');
     setProofFile(null);
-    setProofPreviewUrl(null);
+    setProofPreviewUrl(col.payments?.[0]?.proof_url || null);
     setPayModalOpen(true);
     fetchPaymentMethods();
   };
@@ -683,7 +689,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         bank_name: payMethod === 'CHEQUE' ? bankName : null,
         cheque_date: payMethod === 'CHEQUE' && chequeDate ? chequeDate : null,
         transaction_reference: transactionReference || null,
-        proof_url: uploadedProofUrl || null,
+        proof_url: uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || null),
         notes: payNotes || null,
       });
 
@@ -2099,7 +2105,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
             </div>
             <div className="p-4 bg-slate-950 flex items-center justify-center max-h-[75vh] overflow-auto">
               <img
-                src={enlargedProofUrl}
+                src={getFileUrl(enlargedProofUrl)}
                 alt="Enlarged Payment Proof"
                 className="max-h-[65vh] max-w-full rounded-lg object-contain shadow-lg"
               />

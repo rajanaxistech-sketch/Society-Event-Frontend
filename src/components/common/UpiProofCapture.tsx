@@ -11,6 +11,7 @@ import {
   Eye,
 } from 'lucide-react';
 import Button from '../ui/Button';
+import { getFileUrl } from '../../utils/fileHelper';
 
 interface UpiProofCaptureProps {
   onImageCaptured: (file: File | Blob | null, previewUrl: string | null) => void;
@@ -29,6 +30,11 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [isFlashActive, setIsFlashActive] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+
+  // Synchronize when existingProofUrl prop changes (e.g. editing a different flat/collection)
+  useEffect(() => {
+    setCapturedPreview(existingProofUrl || null);
+  }, [existingProofUrl]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -265,7 +271,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
             className="w-16 h-16 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-200 cursor-pointer relative group"
           >
             <img
-              src={capturedPreview}
+              src={getFileUrl(capturedPreview)}
               alt="UPI Payment Proof"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
@@ -374,7 +380,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
             </div>
             <div className="p-4 bg-slate-950 flex items-center justify-center max-h-[70vh] overflow-auto">
               <img
-                src={capturedPreview}
+                src={getFileUrl(capturedPreview)}
                 alt="Enlarged UPI Receipt"
                 className="max-h-[60vh] max-w-full rounded-lg object-contain shadow-md"
               />
