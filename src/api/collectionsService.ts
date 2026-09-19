@@ -64,12 +64,35 @@ export const collectionsService = {
       bank_name?: string | null;
       cheque_date?: string | null;
       transaction_reference?: string | null;
+      proof_url?: string | null;
       notes?: string | null;
     }
   ): Promise<ApiResponse<{ payment: PaymentItem; collection: EventCollectionItem }>> => {
     const response = await axiosClient.post<
       ApiResponse<{ payment: PaymentItem; collection: EventCollectionItem }>
     >(`/collections/${collectionId}/payments`, payload);
+    return response.data;
+  },
+
+  uploadProof: async (
+    file: File | Blob,
+    fileName?: string
+  ): Promise<ApiResponse<{ proof_url: string; file_name: string; size: number }>> => {
+    const formData = new FormData();
+    if (file instanceof File) {
+      formData.append('file', file);
+    } else {
+      formData.append('file', file, fileName || `proof_${Date.now()}.jpg`);
+    }
+    const response = await axiosClient.post<ApiResponse<{ proof_url: string; file_name: string; size: number }>>(
+      '/collections/upload-proof',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
     return response.data;
   },
 
@@ -146,6 +169,7 @@ export const collectionsService = {
       amount?: number;
       payment_method: string;
       transaction_reference?: string | null;
+      proof_url?: string | null;
       notes?: string | null;
       cheque_number?: string | null;
       bank_name?: string | null;

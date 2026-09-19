@@ -716,6 +716,7 @@ export interface PaymentItem {
   bank_name?: string | null;
   cheque_date?: string | null;
   clearing_status?: 'pending' | 'cleared' | 'bounced' | 'cancelled' | string | null;
+  proof_url?: string | null;
   notes?: string | null;
   status?: 'recorded' | 'reversed' | 'completed' | 'pending' | 'failed' | string;
   payment_status?: 'recorded' | 'reversed' | 'completed' | 'pending' | 'failed' | string;

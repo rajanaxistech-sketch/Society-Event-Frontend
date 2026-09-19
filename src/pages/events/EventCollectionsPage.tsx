@@ -33,6 +33,7 @@ import { formatDate, formatCurrency } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { getEventTheme } from '../../utils/eventTheme';
+import { UpiProofCapture } from '../../components/common/UpiProofCapture';
 import {
   Plus,
   Edit2,
@@ -57,7 +58,20 @@ import {
   ExternalLink,
   LayoutGrid,
   List,
+  Banknote,
+  QrCode,
+  FileText,
+  Smartphone,
+  Landmark,
+  Eye,
+  Image as ImageIcon,
+  X,
 } from 'lucide-react';
+
+const isUuid = (val: any): boolean => {
+  if (typeof val !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val);
+};
 
 const getTowerDisplayName = (tower: any, index?: number): string => {
   if (!tower) return index !== undefined ? `Tower ${index + 1}` : 'Tower';
@@ -189,6 +203,9 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const [chequeDate, setChequeDate] = useState('');
   const [transactionReference, setTransactionReference] = useState('');
   const [payNotes, setPayNotes] = useState('');
+  const [proofFile, setProofFile] = useState<File | Blob | null>(null);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
+  const [enlargedProofUrl, setEnlargedProofUrl] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<PaymentMethodItem[]>([]);
 
@@ -292,13 +309,9 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     }
   };
 
-  useEffect(() => {
-    fetchCollections();
-  }, [eventId, meta.page, meta.limit, statusFilter]);
-
   // Seat-Map Matrix State
   const [viewMode, setViewMode] = useState<'seat-map' | 'table'>('seat-map');
-  const [matrixData, setMatrixData] = useState<any>(() => generateMockMatrix());
+  const [matrixData, setMatrixData] = useState<any>(null);
   const [isLoadingMatrix, setIsLoadingMatrix] = useState(false);
   const [selectedTowerIndex, setSelectedTowerIndex] = useState(0);
   const [selectedFloorNumber, setSelectedFloorNumber] = useState<number | null>(1);
@@ -311,14 +324,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     }
 
     try {
-      if (showSpinner && !matrixData) {
+      if (showSpinner) {
         setIsLoadingMatrix(true);
       }
       const res = await collectionsService.getMatrix(eventId);
       if (res.success && res.data && res.data.towers?.length > 0) {
         setMatrixData(res.data);
         const firstTower = res.data.towers[selectedTowerIndex] || res.data.towers[0];
-        if (firstTower?.floors?.length > 0 && selectedFloorNumber === null) {
+        if (firstTower?.floors?.length > 0 && (selectedFloorNumber === null || selectedFloorNumber === undefined)) {
           setSelectedFloorNumber(firstTower.floors[0].floorNumber);
         }
       } else {
@@ -339,6 +352,22 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     }
   };
 
+  // 1. Initial one-time comprehensive refresh on page arrival
+  useEffect(() => {
+    if (eventId) {
+      fetchPaymentMethods();
+      fetchMatrix(true);
+      fetchCollections();
+    }
+  }, [eventId]);
+
+  // 2. Subsequent pagination / status filter changes for ledger table
+  useEffect(() => {
+    if (eventId) {
+      fetchCollections();
+    }
+  }, [meta.page, meta.limit, statusFilter]);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefreshAll = async () => {
@@ -347,6 +376,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       await Promise.all([
         fetchCollections(),
         fetchMatrix(false),
+        fetchPaymentMethods(),
       ]);
       toast.success('Collection data refreshed successfully');
     } catch {
@@ -357,6 +387,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   };
 
   const handleSeatMapFlatClick = (flat: any) => {
+    setPayingCollection(null);
     setSelectedFlatForPayment(flat);
     const expAmt = Number(flat.amount ?? 2500);
     const paidAmt = Number(flat.amountPaid ?? 0);
@@ -368,6 +399,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayMethod(flat.paymentMethod || 'UPI');
     setTransactionReference('');
     setPayNotes('');
+    setProofFile(null);
+    setProofPreviewUrl(null);
     setChequeNumber('');
     setBankName('');
     setChequeDate('');
@@ -383,61 +416,57 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
     try {
       setIsSavingExpectedFee(true);
-      if (selectedFlatForPayment && eventId) {
-        if (eventId !== 'navratri-2026' && selectedFlatForPayment.id && selectedFlatForPayment.id.includes('-')) {
-          await collectionsService.updateFlatAmount(eventId, selectedFlatForPayment.id, newFee);
-        }
-
-        const paid = Number(selectedFlatForPayment.amountPaid || 0);
-        const newPending = Math.max(0, newFee - paid);
-        const newStatus = newPending <= 0 && newFee > 0 ? 'paid' : paid > 0 ? 'partially_paid' : 'pending';
-
-        // Update local selectedFlatForPayment
-        const updatedFlat = {
-          ...selectedFlatForPayment,
-          amount: newFee,
-          pendingAmount: newPending,
-          status: newStatus,
-        };
-        setSelectedFlatForPayment(updatedFlat);
-
-        // Update matrixData in memory
-        if (matrixData) {
-          const updated = JSON.parse(JSON.stringify(matrixData));
-          for (const tower of updated.towers || []) {
-            for (const floor of tower.floors || []) {
-              for (const flat of floor.flats || []) {
-                if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
-                  flat.amount = newFee;
-                  flat.pendingAmount = newPending;
-                  flat.status = newStatus;
+      if (selectedFlatForPayment) {
+        if (!isUuid(eventId) || !isUuid(selectedFlatForPayment.id)) {
+          // Instant in-memory update for mock/demo
+          if (matrixData) {
+            const updated = JSON.parse(JSON.stringify(matrixData));
+            for (const tower of updated.towers || []) {
+              for (const floor of tower.floors || []) {
+                for (const flat of floor.flats || []) {
+                  if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
+                    flat.amount = newFee;
+                    flat.pendingAmount = Math.max(0, newFee - Number(flat.amountPaid || 0));
+                  }
                 }
               }
             }
+            setMatrixData(updated);
           }
-          setMatrixData(updated);
+          selectedFlatForPayment.amount = newFee;
+          toast.success(`Expected fee updated to ₹${newFee} for Flat ${selectedFlatForPayment.flatNumber}`);
+          setIsEditingExpectedFee(false);
+          return;
         }
 
-        toast.success(`Expected fee updated to ${formatCurrency(newFee)} for Flat ${selectedFlatForPayment.flatNumber}`);
-        setIsEditingExpectedFee(false);
-        fetchMatrix();
-        fetchCollections();
+        const res = await collectionsService.updateFlatAmount(eventId, selectedFlatForPayment.id, newFee);
+        if (res.success) {
+          toast.success(`Expected fee updated to ₹${newFee} for Flat ${selectedFlatForPayment.flatNumber}`);
+          setIsEditingExpectedFee(false);
+          selectedFlatForPayment.amount = newFee;
+          fetchMatrix(false);
+          fetchCollections();
+        } else {
+          toast.error(res.message || 'Failed to update expected fee');
+        }
       } else if (payingCollection) {
-        await collectionsService.update(payingCollection.id, { custom_amount: newFee });
-        const paid = Number(payingCollection.amount_paid || 0);
-        const newPending = Math.max(0, newFee - paid);
-        const updatedCol = {
-          ...payingCollection,
-          expected_amount: newFee,
-          custom_amount: newFee,
-          pending_amount: newPending,
-          status: newPending <= 0 && newFee > 0 ? 'paid' : paid > 0 ? 'partially_paid' : 'pending',
-        };
-        setPayingCollection(updatedCol);
-        toast.success(`Expected fee updated to ${formatCurrency(newFee)}`);
-        setIsEditingExpectedFee(false);
-        fetchCollections();
-        fetchMatrix();
+        if (!isUuid(payingCollection.id)) {
+          payingCollection.expected_amount = newFee;
+          payingCollection.pending_amount = Math.max(0, newFee - Number(payingCollection.amount_paid || 0));
+          toast.success(`Expected fee updated to ₹${newFee}`);
+          setIsEditingExpectedFee(false);
+          return;
+        }
+
+        const res = await collectionsService.update(payingCollection.id, { custom_amount: newFee });
+        if (res.success) {
+          toast.success(`Expected fee updated to ₹${newFee}`);
+          setIsEditingExpectedFee(false);
+          payingCollection.expected_amount = newFee;
+          payingCollection.pending_amount = Math.max(0, newFee - Number(payingCollection.amount_paid || 0));
+          fetchCollections();
+          fetchMatrix();
+        }
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to update expected fee'));
@@ -457,8 +486,22 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
     try {
       setIsProcessingPayment(true);
-      if (eventId === 'navratri-2026' || !selectedFlatForPayment.id.includes('-')) {
-        // Instant In-memory state update for demo
+
+      // Upload proof file if user snapped/selected a receipt image
+      let uploadedProofUrl: string | undefined = undefined;
+      if (proofFile) {
+        try {
+          const uploadRes = await collectionsService.uploadProof(proofFile);
+          if (uploadRes.success && uploadRes.data?.proof_url) {
+            uploadedProofUrl = uploadRes.data.proof_url;
+          }
+        } catch (uploadErr) {
+          console.warn('Failed to upload proof image, proceeding without proof:', uploadErr);
+        }
+      }
+
+      if (!isUuid(eventId) || !isUuid(selectedFlatForPayment.id)) {
+        // Instant In-memory state update for demo or fallback mock flats
         if (matrixData) {
           const updated = JSON.parse(JSON.stringify(matrixData));
           for (const tower of updated.towers || []) {
@@ -487,6 +530,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         amount: enteredAmount,
         payment_method: payMethod,
         transaction_reference: transactionReference || undefined,
+        proof_url: uploadedProofUrl,
         notes: payNotes || undefined,
         cheque_number: chequeNumber || undefined,
         bank_name: bankName || undefined,
@@ -572,6 +616,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
   // Payment Modal handler
   const openPayModal = (col: EventCollectionItem) => {
+    setSelectedFlatForPayment(null);
     setPayingCollection(col);
     const expAmt = Number(col.expected_amount ?? 2500);
     const paidAmt = Number(col.amount_paid ?? 0);
@@ -580,13 +625,15 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : expAmt)));
     setCustomExpectedFee(String(expAmt));
     setIsEditingExpectedFee(false);
-    setPayMethod((prev) => (availablePaymentMethods.some((m) => m.code === prev) ? prev : availablePaymentMethods[0]?.code || ''));
+    setPayMethod((prev) => (availablePaymentMethods.some((m) => m.code === prev) ? prev : availablePaymentMethods[0]?.code || 'UPI'));
     setPayDate(new Date().toISOString().split('T')[0]);
     setChequeNumber('');
     setBankName('');
     setChequeDate('');
     setTransactionReference('');
     setPayNotes('');
+    setProofFile(null);
+    setProofPreviewUrl(null);
     setPayModalOpen(true);
     fetchPaymentMethods();
   };
@@ -614,6 +661,20 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
     try {
       setIsProcessingPayment(true);
+
+      // Upload proof file if user snapped/selected a receipt image
+      let uploadedProofUrl: string | undefined = undefined;
+      if (proofFile) {
+        try {
+          const uploadRes = await collectionsService.uploadProof(proofFile);
+          if (uploadRes.success && uploadRes.data?.proof_url) {
+            uploadedProofUrl = uploadRes.data.proof_url;
+          }
+        } catch (uploadErr) {
+          console.warn('Failed to upload proof image, proceeding without proof:', uploadErr);
+        }
+      }
+
       const res = await collectionsService.recordPayment(payingCollection.id, {
         amount: amt,
         payment_method: payMethod,
@@ -622,6 +683,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         bank_name: payMethod === 'CHEQUE' ? bankName : null,
         cheque_date: payMethod === 'CHEQUE' && chequeDate ? chequeDate : null,
         transaction_reference: transactionReference || null,
+        proof_url: uploadedProofUrl || null,
         notes: payNotes || null,
       });
 
@@ -1080,14 +1142,12 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
             </button>
             <button
               type="button"
-              onClick={() => {
-                fetchCollections();
-                fetchMatrix();
-              }}
-              className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+              onClick={handleRefreshAll}
+              disabled={isRefreshing || isLoading || isLoadingMatrix}
+              className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 active:scale-95 transition-all"
               title="Refresh Data"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-600' : ''}`} />
             </button>
           </div>
         </div>
@@ -1643,7 +1703,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 )}
               </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
             <Input
               label="Payment Amount (₹)"
               type="number"
@@ -1652,19 +1712,95 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
             />
-
-            <Select
-              label="Payment Method"
-              requiredIndicator
-              value={payMethod}
-              onChange={(e) => setPayMethod(e.target.value as any)}
-            >
-              <option value="UPI">UPI / Digital QR</option>
-              <option value="CASH">Cash Payment</option>
-              <option value="CHEQUE">Cheque / Demand Draft</option>
-              <option value="BANK_TRANSFER">Direct Bank Transfer (NEFT/IMPS)</option>
-            </Select>
           </div>
+
+          {/* Payment Method with Visual Cards & Icons */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Payment Method <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                {
+                  code: 'UPI',
+                  name: 'UPI / Digital QR',
+                  subtitle: 'GPay, PhonePe, QR',
+                  icon: QrCode,
+                  activeClass: 'border-indigo-600 bg-indigo-50/90 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs',
+                  iconColor: 'text-indigo-600 bg-indigo-100',
+                },
+                {
+                  code: 'CASH',
+                  name: 'Cash Payment',
+                  subtitle: 'Physical Currency',
+                  icon: Banknote,
+                  activeClass: 'border-emerald-600 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs',
+                  iconColor: 'text-emerald-600 bg-emerald-100',
+                },
+                {
+                  code: 'CHEQUE',
+                  name: 'Cheque / DD',
+                  subtitle: 'Demand Draft',
+                  icon: FileText,
+                  activeClass: 'border-amber-600 bg-amber-50/90 text-amber-950 ring-2 ring-amber-500/20 shadow-xs',
+                  iconColor: 'text-amber-600 bg-amber-100',
+                },
+                {
+                  code: 'BANK_TRANSFER',
+                  name: 'Bank Transfer',
+                  subtitle: 'NEFT / RTGS / IMPS',
+                  icon: Building2,
+                  activeClass: 'border-sky-600 bg-sky-50/90 text-sky-950 ring-2 ring-sky-500/20 shadow-xs',
+                  iconColor: 'text-sky-600 bg-sky-100',
+                },
+              ].map((item) => {
+                const isSelected = payMethod === item.code || (item.code === 'UPI' && payMethod === 'QR');
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => setPayMethod(item.code)}
+                    className={`relative flex flex-col items-start p-2.5 rounded-xl border text-left transition-all ${
+                      isSelected
+                        ? item.activeClass
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1.5">
+                      <div
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                          isSelected ? item.iconColor : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      {isSelected && (
+                        <span className="w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-indigo-300 animate-pulse" />
+                      )}
+                    </div>
+                    <span className="text-xs font-bold leading-tight block truncate w-full">
+                      {item.name}
+                    </span>
+                    <span className="text-[10px] text-slate-500 block truncate w-full mt-0.5">
+                      {item.subtitle}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* UPI Live Camera Snapshot / Screenshot Upload Section */}
+          {(payMethod === 'UPI' || payMethod === 'QR') && (
+            <UpiProofCapture
+              onImageCaptured={(file, preview) => {
+                setProofFile(file);
+                setProofPreviewUrl(preview);
+              }}
+              existingProofUrl={proofPreviewUrl}
+            />
+          )}
 
           <Input
             label="Payment Date"
@@ -1800,7 +1936,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
             <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 text-xs">
               {paymentHistory.map((p) => (
                 <div key={p.id} className="p-3 bg-white flex items-center justify-between gap-3">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-slate-900 text-sm">{formatCurrency(p.amount)}</span>
                       <span className="px-2 py-0.5 rounded bg-slate-100 font-bold text-[10px] text-slate-700">
@@ -1816,6 +1952,19 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                       {p.collector?.full_name && ` • Collected by: ${p.collector.full_name}`}
                     </p>
                     {p.notes && <p className="text-[10px] text-slate-400 italic mt-0.5">"{p.notes}"</p>}
+
+                    {p.proof_url && (
+                      <div className="mt-2">
+                        <button
+                          type="button"
+                          onClick={() => setEnlargedProofUrl(p.proof_url || null)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-[11px] font-bold transition-colors shadow-2xs"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
+                          View UPI Receipt Proof
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">
@@ -1930,6 +2079,45 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         variant="primary"
         isLoading={isGenerating}
       />
+
+      {/* 7. Enlarged Proof Image Modal */}
+      {enlargedProofUrl && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-700">
+            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-indigo-400" />
+                <span className="text-xs font-bold">UPI Receipt / Payment Proof</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEnlargedProofUrl(null)}
+                className="p-1 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 bg-slate-950 flex items-center justify-center max-h-[75vh] overflow-auto">
+              <img
+                src={enlargedProofUrl}
+                alt="Enlarged Payment Proof"
+                className="max-h-[65vh] max-w-full rounded-lg object-contain shadow-lg"
+              />
+            </div>
+            <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-medium">Verified Payment Artifact</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setEnlargedProofUrl(null)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
