@@ -804,6 +804,9 @@ export interface FoodItemEntity {
   food_datetime?: string | null;
   availability_status?: string | null;
   notes?: string | null;
+  image_url?: string | null;
+  day_number?: number | null;
+  meal_type?: string | null;
   created_at: string;
   event?: EventItem;
 }

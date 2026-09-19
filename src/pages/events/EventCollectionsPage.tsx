@@ -59,6 +59,101 @@ import {
   List,
 } from 'lucide-react';
 
+const getTowerDisplayName = (tower: any, index?: number): string => {
+  if (!tower) return index !== undefined ? `Tower ${index + 1}` : 'Tower';
+  const rawName = (tower.name || tower.towerName || tower.code || (index !== undefined ? `${index + 1}` : '')).toString().trim();
+  if (!rawName) return index !== undefined ? `Tower ${index + 1}` : 'Tower';
+  if (/^(tower|wing|block|building)/i.test(rawName)) {
+    return rawName;
+  }
+  return `Tower ${rawName}`;
+};
+
+const getFloorDisplayName = (floor: any): string => {
+  if (!floor) return 'Floor';
+  if (floor.floorName && typeof floor.floorName === 'string' && floor.floorName.trim().length > 0) {
+    return floor.floorName;
+  }
+  if (floor.name && typeof floor.name === 'string' && floor.name.trim().length > 0) {
+    return floor.name;
+  }
+  if (floor.floorNumber !== undefined && floor.floorNumber !== null) {
+    return `Floor ${floor.floorNumber}`;
+  }
+  return 'Floor';
+};
+
+const generateMockMatrix = () => {
+  const towers = ['A', 'B', 'C'].map((name) => {
+    let towerTotal = 40;
+    let towerPaid = 0;
+    const floors: Array<{
+      floorNumber: number;
+      name: string;
+      floorName: string;
+      totalUnits: number;
+      paidUnits: number;
+      pendingUnits: number;
+      flats: any[];
+    }> = [];
+    for (let f = 1; f <= 10; f++) {
+      const flats: any[] = [];
+      let floorPaid = 0;
+      const suffixes = ['A', 'B', 'C', 'D'];
+      suffixes.forEach((suf, idx) => {
+        const isPaid = !((f % 3 === 0 && idx === 1) || (f === 4 && idx === 2) || (f === 7 && idx === 0) || (f === 9 && idx === 3));
+        if (isPaid) {
+          floorPaid++;
+          towerPaid++;
+        }
+        flats.push({
+          id: `tower-${name.toLowerCase()}-${f}0${idx + 1}${suf}`,
+          flatNumber: `${f}0${idx + 1}${suf}`,
+          status: isPaid ? 'paid' : 'pending',
+          amount: 2500,
+          amountPaid: isPaid ? 2500 : 0,
+          pendingAmount: isPaid ? 0 : 2500,
+          residentName: `Resident ${f}0${idx + 1}${suf}`,
+          phone: '+91 98765 43210',
+          paymentMethod: isPaid ? (idx % 2 === 0 ? 'UPI' : 'Cheque') : undefined,
+        });
+      });
+      floors.push({
+        floorNumber: f,
+        name: `Floor ${f}`,
+        floorName: `Floor ${f}`,
+        totalUnits: 4,
+        paidUnits: floorPaid,
+        pendingUnits: 4 - floorPaid,
+        flats,
+      });
+    }
+    return {
+      name: `Tower ${name}`,
+      towerName: name,
+      totalUnits: 40,
+      paidUnits: towerPaid,
+      pendingUnits: 40 - towerPaid,
+      floors,
+    };
+  });
+
+  const totalUnits = 120;
+  const paidUnits = towers.reduce((acc, t) => acc + t.paidUnits, 0);
+
+  return {
+    summary: {
+      totalUnits,
+      paidUnits,
+      pendingUnits: totalUnits - paidUnits,
+      totalTarget: totalUnits * 2500,
+      totalCollected: paidUnits * 2500,
+      progressPercentage: Math.round((paidUnits / totalUnits) * 100),
+    },
+    towers,
+  };
+};
+
 interface EventCollectionsPageProps {
   eventId?: string;
 }
@@ -96,6 +191,11 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const [payNotes, setPayNotes] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState<PaymentMethodItem[]>([]);
+
+  // 1b. Expected Fee Editing State (inside Payment Modal & Seat Map)
+  const [isEditingExpectedFee, setIsEditingExpectedFee] = useState(false);
+  const [customExpectedFee, setCustomExpectedFee] = useState('');
+  const [isSavingExpectedFee, setIsSavingExpectedFee] = useState(false);
 
   // 2. Adjust / Override Amount Modal
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
@@ -198,83 +298,22 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
   // Seat-Map Matrix State
   const [viewMode, setViewMode] = useState<'seat-map' | 'table'>('seat-map');
-  const [matrixData, setMatrixData] = useState<any>(null);
-  const [isLoadingMatrix, setIsLoadingMatrix] = useState(true);
+  const [matrixData, setMatrixData] = useState<any>(() => generateMockMatrix());
+  const [isLoadingMatrix, setIsLoadingMatrix] = useState(false);
   const [selectedTowerIndex, setSelectedTowerIndex] = useState(0);
-  const [selectedFloorNumber, setSelectedFloorNumber] = useState<number | null>(null);
+  const [selectedFloorNumber, setSelectedFloorNumber] = useState<number | null>(1);
   const [selectedFlatForPayment, setSelectedFlatForPayment] = useState<any>(null);
 
-  const generateMockMatrix = () => {
-    const towers = ['A', 'B', 'C'].map((name) => {
-      let towerTotal = 40;
-      let towerPaid = 0;
-      const floors: Array<{
-        floorNumber: number;
-        totalUnits: number;
-        paidUnits: number;
-        pendingUnits: number;
-        flats: any[];
-      }> = [];
-      for (let f = 1; f <= 10; f++) {
-        const flats: any[] = [];
-        let floorPaid = 0;
-        const suffixes = ['A', 'B', 'C', 'D'];
-        suffixes.forEach((suf, idx) => {
-          const isPaid = !((f % 3 === 0 && idx === 1) || (f === 4 && idx === 2) || (f === 7 && idx === 0) || (f === 9 && idx === 3));
-          if (isPaid) {
-            floorPaid++;
-            towerPaid++;
-          }
-          flats.push({
-            id: `tower-${name.toLowerCase()}-${f}0${idx + 1}${suf}`,
-            flatNumber: `${f}0${idx + 1}${suf}`,
-            status: isPaid ? 'paid' : 'pending',
-            amount: 2500,
-            amountPaid: isPaid ? 2500 : 0,
-            pendingAmount: isPaid ? 0 : 2500,
-            residentName: `Resident ${f}0${idx + 1}${suf}`,
-            phone: '+91 98765 43210',
-            paymentMethod: isPaid ? (idx % 2 === 0 ? 'UPI' : 'Cheque') : undefined,
-          });
-        });
-        floors.push({
-          floorNumber: f,
-          totalUnits: 4,
-          paidUnits: floorPaid,
-          pendingUnits: 4 - floorPaid,
-          flats,
-        });
-      }
-      return {
-        towerName: name,
-        totalUnits: 40,
-        paidUnits: towerPaid,
-        pendingUnits: 40 - towerPaid,
-        floors,
-      };
-    });
-
-    const totalUnits = 120;
-    const paidUnits = towers.reduce((acc, t) => acc + t.paidUnits, 0);
-
-    return {
-      summary: {
-        totalUnits,
-        paidUnits,
-        pendingUnits: totalUnits - paidUnits,
-        totalTarget: totalUnits * 2500,
-        totalCollected: paidUnits * 2500,
-        progressPercentage: Math.round((paidUnits / totalUnits) * 100),
-      },
-      towers,
-    };
-  };
-
-  const fetchMatrix = async () => {
-    if (!eventId) return;
+  const fetchMatrix = async (showSpinner = false) => {
+    if (!eventId) {
+      setIsLoadingMatrix(false);
+      return;
+    }
 
     try {
-      setIsLoadingMatrix(true);
+      if (showSpinner && !matrixData) {
+        setIsLoadingMatrix(true);
+      }
       const res = await collectionsService.getMatrix(eventId);
       if (res.success && res.data && res.data.towers?.length > 0) {
         setMatrixData(res.data);
@@ -284,26 +323,49 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         }
       } else {
         const mock = generateMockMatrix();
-        setMatrixData(mock);
-        setSelectedFloorNumber(4);
+        setMatrixData((prev: any) => prev || mock);
+        if (selectedFloorNumber === null) {
+          setSelectedFloorNumber(1);
+        }
       }
     } catch (err: any) {
       const mock = generateMockMatrix();
-      setMatrixData(mock);
-      setSelectedFloorNumber(4);
+      setMatrixData((prev: any) => prev || mock);
+      if (selectedFloorNumber === null) {
+        setSelectedFloorNumber(1);
+      }
     } finally {
       setIsLoadingMatrix(false);
     }
   };
 
-  useEffect(() => {
-    fetchMatrix();
-  }, [eventId]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshAll = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        fetchCollections(),
+        fetchMatrix(false),
+      ]);
+      toast.success('Collection data refreshed successfully');
+    } catch {
+      toast.error('Failed to refresh collection data');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleSeatMapFlatClick = (flat: any) => {
     setSelectedFlatForPayment(flat);
-    setPayAmount(String(flat.pendingAmount || flat.amount || 2500));
-    setPayMethod('UPI');
+    const expAmt = Number(flat.amount ?? 2500);
+    const paidAmt = Number(flat.amountPaid ?? 0);
+    const pendingAmt = Math.max(0, expAmt - paidAmt);
+    // If flat already has a payment, populate with the paid amount so admin can edit it; otherwise pending/expected amount
+    setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : expAmt)));
+    setCustomExpectedFee(String(expAmt));
+    setIsEditingExpectedFee(false);
+    setPayMethod(flat.paymentMethod || 'UPI');
     setTransactionReference('');
     setPayNotes('');
     setChequeNumber('');
@@ -312,9 +374,86 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayModalOpen(true);
   };
 
+  const handleSaveExpectedFee = async () => {
+    const newFee = Number(customExpectedFee);
+    if (isNaN(newFee) || newFee < 0) {
+      toast.warning('Expected fee must be 0 or positive');
+      return;
+    }
+
+    try {
+      setIsSavingExpectedFee(true);
+      if (selectedFlatForPayment && eventId) {
+        if (eventId !== 'navratri-2026' && selectedFlatForPayment.id && selectedFlatForPayment.id.includes('-')) {
+          await collectionsService.updateFlatAmount(eventId, selectedFlatForPayment.id, newFee);
+        }
+
+        const paid = Number(selectedFlatForPayment.amountPaid || 0);
+        const newPending = Math.max(0, newFee - paid);
+        const newStatus = newPending <= 0 && newFee > 0 ? 'paid' : paid > 0 ? 'partially_paid' : 'pending';
+
+        // Update local selectedFlatForPayment
+        const updatedFlat = {
+          ...selectedFlatForPayment,
+          amount: newFee,
+          pendingAmount: newPending,
+          status: newStatus,
+        };
+        setSelectedFlatForPayment(updatedFlat);
+
+        // Update matrixData in memory
+        if (matrixData) {
+          const updated = JSON.parse(JSON.stringify(matrixData));
+          for (const tower of updated.towers || []) {
+            for (const floor of tower.floors || []) {
+              for (const flat of floor.flats || []) {
+                if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
+                  flat.amount = newFee;
+                  flat.pendingAmount = newPending;
+                  flat.status = newStatus;
+                }
+              }
+            }
+          }
+          setMatrixData(updated);
+        }
+
+        toast.success(`Expected fee updated to ${formatCurrency(newFee)} for Flat ${selectedFlatForPayment.flatNumber}`);
+        setIsEditingExpectedFee(false);
+        fetchMatrix();
+        fetchCollections();
+      } else if (payingCollection) {
+        await collectionsService.update(payingCollection.id, { custom_amount: newFee });
+        const paid = Number(payingCollection.amount_paid || 0);
+        const newPending = Math.max(0, newFee - paid);
+        const updatedCol = {
+          ...payingCollection,
+          expected_amount: newFee,
+          custom_amount: newFee,
+          pending_amount: newPending,
+          status: newPending <= 0 && newFee > 0 ? 'paid' : paid > 0 ? 'partially_paid' : 'pending',
+        };
+        setPayingCollection(updatedCol);
+        toast.success(`Expected fee updated to ${formatCurrency(newFee)}`);
+        setIsEditingExpectedFee(false);
+        fetchCollections();
+        fetchMatrix();
+      }
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, 'Failed to update expected fee'));
+    } finally {
+      setIsSavingExpectedFee(false);
+    }
+  };
+
   const handleSeatMapPaySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFlatForPayment || !eventId) return;
+
+    const enteredAmount = Number(payAmount);
+    const expectedAmount = Number(selectedFlatForPayment.amount ?? 2500);
+    const newPending = Math.max(0, expectedAmount - enteredAmount);
+    const newStatus = newPending <= 0 && expectedAmount > 0 ? 'paid' : enteredAmount > 0 ? 'partially_paid' : 'pending';
 
     try {
       setIsProcessingPayment(true);
@@ -326,9 +465,9 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
             for (const floor of tower.floors || []) {
               for (const flat of floor.flats || []) {
                 if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
-                  flat.status = 'paid';
-                  flat.amountPaid = Number(payAmount);
-                  flat.pendingAmount = 0;
+                  flat.status = newStatus;
+                  flat.amountPaid = enteredAmount;
+                  flat.pendingAmount = newPending;
                   flat.paymentMethod = payMethod;
                 }
               }
@@ -336,14 +475,16 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           }
           setMatrixData(updated);
         }
-        toast.success(`🎉 Flat ${selectedFlatForPayment.flatNumber} payment of ₹${payAmount} recorded successfully!`);
+        toast.success(
+          `🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount} (Balance: ₹${newPending})`
+        );
         setPayModalOpen(false);
         setSelectedFlatForPayment(null);
         return;
       }
 
       const res = await collectionsService.payFlat(eventId, selectedFlatForPayment.id, {
-        amount: Number(payAmount),
+        amount: enteredAmount,
         payment_method: payMethod,
         transaction_reference: transactionReference || undefined,
         notes: payNotes || undefined,
@@ -353,7 +494,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       });
 
       if (res.success) {
-        toast.success(res.data?.message || `🎉 Flat ${selectedFlatForPayment.flatNumber} payment recorded successfully!`);
+        toast.success(res.data?.message || `🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
         setPayModalOpen(false);
         setSelectedFlatForPayment(null);
         fetchMatrix();
@@ -369,9 +510,9 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           for (const floor of tower.floors || []) {
             for (const flat of floor.flats || []) {
               if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
-                flat.status = 'paid';
-                flat.amountPaid = Number(payAmount);
-                flat.pendingAmount = 0;
+                flat.status = newStatus;
+                flat.amountPaid = enteredAmount;
+                flat.pendingAmount = newPending;
                 flat.paymentMethod = payMethod;
               }
             }
@@ -379,7 +520,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         }
         setMatrixData(updated);
       }
-      toast.success(`🎉 Flat ${selectedFlatForPayment.flatNumber} payment recorded successfully!`);
+      toast.success(`🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
       setPayModalOpen(false);
       setSelectedFlatForPayment(null);
     } finally {
@@ -432,7 +573,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   // Payment Modal handler
   const openPayModal = (col: EventCollectionItem) => {
     setPayingCollection(col);
-    setPayAmount(String(col.pending_amount || ''));
+    const expAmt = Number(col.expected_amount ?? 2500);
+    const paidAmt = Number(col.amount_paid ?? 0);
+    const pendingAmt = Math.max(0, expAmt - paidAmt);
+    // Populate with current paid amount so admin can edit it, otherwise pending amount
+    setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : expAmt)));
+    setCustomExpectedFee(String(expAmt));
+    setIsEditingExpectedFee(false);
     setPayMethod((prev) => (availablePaymentMethods.some((m) => m.code === prev) ? prev : availablePaymentMethods[0]?.code || ''));
     setPayDate(new Date().toISOString().split('T')[0]);
     setChequeNumber('');
@@ -454,14 +601,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     }
 
     const amt = Number(payAmount);
-    const pending = Number(payingCollection.pending_amount || 0);
+    const expected = Number(payingCollection.expected_amount || 0);
 
-    if (amt <= 0) {
-      toast.warning('Payment amount must be greater than 0');
+    if (amt < 0) {
+      toast.warning('Payment amount cannot be negative');
       return;
     }
-    if (amt > pending) {
-      toast.error(`Payment cannot exceed remaining balance of ${formatCurrency(pending)}`);
+    if (amt > expected) {
+      toast.error(`Payment cannot exceed expected fee of ${formatCurrency(expected)}`);
       return;
     }
 
@@ -479,9 +626,10 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       });
 
       if (res.success) {
-        toast.success(`Payment of ${formatCurrency(amt)} recorded successfully.`);
+        toast.success(`Payment updated to ${formatCurrency(amt)} successfully.`);
         setPayModalOpen(false);
         fetchCollections();
+        fetchMatrix();
       } else {
         toast.error(res.message || 'Failed to record payment');
       }
@@ -848,272 +996,209 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const eventTheme = event ? getEventTheme(event.name, event.description) : null;
 
   return (
-    <div className="space-y-3.5">
-      {/* Standalone Route Page Header (when accessed via /flat-collections/:id or /events/:id/collections) */}
+    <div className="space-y-3">
+      {/* 1. Minimalist Route Page Header */}
       {isStandalone && (
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => navigate('/flat-collections')}
-                className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-                title="Back to Flat Collections"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-2.5">
-                {eventTheme && (
-                  <div
-                    className={`w-9 h-9 rounded-xl ${eventTheme.iconBgClass} flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs`}
-                  >
-                    <Calendar className="w-4 h-4" />
-                  </div>
+        <div className="bg-white px-3.5 py-3 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              type="button"
+              onClick={() => navigate('/flat-collections')}
+              className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shrink-0"
+              title="Back to Flat Collections"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h1 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
+                  {event?.name || 'Flat Collections'}
+                </h1>
+                {event?.event_year && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/60">
+                    {event.event_year}
+                  </span>
                 )}
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
-                      {event?.name || 'Event Flat Collections'}
-                    </h1>
-                    {event?.event_year && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/60">
-                        {event.event_year}
-                      </span>
-                    )}
-                    {event?.is_navratri && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 bg-amber-50 text-amber-700 rounded border border-amber-200/60 flex items-center gap-0.5">
-                        <Sparkles className="w-2.5 h-2.5" /> Navratri
-                      </span>
-                    )}
-                    {event?.status && <StatusBadge status={event.status} size="sm" />}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-0.5 font-medium">
-                    <Building2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                    <span>{event?.society?.name || 'Society Event'}</span>
-                    {event?.society?.code && (
-                      <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1 py-0.2 rounded">
-                        {event.society.code}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                {event?.is_navratri && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 bg-amber-50 text-amber-700 rounded border border-amber-200/60 flex items-center gap-0.5">
+                    <Sparkles className="w-2.5 h-2.5" /> Navratri
+                  </span>
+                )}
               </div>
+              <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                {event?.society?.name || 'Society Event'}
+              </p>
             </div>
-
-            {event && (
-              <div className="flex items-center gap-2 self-start sm:self-auto">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => navigate(`/events/${encodeId(event.id)}`)}
-                  leftIcon={<ExternalLink className="w-3.5 h-3.5" />}
-                  className="text-xs"
-                >
-                  View Event Overview
-                </Button>
-              </div>
-            )}
           </div>
-        </div>
-      )}
 
-      {/* KPI Summary Dashboard */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Flats</span>
-          <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-1 block">
-            {dashboardMetrics.totalFlats}
-          </span>
-        </div>
-
-        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Expected Collection</span>
-          <CurrencyDisplay
-            amount={dashboardMetrics.totalExpected}
-            className="text-lg sm:text-xl font-extrabold text-slate-900 mt-1 block"
-          />
-        </div>
-
-        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Collected</span>
-          <CurrencyDisplay
-            amount={dashboardMetrics.totalCollected}
-            trend="positive"
-            className="text-lg sm:text-xl font-extrabold mt-1 block"
-          />
-        </div>
-
-        <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Pending</span>
-          <CurrencyDisplay
-            amount={dashboardMetrics.totalPending}
-            trend={dashboardMetrics.totalPending > 0 ? 'negative' : 'neutral'}
-            className="text-lg sm:text-xl font-extrabold mt-1 block"
-          />
-        </div>
-
-        <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200/80 shadow-2xs">
-          <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Paid Flats</span>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-lg sm:text-xl font-extrabold text-emerald-700">{dashboardMetrics.paidCount}</span>
-            <span className="text-[10px] text-emerald-600">units</span>
-          </div>
-        </div>
-
-        <div className="p-3 bg-rose-50/60 rounded-xl border border-rose-200/80 shadow-2xs">
-          <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Pending / Not Paid</span>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-lg sm:text-xl font-extrabold text-rose-700">
-              {dashboardMetrics.notPaidCount + dashboardMetrics.partialCount}
-            </span>
-            <span className="text-[10px] text-rose-600">({dashboardMetrics.partialCount} partial)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Collections Card (Seat Map Matrix & Table Ledger) */}
-      <Card
-        title="Event Collection Management"
-        subtitle={
-          viewMode === 'seat-map'
-            ? 'Interactive seat-map drilldown: Select Tower & Floor to inspect unit payment statuses.'
-            : 'Detailed ledger view of unit contribution obligations and transactions.'
-        }
-        headerAction={
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* View Mode Switcher */}
-            <div className="inline-flex p-0.5 bg-slate-100 rounded-lg border border-slate-200">
+            <div className="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200/80">
               <button
                 type="button"
                 onClick={() => setViewMode('seat-map')}
-                className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                   viewMode === 'seat-map'
-                    ? 'bg-white text-indigo-600 shadow-2xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-indigo-600 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
-                Seat Map
+                <span className="hidden sm:inline">Seat Map</span>
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('table')}
-                className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                   viewMode === 'table'
-                    ? 'bg-white text-indigo-600 shadow-2xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-indigo-600 shadow-2xs'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 <List className="w-3.5 h-3.5" />
-                Table Ledger
+                <span className="hidden sm:inline">Ledger</span>
               </button>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportCsv}
-              leftIcon={<Download className="w-3.5 h-3.5" />}
-            >
-              Export Report
-            </Button>
             <PermissionGuard permission={Permissions.COLLECTION_CREATE}>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                type="button"
                 onClick={() => setGenerateConfirmOpen(true)}
-                leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+                title="Sync Society Units"
               >
-                Sync Society Units
-              </Button>
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
             </PermissionGuard>
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+              title="Export Report"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 fetchCollections();
                 fetchMatrix();
               }}
-              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+              className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+              title="Refresh Data"
             >
-              Refresh
-            </Button>
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
           </div>
-        }
-      >
+        </div>
+      )}
+
+      {/* 2. Unified Minimalist Metrics Card */}
+      {(() => {
+        const defaultAmt = Number(event?.default_collection_amount || 2500);
+        const totalUnits = matrixData?.summary?.totalUnits ?? matrixData?.summary?.totalFlats ?? 120;
+        const paidUnits = matrixData?.summary?.paidUnits ?? matrixData?.summary?.paidFlats ?? 0;
+        const pendingUnits = Math.max(0, totalUnits - paidUnits);
+        const totalCollected = matrixData?.summary?.totalCollected ?? (paidUnits * defaultAmt);
+        const totalTarget = matrixData?.summary?.totalTarget ?? (totalUnits * defaultAmt);
+        const totalPending = Math.max(0, totalTarget - totalCollected);
+        const progressPercentage = totalUnits > 0 ? Math.round((paidUnits / totalUnits) * 100) : (totalTarget > 0 ? Math.round((totalCollected / totalTarget) * 100) : 0);
+
+        return (
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
+            <div className="flex items-end justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Collected</span>
+                  <button
+                    type="button"
+                    onClick={handleRefreshAll}
+                    disabled={isRefreshing || isLoading || isLoadingMatrix}
+                    className="p-1 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-slate-100 active:scale-95 transition-all inline-flex items-center justify-center cursor-pointer"
+                    title="Refresh Total Collected & Flat Matrix"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-600' : ''}`} />
+                  </button>
+                </div>
+                <div className="flex items-baseline gap-1.5 mt-0.5">
+                  <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    {formatCurrency(totalCollected)}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400">
+                    of {formatCurrency(totalTarget)}
+                  </span>
+                </div>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 shrink-0">
+                {progressPercentage}% Collected
+              </span>
+            </div>
+
+            {/* Smooth Progress Bar */}
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div
+                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, progressPercentage))}%` }}
+              />
+            </div>
+
+            {/* 3 Minimalist Stats Pill Columns */}
+            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-center">
+              <div className="p-1.5 rounded-xl bg-slate-50/70">
+                <span className="text-[9px] font-bold text-slate-400 uppercase block">Pending Due</span>
+                <span className="text-xs sm:text-sm font-extrabold text-rose-600 block mt-0.5">
+                  {formatCurrency(totalPending)}
+                </span>
+              </div>
+              <div className="p-1.5 rounded-xl bg-slate-50/70">
+                <span className="text-[9px] font-bold text-slate-400 uppercase block">Paid Units</span>
+                <span className="text-xs sm:text-sm font-extrabold text-emerald-700 block mt-0.5">
+                  {paidUnits} <span className="text-[10px] text-slate-400 font-normal">/ {totalUnits}</span>
+                </span>
+              </div>
+              <div className="p-1.5 rounded-xl bg-slate-50/70">
+                <span className="text-[9px] font-bold text-slate-400 uppercase block">Pending Units</span>
+                <span className="text-xs sm:text-sm font-extrabold text-amber-600 block mt-0.5">
+                  {pendingUnits} <span className="text-[10px] text-slate-400 font-normal">left</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 3. Main Content Card */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
         {viewMode === 'seat-map' ? (
           /* ================= SEAT MAP DRILLDOWN ================= */
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {/* Resident's Unit Quick Banner if available */}
             {matrixData?.userUnit && (
-              <div className="p-4 rounded-xl border border-indigo-200 bg-linear-to-r from-indigo-50/90 via-purple-50/40 to-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
-                    <Home className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-sm text-slate-900">
-                        Your Unit: {matrixData.userUnit.towerName ? `Tower ${matrixData.userUnit.towerName}, ` : ''}Flat {matrixData.userUnit.flatNumber}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                          matrixData.userUnit.status === 'paid'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        {matrixData.userUnit.status === 'paid' ? 'Paid' : 'Payment Due'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-0.5">
-                      {matrixData.userUnit.status === 'paid'
-                        ? `Contribution of ₹${matrixData.userUnit.amountPaid || matrixData.userUnit.amount} is fully recorded.`
-                        : `Pending contribution: ₹${matrixData.userUnit.pendingAmount || matrixData.userUnit.amount}.`}
-                    </p>
-                  </div>
+              <div className="px-3.5 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60 flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <Home className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span className="font-bold text-slate-900">
+                    Your Unit: {matrixData.userUnit.towerName ? `${getTowerDisplayName({ name: matrixData.userUnit.towerName })}, ` : ''}Flat {matrixData.userUnit.flatNumber}
+                  </span>
+                  <span
+                    className={`px-2 py-0.2 rounded-full text-[10px] font-extrabold ${
+                      matrixData.userUnit.status === 'paid'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {matrixData.userUnit.status === 'paid' ? 'Paid' : 'Payment Due'}
+                  </span>
                 </div>
                 {matrixData.userUnit.status !== 'paid' && (
-                  <Button
-                    size="sm"
-                    variant="primary"
+                  <button
+                    type="button"
                     onClick={() => handleSeatMapFlatClick(matrixData.userUnit)}
-                    className="font-bold shadow-xs shrink-0"
+                    className="text-xs font-bold text-indigo-700 hover:text-indigo-900 underline shrink-0"
                   >
-                    Pay ₹{matrixData.userUnit.pendingAmount || matrixData.userUnit.amount} Now
-                  </Button>
+                    Pay ₹{matrixData.userUnit.pendingAmount || matrixData.userUnit.amount}
+                  </button>
                 )}
-              </div>
-            )}
-
-            {/* Overall Progress Strip */}
-            {matrixData?.summary && (
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div>
-                    <span className="text-slate-400 font-semibold block text-[10px] uppercase">Target</span>
-                    <span className="font-bold text-slate-800">{formatCurrency(matrixData.summary.totalTarget)}</span>
-                  </div>
-                  <div className="h-6 w-px bg-slate-200 hidden sm:block" />
-                  <div>
-                    <span className="text-slate-400 font-semibold block text-[10px] uppercase">Collected</span>
-                    <span className="font-bold text-emerald-600">{formatCurrency(matrixData.summary.totalCollected)}</span>
-                  </div>
-                  <div className="h-6 w-px bg-slate-200 hidden sm:block" />
-                  <div>
-                    <span className="text-slate-400 font-semibold block text-[10px] uppercase">Paid Units</span>
-                    <span className="font-bold text-slate-800">
-                      {matrixData.summary.paidUnits} / {matrixData.summary.totalUnits} ({matrixData.summary.progressPercentage}%)
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-full sm:w-48 bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, matrixData.summary.progressPercentage || 0)}%` }}
-                  />
-                </div>
               </div>
             )}
 
@@ -1124,9 +1209,23 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   <span className="text-xs font-bold text-slate-500 uppercase shrink-0 mr-1">Tower / Wing:</span>
                   {matrixData.towers.map((tower: any, tIdx: number) => {
                     const isSelected = selectedTowerIndex === tIdx;
+                    const towerLabel = getTowerDisplayName(tower, tIdx);
+                    const totalUnits =
+                      tower.totalUnits ??
+                      tower.floors?.reduce((acc: number, f: any) => acc + (f.totalUnits ?? f.flats?.length ?? 0), 0) ??
+                      0;
+                    const paidUnits =
+                      tower.paidUnits ??
+                      tower.floors?.reduce(
+                        (acc: number, f: any) =>
+                          acc + (f.paidUnits ?? f.flats?.filter((fl: any) => fl.status === 'paid' || fl.isPaid)?.length ?? 0),
+                        0
+                      ) ??
+                      0;
+
                     return (
                       <button
-                        key={tower.towerName}
+                        key={tower.id || tower.towerName || tower.name || tIdx}
                         type="button"
                         onClick={() => {
                           setSelectedTowerIndex(tIdx);
@@ -1143,14 +1242,16 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                         }`}
                       >
                         <Building2 className="w-3.5 h-3.5" />
-                        <span>Tower {tower.towerName}</span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                            isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {tower.paidUnits}/{tower.totalUnits}
-                        </span>
+                        <span>{towerLabel}</span>
+                        {totalUnits > 0 && (
+                          <span
+                            className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                              isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {paidUnits}/{totalUnits}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -1171,11 +1272,18 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                     >
                       All Floors
                     </button>
-                    {matrixData.towers[selectedTowerIndex].floors.map((floor: any) => {
+                    {matrixData.towers[selectedTowerIndex].floors.map((floor: any, fIdx: number) => {
                       const isFloorSelected = selectedFloorNumber === floor.floorNumber;
+                      const floorLabel = getFloorDisplayName(floor);
+                      const totalFloorUnits = floor.totalUnits ?? floor.flats?.length ?? 0;
+                      const paidFloorUnits =
+                        floor.paidUnits ??
+                        floor.flats?.filter((fl: any) => fl.status === 'paid' || fl.isPaid)?.length ??
+                        0;
+
                       return (
                         <button
-                          key={floor.floorNumber}
+                          key={floor.id || floor.floorNumber || fIdx}
                           type="button"
                           onClick={() => setSelectedFloorNumber(floor.floorNumber)}
                           className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1 border ${
@@ -1184,14 +1292,16 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                           }`}
                         >
-                          <span>Floor {floor.floorNumber}</span>
-                          <span
-                            className={`text-[9px] px-1 py-0.2 rounded ${
-                              isFloorSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-500'
-                            }`}
-                          >
-                            {floor.paidUnits}/{floor.totalUnits}
-                          </span>
+                          <span>{floorLabel}</span>
+                          {totalFloorUnits > 0 && (
+                            <span
+                              className={`text-[9px] px-1 py-0.2 rounded ${
+                                isFloorSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-500'
+                              }`}
+                            >
+                              {paidFloorUnits}/{totalFloorUnits}
+                            </span>
+                          )}
                         </button>
                       );
                     })}
@@ -1202,18 +1312,28 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 <div className="space-y-4 pt-2">
                   {matrixData.towers[selectedTowerIndex]?.floors
                     ?.filter((f: any) => selectedFloorNumber === null || f.floorNumber === selectedFloorNumber)
-                    .map((floor: any) => (
-                      <div key={floor.floorNumber} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-extrabold text-slate-800">
-                              Floor {floor.floorNumber}
-                            </span>
-                            <span className="text-[10px] text-slate-500 font-medium">
-                              ({floor.paidUnits} of {floor.totalUnits} paid)
-                            </span>
+                    .map((floor: any, fIdx: number) => {
+                      const floorLabel = getFloorDisplayName(floor);
+                      const totalFloorUnits = floor.totalUnits ?? floor.flats?.length ?? 0;
+                      const paidFloorUnits =
+                        floor.paidUnits ??
+                        floor.flats?.filter((fl: any) => fl.status === 'paid' || fl.isPaid)?.length ??
+                        0;
+
+                      return (
+                        <div key={floor.id || floor.floorNumber || fIdx} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-extrabold text-slate-800">
+                                {floorLabel}
+                              </span>
+                              {totalFloorUnits > 0 && (
+                                <span className="text-[10px] text-slate-500 font-medium">
+                                  ({paidFloorUnits} of {totalFloorUnits} paid)
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
                           {floor.flats.map((flat: any) => {
@@ -1257,28 +1377,45 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                                 <div className="mt-2 pt-1.5 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
                                   {isPaid ? (
                                     <span className="font-bold text-emerald-700">
-                                      ₹{flat.amountPaid || flat.amount} Paid
+                                      ₹{flat.amountPaid ?? flat.amount} Paid
                                     </span>
                                   ) : (
                                     <span className="font-bold text-amber-800">
-                                      ₹{flat.pendingAmount || flat.amount} Due
+                                      ₹{flat.pendingAmount ?? flat.amount} Due
                                     </span>
                                   )}
-                                  {!isPaid && (
-                                    <button
-                                      type="button"
-                                      className="text-[10px] font-extrabold text-indigo-600 hover:text-indigo-800 underline"
-                                    >
-                                      Pay
-                                    </button>
-                                  )}
+                                  <div className="flex items-center gap-1.5">
+                                    {can(Permissions.COLLECTION_UPDATE) && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSeatMapFlatClick(flat);
+                                          setIsEditingExpectedFee(true);
+                                        }}
+                                        className="text-[10px] font-bold text-slate-500 hover:text-indigo-600 p-0.5 rounded hover:bg-slate-100 transition-colors"
+                                        title="Change Expected Fee for this Flat"
+                                      >
+                                        <Edit2 className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                    {!isPaid && (
+                                      <button
+                                        type="button"
+                                        className="text-[10px] font-extrabold text-indigo-600 hover:text-indigo-800 underline"
+                                      >
+                                        Pay
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             );
                           })}
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : isLoadingMatrix ? (
@@ -1377,7 +1514,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
             />
           </div>
         )}
-      </Card>
+      </div>
 
       {/* 1. Mark as Paid / Self-Pay Modal */}
       <Modal
@@ -1385,36 +1522,126 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         onClose={() => {
           setPayModalOpen(false);
           setSelectedFlatForPayment(null);
+          setIsEditingExpectedFee(false);
         }}
         title={
           selectedFlatForPayment
-            ? `Record Payment: Flat ${selectedFlatForPayment.flatNumber}`
-            : `Record Payment: ${payingCollection?.flat ? `Flat ${payingCollection.flat.flat_number}` : `Bungalow ${payingCollection?.bungalow?.bungalow_number}`}`
+            ? `${Number(selectedFlatForPayment.amountPaid || 0) > 0 ? 'Update Payment' : 'Record Payment'}: Flat ${selectedFlatForPayment.flatNumber}`
+            : `${Number(payingCollection?.amount_paid || 0) > 0 ? 'Update Payment' : 'Record Payment'}: ${payingCollection?.flat ? `Flat ${payingCollection.flat.flat_number}` : `Bungalow ${payingCollection?.bungalow?.bungalow_number}`}`
         }
         description="Record contribution receipt via UPI, Cash, or Cheque."
       >
-        <form onSubmit={selectedFlatForPayment ? handleSeatMapPaySubmit : handleRecordPayment} className="space-y-3.5">
-          {/* Member & Balance Context */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs grid grid-cols-3 gap-2 text-center">
-            <div>
-              <span className="text-slate-400 uppercase text-[10px] font-bold block">Expected Fee</span>
-              <span className="font-extrabold text-slate-800 text-sm">
-                {formatCurrency(selectedFlatForPayment?.amount || payingCollection?.expected_amount)}
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-400 uppercase text-[10px] font-bold block">Already Paid</span>
-              <span className="font-extrabold text-emerald-600 text-sm">
-                {formatCurrency(selectedFlatForPayment?.amountPaid || payingCollection?.amount_paid || 0)}
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-400 uppercase text-[10px] font-bold block">Balance Due</span>
-              <span className="font-extrabold text-rose-600 text-sm">
-                {formatCurrency(selectedFlatForPayment?.pendingAmount || payingCollection?.pending_amount || selectedFlatForPayment?.amount)}
-              </span>
-            </div>
-          </div>
+        {(() => {
+          const currentExpectedFee = Number(selectedFlatForPayment?.amount ?? payingCollection?.expected_amount ?? 2500);
+          const currentPaidFee = Number(selectedFlatForPayment?.amountPaid ?? payingCollection?.amount_paid ?? 0);
+          const currentBalanceDue = Math.max(0, currentExpectedFee - currentPaidFee);
+
+          return (
+            <form onSubmit={selectedFlatForPayment ? handleSeatMapPaySubmit : handleRecordPayment} className="space-y-3.5">
+              {/* Member & Balance Context */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="relative">
+                    <div className="flex items-center justify-center gap-1">
+                      <span className="text-slate-500 uppercase text-[10px] font-bold">Expected Fee</span>
+                      {can(Permissions.COLLECTION_UPDATE) && !isEditingExpectedFee && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomExpectedFee(String(currentExpectedFee));
+                            setIsEditingExpectedFee(true);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-800 p-0.5 rounded hover:bg-indigo-100 transition-colors inline-flex"
+                          title="Change Expected Fee for this Flat"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <span className="font-extrabold text-slate-800 text-sm block mt-0.5">
+                      {formatCurrency(currentExpectedFee)}
+                    </span>
+                    {can(Permissions.COLLECTION_UPDATE) && !isEditingExpectedFee && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomExpectedFee(String(currentExpectedFee));
+                          setIsEditingExpectedFee(true);
+                        }}
+                        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline block mx-auto mt-0.5"
+                      >
+                        Change Fee
+                      </button>
+                    )}
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 uppercase text-[10px] font-bold block">Already Paid</span>
+                    <span className="font-extrabold text-emerald-600 text-sm block mt-0.5">
+                      {formatCurrency(currentPaidFee)}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-500 uppercase text-[10px] font-bold block">Balance Due</span>
+                    <span
+                      className={`font-extrabold text-sm block mt-0.5 ${
+                        currentBalanceDue > 0 ? 'text-rose-600' : 'text-emerald-600'
+                      }`}
+                    >
+                      {formatCurrency(currentBalanceDue)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Inline Fee Editor when editing */}
+                {isEditingExpectedFee && (
+                  <div className="mt-3 pt-2.5 border-t border-slate-200 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200">
+                      <div className="flex items-center justify-between gap-1 mb-1.5">
+                        <span className="text-[11px] font-bold text-indigo-900 flex items-center gap-1">
+                          <Edit2 className="w-3 h-3 text-indigo-600" />
+                          Change Expected Fee for this Flat:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingExpectedFee(false)}
+                          className="text-[10px] text-slate-500 hover:text-slate-700 font-semibold"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Enter expected fee"
+                            value={customExpectedFee}
+                            onChange={(e) => setCustomExpectedFee(e.target.value)}
+                            className="w-full h-8 pl-6 pr-2.5 text-xs font-bold bg-white border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+                            autoFocus
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="primary"
+                          onClick={handleSaveExpectedFee}
+                          isLoading={isSavingExpectedFee}
+                          className="h-8 px-3 text-xs shrink-0"
+                        >
+                          Save Fee
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Overrides fee for this flat. Remaining balance will update automatically.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
@@ -1504,10 +1731,12 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
               Cancel
             </Button>
             <Button type="submit" variant="primary" isLoading={isProcessingPayment}>
-              Record Collection Payment
+              {currentPaidFee > 0 ? 'Update Payment Amount' : 'Record Collection Payment'}
             </Button>
           </div>
         </form>
+          );
+        })()}
       </Modal>
 
       {/* 2. Adjust Collection Amount Modal */}

@@ -2,19 +2,13 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { foodService } from '../../api/foodService';
 import { eventsService } from '../../api/eventsService';
-import { FoodItemEntity, PaginationMeta, EventItem } from '../../types';
+import { FoodItemEntity, EventItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
 import { Permissions } from '../../constants/permissions';
-import Card from '../../components/ui/Card';
-import Table, { Column } from '../../components/ui/Table';
-import Pagination from '../../components/ui/Pagination';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import Input from '../../components/ui/Input';
-import Textarea from '../../components/ui/Textarea';
-import Select from '../../components/ui/Select';
-import CurrencyDisplay from '../../components/common/CurrencyDisplay';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { extractErrorMessage } from '../../utils/errorExtractor';
@@ -24,13 +18,11 @@ import {
   Edit2,
   Trash2,
   Utensils,
-  RefreshCw,
   Sparkles,
-  LayoutGrid,
-  List,
+  Image as ImageIcon,
+  Upload,
+  Layers,
   CheckCircle2,
-  Clock,
-  HeartHandshake,
 } from 'lucide-react';
 
 interface EventFoodPageProps {
@@ -38,41 +30,102 @@ interface EventFoodPageProps {
 }
 
 const NAVRATRI_FOOD_DAYS = [
-  { day: 1, title: 'Day 1: Prasad & Fruits', delicacy: 'Ghee Prasad & Fresh Fruits' },
-  { day: 2, title: 'Day 2: Sugar & Sweets', delicacy: 'Peda & Panchamrit' },
-  { day: 3, title: 'Day 3: Milk Delicacies', delicacy: 'Kheer & Mawa Barfi' },
-  { day: 4, title: 'Day 4: Malpua & Snacks', delicacy: 'Malpua & Farali Khichdi' },
-  { day: 5, title: 'Day 5: Banana Prasad', delicacy: 'Banana Halwa & Sabudana Vada' },
-  { day: 6, title: 'Day 6: Honey & Sweets', delicacy: 'Honey Dry Fruit Prasad' },
-  { day: 7, title: 'Day 7: Jaggery Treats', delicacy: 'Gud Papdi & Dry Fruits' },
-  { day: 8, title: 'Day 8: Coconut Feast', delicacy: 'Coconut Ladoo & Kheer' },
-  { day: 9, title: 'Day 9: Mahaprasad Feast', delicacy: 'Grand Community Buffet' },
+  { day: 1, title: 'Day 1', subtitle: 'Prasad & Fruits', delicacy: 'Pure Ghee Prasad & Fresh Fruits' },
+  { day: 2, title: 'Day 2', subtitle: 'Sugar & Sweets', delicacy: 'Peda & Panchamrit' },
+  { day: 3, title: 'Day 3', subtitle: 'Milk Delicacies', delicacy: 'Kheer & Mawa Barfi' },
+  { day: 4, title: 'Day 4', subtitle: 'Malpua & Snacks', delicacy: 'Malpua & Farali Khichdi' },
+  { day: 5, title: 'Day 5', subtitle: 'Banana Prasad', delicacy: 'Banana Halwa & Sabudana Vada' },
+  { day: 6, title: 'Day 6', subtitle: 'Honey & Sweets', delicacy: 'Honey Dry Fruit Prasad' },
+  { day: 7, title: 'Day 7', subtitle: 'Jaggery Treats', delicacy: 'Gud Papdi & Dry Fruits' },
+  { day: 8, title: 'Day 8', subtitle: 'Coconut Feast', delicacy: 'Coconut Ladoo & Kheer' },
+  { day: 9, title: 'Day 9', subtitle: 'Mahaprasad Feast', delicacy: 'Grand Community Buffet' },
 ];
+
+const FOOD_PRESET_IMAGES = [
+  {
+    name: 'Pure Ghee Prasad',
+    url: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Kheer & Sweets',
+    url: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Grand Indian Thali',
+    url: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Farali Khichdi & Vada',
+    url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Fresh Fruits Basket',
+    url: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Halwa & Sheera',
+    url: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Ladoo & Mithai',
+    url: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    name: 'Masala Chai / Milk',
+    url: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500&auto=format&fit=crop&q=80',
+  },
+];
+
+// Helper to normalize and parse metadata for food items
+const parseFoodItem = (item: FoodItemEntity): FoodItemEntity => {
+  let imageUrl = item.image_url || null;
+  let dayNumber = item.day_number ?? null;
+  let cleanNotes = item.notes || '';
+
+  if (item.notes && item.notes.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(item.notes);
+      if (parsed.image_url) imageUrl = parsed.image_url;
+      if (parsed.day_number !== undefined && parsed.day_number !== null) dayNumber = Number(parsed.day_number);
+      if (parsed.note !== undefined) cleanNotes = parsed.note;
+    } catch (_) {}
+  }
+
+  // Auto-infer day number if not set
+  if (dayNumber === null) {
+    const text = `${item.name} ${item.description || ''} ${item.notes || ''}`.toLowerCase();
+    const match = text.match(/day\s*[-:]?\s*([1-9])/i);
+    if (match && match[1]) {
+      dayNumber = parseInt(match[1], 10);
+    }
+  }
+
+  return {
+    ...item,
+    image_url: imageUrl,
+    day_number: dayNumber || 1,
+    notes: cleanNotes,
+  };
+};
 
 export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEventId }) => {
   const { id: routeEventId } = useParams<{ id: string }>();
   const eventId = decodeId(propEventId || routeEventId);
   const toast = useToast();
-  const { can, isResident } = usePermission();
+  const { isResident } = usePermission();
 
   const [event, setEvent] = useState<EventItem | null>(null);
   const [foodItems, setFoodItems] = useState<FoodItemEntity[]>([]);
-  const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 30, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedDayTab, setSelectedDayTab] = useState<number | null>(null);
-  const [displayMode, setDisplayMode] = useState<'cards' | 'table'>('cards');
+  const [selectedDayTab, setSelectedDayTab] = useState<number | null>(1);
 
-  // Modal State
+  // Modal State - Cleaned & Simplified
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItemEntity | null>(null);
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [quantityUnit, setQuantityUnit] = useState('kg');
-  const [estimatedCost, setEstimatedCost] = useState('');
-  const [vendorName, setVendorName] = useState('');
-  const [availabilityStatus, setAvailabilityStatus] = useState('available');
-  const [notes, setNotes] = useState('');
+  const [dayNumber, setDayNumber] = useState<number>(1);
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [imageTab, setImageTab] = useState<'preset' | 'upload' | 'url'>('preset');
   const [isSaving, setIsSaving] = useState(false);
 
   // Delete State
@@ -81,11 +134,14 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
   useEffect(() => {
     if (eventId) {
-      eventsService.getById(eventId).then((res) => {
-        if (res.success && res.data) {
-          setEvent(res.data);
-        }
-      }).catch(() => {});
+      eventsService
+        .getById(eventId)
+        .then((res) => {
+          if (res.success && res.data) {
+            setEvent(res.data);
+          }
+        })
+        .catch(() => {});
     }
   }, [eventId]);
 
@@ -101,7 +157,8 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     return Array.from({ length: diffDays }, (_, i) => ({
       day: i + 1,
       title: `Day ${i + 1}`,
-      delicacy: `Day ${i + 1} Menu`,
+      subtitle: `Day ${i + 1} Menu`,
+      delicacy: `Day ${i + 1} Food Schedule`,
     }));
   }, [event, isNavratri]);
 
@@ -110,13 +167,13 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     try {
       setIsLoading(true);
       const res = await foodService.listByEvent(eventId, {
-        page: meta.page,
-        limit: meta.limit,
+        page: 1,
+        limit: 100,
       });
 
       if (res.success && res.data) {
-        setFoodItems(res.data);
-        if (res.meta) setMeta(res.meta);
+        const parsed = res.data.map(parseFoodItem);
+        setFoodItems(parsed);
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to fetch food items'));
@@ -127,32 +184,47 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
   useEffect(() => {
     fetchFoodItems();
-  }, [eventId, meta.page, meta.limit]);
+  }, [eventId]);
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = (targetDay?: number) => {
+    const dayToUse = targetDay || (selectedDayTab !== null ? selectedDayTab : 1);
     setEditingItem(null);
     setName('');
-    setDescription(selectedDayTab ? `Day ${selectedDayTab} Prasad / Menu` : '');
-    setQuantity('');
-    setQuantityUnit('plates');
-    setEstimatedCost('');
-    setVendorName('');
-    setAvailabilityStatus('available');
-    setNotes(isResident ? 'Suggested by Resident' : '');
+    setDayNumber(dayToUse);
+    setImageUrl(FOOD_PRESET_IMAGES[0]?.url || '');
+    setImageTab('preset');
     setModalOpen(true);
   };
 
   const handleOpenEditModal = (item: FoodItemEntity) => {
     setEditingItem(item);
     setName(item.name);
-    setDescription(item.description || '');
-    setQuantity(item.quantity ? String(item.quantity) : '');
-    setQuantityUnit(item.quantity_unit || 'plates');
-    setEstimatedCost(item.estimated_cost ? String(item.estimated_cost) : '');
-    setVendorName(item.vendor_name || '');
-    setAvailabilityStatus(item.availability_status || 'available');
-    setNotes(item.notes || '');
+    setDayNumber(item.day_number || 1);
+    setImageUrl(item.image_url || '');
+    setImageTab(item.image_url ? (FOOD_PRESET_IMAGES.some(p => p.url === item.image_url) ? 'preset' : 'url') : 'preset');
     setModalOpen(true);
+  };
+
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.warning('Please select a valid image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.warning('Image size must be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageUrl(reader.result as string);
+      toast.success('Image loaded successfully');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSaveFood = async (e: React.FormEvent) => {
@@ -164,15 +236,10 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
     try {
       setIsSaving(true);
-      const payload = {
-        name,
-        description: description || null,
-        quantity: quantity ? Number(quantity) : null,
-        quantity_unit: quantityUnit || null,
-        estimated_cost: estimatedCost ? Number(estimatedCost) : null,
-        vendor_name: vendorName || null,
-        availability_status: availabilityStatus || null,
-        notes: notes || (isResident ? 'Suggested by Resident' : null),
+      const payload: Partial<FoodItemEntity> = {
+        name: name.trim(),
+        image_url: imageUrl || null,
+        day_number: dayNumber || 1,
       };
 
       let res;
@@ -185,10 +252,10 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       if (res.success) {
         toast.success(
           editingItem
-            ? 'Food item updated.'
+            ? 'Food item updated successfully.'
             : isResident
-            ? 'Dish suggestion submitted successfully!'
-            : 'Food item added to menu.'
+            ? 'Dish suggestion submitted for review!'
+            : `Food item added for Day ${dayNumber}.`
         );
         setModalOpen(false);
         fetchFoodItems();
@@ -208,7 +275,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       setIsDeleting(true);
       const res = await foodService.delete(deleteTarget.id);
       if (res.success) {
-        toast.success('Food item deleted.');
+        toast.success('Food item removed from menu.');
         setDeleteTarget(null);
         fetchFoodItems();
       } else {
@@ -221,10 +288,13 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     }
   };
 
-  // Filtered items based on selected day pill
+  // Filtered items based on selected day tab
   const filteredFoodItems = useMemo(() => {
     if (selectedDayTab === null) return foodItems;
     return foodItems.filter((item) => {
+      if (item.day_number !== null && item.day_number !== undefined) {
+        return item.day_number === selectedDayTab;
+      }
       const nameL = item.name.toLowerCase();
       const descL = (item.description || '').toLowerCase();
       const target = `day ${selectedDayTab}`;
@@ -233,126 +303,59 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     });
   }, [foodItems, selectedDayTab]);
 
-  const columns: Column<FoodItemEntity>[] = useMemo(() => {
-    const baseCols: Column<FoodItemEntity>[] = [
-      {
-        key: 'name',
-        header: 'Item Name & Description',
-        render: (row) => (
-          <div>
-            <div className="flex items-center gap-1.5">
-              <Utensils className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-              <span className="font-bold text-slate-900 text-xs">{row.name}</span>
-            </div>
-            <span className="text-[11px] text-slate-500 block mt-0.5">{row.description || '—'}</span>
-          </div>
-        ),
-      },
-      {
-        key: 'quantity',
-        header: 'Planned Quantity',
-        render: (row) => (
-          <span className="text-xs font-semibold text-slate-700">
-            {row.quantity ? `${row.quantity} ${row.quantity_unit || ''}` : '—'}
-          </span>
-        ),
-      },
-    ];
-
-    if (!isResident) {
-      baseCols.push({
-        key: 'estimated_cost',
-        header: 'Estimated Cost',
-        align: 'right',
-        render: (row) => <CurrencyDisplay amount={row.estimated_cost} />,
-      });
-    }
-
-    baseCols.push({
-      key: 'vendor_name',
-      header: 'Caterer / Kitchen',
-      render: (row) => <span className="text-xs text-slate-600 font-medium">{row.vendor_name || 'Society In-House'}</span>,
-    });
-
-    if (!isResident) {
-      baseCols.push({
-        key: 'actions',
-        header: 'Actions',
-        align: 'right',
-        render: (row) => (
-          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-            <PermissionGuard permission={Permissions.FOOD_MANAGE}>
-              <button
-                type="button"
-                onClick={() => handleOpenEditModal(row)}
-                className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
-                title="Edit Item"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(row)}
-                className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-colors"
-                title="Delete Item"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </PermissionGuard>
-          </div>
-        ),
-      });
-    }
-
-    return baseCols;
-  }, [isResident]);
-
   return (
-    <div className="space-y-4">
-      {/* Dynamic Festival / Celebration Menu Tabs */}
+    <div className="space-y-3">
+      {/* 1. Horizontal Day Carousel / Filter Tabs */}
       {daysList.length > 0 && (
-        <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <Utensils className="w-4 h-4 text-indigo-600" />
-              {isNavratri ? '9-Day Festive Menu & Prasad Schedule' : `${daysList.length}-Day Food Schedule`}
-            </span>
-            <span className="text-[11px] text-slate-500 font-medium">Filter by celebration day</span>
-          </div>
-
+        <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
             <button
               type="button"
               onClick={() => setSelectedDayTab(null)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border flex items-center gap-1.5 cursor-pointer ${
                 selectedDayTab === null
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs ring-2 ring-slate-900/10'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              All Menu Items
+              <Layers className="w-3.5 h-3.5" />
+              <span>All Days ({foodItems.length})</span>
             </button>
+
             {daysList.map((d) => {
               const isSelected = selectedDayTab === d.day;
+              const countForDay = foodItems.filter(
+                (item) => item.day_number === d.day || (!item.day_number && (item.name + ' ' + (item.description || '')).toLowerCase().includes(`day ${d.day}`))
+              ).length;
+
               return (
                 <button
                   key={d.day}
                   type="button"
                   onClick={() => setSelectedDayTab(d.day)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 border cursor-pointer ${
                     isSelected
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-600/20'
+                      : 'bg-white text-slate-700 border-slate-200/90 hover:bg-slate-50'
                   }`}
                 >
-                  <span>Day {d.day}</span>
-                  {d.delicacy && (
+                  <span className="font-extrabold">{d.title}</span>
+                  {d.subtitle && (
                     <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-500'
+                      className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-lg ${
+                        isSelected ? 'bg-indigo-700/80 text-white' : 'bg-slate-100 text-slate-600'
                       }`}
                     >
-                      {d.delicacy.split('&')[0].trim()}
+                      {d.subtitle}
+                    </span>
+                  )}
+                  {countForDay > 0 && (
+                    <span
+                      className={`text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center ${
+                        isSelected ? 'bg-white text-indigo-700 font-black' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      }`}
+                    >
+                      {countForDay}
                     </span>
                   )}
                 </button>
@@ -362,264 +365,285 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
         </div>
       )}
 
-      {/* Main Catering Card */}
-      <Card
-        title="Event Catering, Prasad & Food Menu"
-        subtitle="Explore the 9-day Prasad schedule, live food courses, vendor arrangements, and dish suggestions."
-        headerAction={
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* View Switcher */}
-            <div className="inline-flex p-0.5 bg-slate-100 rounded-lg border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setDisplayMode('cards')}
-                className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                  displayMode === 'cards'
-                    ? 'bg-white text-indigo-600 shadow-2xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                Cards
-              </button>
-              <button
-                type="button"
-                onClick={() => setDisplayMode('table')}
-                className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                  displayMode === 'table'
-                    ? 'bg-white text-indigo-600 shadow-2xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                Table
-              </button>
+      {/* 2. Day Header Strip & Minimalist Food Cards Grid */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            {selectedDayTab !== null ? `Day ${selectedDayTab} Menu` : 'All Days Menu'} ({filteredFoodItems.length} {filteredFoodItems.length === 1 ? 'dish' : 'dishes'})
+          </span>
+          <button
+            type="button"
+            onClick={() => handleOpenCreateModal(selectedDayTab || 1)}
+            className="text-xs font-bold text-indigo-600 hover:text-white bg-indigo-50 hover:bg-indigo-600 border border-indigo-200/80 hover:border-indigo-600 px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{isResident ? 'Suggest Dish' : `Add Dish for ${selectedDayTab !== null ? `Day ${selectedDayTab}` : 'Day 1'}`}</span>
+          </button>
+        </div>
+
+        {filteredFoodItems.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-2xs">
+              <Utensils className="w-6 h-6" />
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchFoodItems}
-              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-            >
-              Refresh
-            </Button>
-
+            <div>
+              <h4 className="text-sm font-bold text-slate-800">
+                {selectedDayTab
+                  ? `No dishes configured for Day ${selectedDayTab} yet`
+                  : 'No food items added for this event'}
+              </h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                {selectedDayTab
+                  ? `Add Prasad or feast items specifically for Day ${selectedDayTab}.`
+                  : 'Get started by adding items to the festive food schedule.'}
+              </p>
+            </div>
             <Button
               variant="primary"
               size="sm"
-              onClick={handleOpenCreateModal}
-              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => handleOpenCreateModal(selectedDayTab || 1)}
+              leftIcon={<Plus className="w-4 h-4" />}
+              className="rounded-xl shadow-xs mx-auto"
             >
-              {isResident ? '+ Suggest Dish' : 'Add Food Item'}
+              {isResident ? 'Suggest a Dish' : `Add Dish for ${selectedDayTab ? `Day ${selectedDayTab}` : 'Day 1'}`}
             </Button>
           </div>
-        }
-      >
-        {displayMode === 'cards' ? (
-          <div className="space-y-4">
-            {filteredFoodItems.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-400">
-                {selectedDayTab
-                  ? `No menu items or Prasad recorded yet for Day ${selectedDayTab}.`
-                  : 'No food items configured for this event.'}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                {filteredFoodItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between hover:shadow-xs transition-shadow"
-                  >
-                    {/* Header Strip */}
-                    <div className="p-3.5 bg-linear-to-r from-amber-50/50 via-white to-orange-50/30 border-b border-slate-100 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                          <Utensils className="w-4 h-4" />
-                        </div>
-                        <span className="font-extrabold text-sm text-slate-900 line-clamp-1">
-                          {item.name}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                        {item.availability_status || 'Available'}
-                      </span>
-                    </div>
-
-                    {/* Body */}
-                    <div className="p-3.5 space-y-2.5">
-                      {item.description && (
-                        <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                          {item.description}
-                        </p>
-                      )}
-
-                      <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
-                        <div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase block">Planned Quantity</span>
-                          <span className="font-semibold text-slate-800">
-                            {item.quantity ? `${item.quantity} ${item.quantity_unit || 'units'}` : 'Open Buffet'}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase block">Caterer / Chef</span>
-                          <span className="font-semibold text-slate-800 line-clamp-1">
-                            {item.vendor_name || 'In-House Volunteers'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {!isResident && item.estimated_cost && (
-                        <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
-                          <span className="text-slate-500 font-medium">Estimated Budget:</span>
-                          <CurrencyDisplay amount={item.estimated_cost} className="font-extrabold text-slate-900" />
-                        </div>
-                      )}
-
-                      {item.notes && (
-                        <p className="text-[11px] text-slate-400 italic">Note: {item.notes}</p>
-                      )}
-                    </div>
-
-                    {/* Admin Actions */}
-                    {!isResident && (
-                      <div className="px-3.5 py-2 bg-slate-50/60 border-t border-slate-100 flex items-center justify-end gap-2 text-xs">
-                        <PermissionGuard permission={Permissions.FOOD_MANAGE}>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleOpenEditModal(item)}
-                            leftIcon={<Edit2 className="w-3.5 h-3.5" />}
-                            className="h-7 text-xs text-slate-600 hover:text-indigo-600"
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setDeleteTarget(item)}
-                            leftIcon={<Trash2 className="w-3.5 h-3.5" />}
-                            className="h-7 text-xs text-rose-600 hover:bg-rose-50"
-                          >
-                            Delete
-                          </Button>
-                        </PermissionGuard>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         ) : (
-          <div>
-            <Table
-              columns={columns}
-              data={filteredFoodItems}
-              isLoading={isLoading}
-              emptyText="No food items or menu entries added for this event."
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {filteredFoodItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs p-3 flex items-center gap-3.5 transition-all duration-200 group"
+              >
+                {/* Left: Food Image Thumbnail */}
+                <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200/60 shadow-2xs">
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-linear-to-br from-amber-50 via-orange-50 to-rose-50 text-slate-400">
+                      <Utensils className="w-6 h-6 text-amber-500/70" />
+                    </div>
+                  )}
 
-            <Pagination
-              meta={meta}
-              onPageChange={(page) => setMeta((prev) => ({ ...prev, page }))}
-              onLimitChange={(limit) => setMeta((prev) => ({ ...prev, limit, page: 1 }))}
-            />
+                  {/* Day Badge Overlay */}
+                  <div className="absolute bottom-1 left-1 pointer-events-none">
+                    <span className="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-md bg-black/65 backdrop-blur-xs text-white shadow-xs">
+                      Day {item.day_number || 1}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Middle: Dish Name & Meta */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-extrabold text-[14.5px] sm:text-[15px] text-slate-900 tracking-tight leading-snug line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                    {item.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Festive Delicacy • Day {item.day_number || 1}
+                  </p>
+                </div>
+
+                {/* Right: Actions */}
+                {!isResident && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <PermissionGuard permission={Permissions.FOOD_MANAGE}>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(item)}
+                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer"
+                        title="Edit Dish"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(item)}
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                        title="Delete Dish"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </PermissionGuard>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
-      </Card>
+      </div>
 
-      {/* Add / Edit Food Modal */}
+      {/* 3. Add / Edit Food Item Modal - Super Simplified: ONLY Dish Name & Image */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingItem ? 'Edit Food Item' : isResident ? 'Suggest a Dish / Prasad Item' : 'Add Food Item to Menu'}
-        description={
-          isResident
-            ? 'Suggest a delicacy, Prasad item, or fasting dish for the organizing committee to review.'
-            : 'Provide food item details, quantities, and vendor estimates.'
-        }
-        size="lg"
+        title={editingItem ? 'Edit Food Item' : isResident ? 'Suggest Food Item' : `Add Food Item (Day ${dayNumber})`}
+        description={`Enter dish name and pick a food photo for Day ${dayNumber}.`}
+        size="md"
       >
         <form onSubmit={handleSaveFood} className="space-y-4">
+          {/* Dish Name */}
           <Input
             label="Dish / Item Name"
-            placeholder="e.g. Sabudana Khichdi, Kheer Prasad, Gulab Jamun"
+            placeholder="e.g. Pure Ghee Sheera Prasad, Sabudana Khichdi, Gujarati Thali"
             value={name}
             onChange={(e) => setName(e.target.value)}
             requiredIndicator
           />
 
-          <Textarea
-            label="Description & Dietary Info"
-            placeholder="e.g. Day 1 Prasad / Pure Ghee / Fasting friendly / Jain option available..."
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          {/* Food Image Selection (Presets / Upload / URL) */}
+          <div className="space-y-2 p-3 bg-slate-50/80 rounded-2xl border border-slate-200/90">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
+                Dish Image
+              </label>
+              <div className="inline-flex p-0.5 bg-slate-200/70 rounded-lg text-[11px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setImageTab('preset')}
+                  className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                    imageTab === 'preset' ? 'bg-white text-indigo-600 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Presets
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageTab('upload')}
+                  className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                    imageTab === 'upload' ? 'bg-white text-indigo-600 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Upload
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageTab('url')}
+                  className={`px-2.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                    imageTab === 'url' ? 'bg-white text-indigo-600 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  URL
+                </button>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Planned Quantity"
-              type="number"
-              placeholder="e.g. 500"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-            />
-            <Input
-              label="Unit of Measure"
-              placeholder="e.g. plates, kg, packets, boxes"
-              value={quantityUnit}
-              onChange={(e) => setQuantityUnit(e.target.value)}
-            />
+            {/* Presets Gallery */}
+            {imageTab === 'preset' && (
+              <div className="grid grid-cols-4 gap-2 pt-1">
+                {FOOD_PRESET_IMAGES.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => setImageUrl(preset.url)}
+                    className={`relative rounded-xl overflow-hidden border-2 text-left group transition-all cursor-pointer ${
+                      imageUrl === preset.url
+                        ? 'border-indigo-600 ring-2 ring-indigo-600/30'
+                        : 'border-slate-200 hover:border-slate-300 opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={preset.url} alt={preset.name} className="w-full h-14 object-cover" />
+                    <div className="p-1 bg-white/95 text-[10px] font-bold text-slate-800 truncate text-center">
+                      {preset.name}
+                    </div>
+                    {imageUrl === preset.url && (
+                      <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-xs">
+                        <CheckCircle2 className="w-3 h-3" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* File Upload */}
+            {imageTab === 'upload' && (
+              <div className="space-y-2 pt-1">
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-white hover:bg-slate-50 transition-colors">
+                  <div className="flex flex-col items-center justify-center pt-2 pb-3">
+                    <Upload className="w-5 h-5 text-slate-400 mb-1" />
+                    <p className="text-xs text-slate-600 font-semibold">
+                      Click to upload image file
+                    </p>
+                    <p className="text-[10px] text-slate-400">PNG, JPG or WebP (max. 5MB)</p>
+                  </div>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleImageFileUpload} />
+                </label>
+              </div>
+            )}
+
+            {/* Custom URL */}
+            {imageTab === 'url' && (
+              <div className="pt-1">
+                <Input
+                  placeholder="https://example.com/dish-photo.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Image Preview */}
+            {imageUrl && (
+              <div className="flex items-center gap-3 pt-2 border-t border-slate-200/60">
+                <img
+                  src={imageUrl}
+                  alt="Preview"
+                  className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-2xs"
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-slate-700 block">Selected Photo Preview</span>
+                  <span className="text-[10px] text-slate-400 truncate block">{imageUrl}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setImageUrl('')}
+                  className="text-xs text-rose-600 hover:underline font-semibold cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
           </div>
 
-          {!isResident && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Estimated Cost (₹)"
-                type="number"
-                placeholder="e.g. 15000"
-                value={estimatedCost}
-                onChange={(e) => setEstimatedCost(e.target.value)}
-              />
-              <Input
-                label="Catering Vendor / Chef Name"
-                placeholder="e.g. Royal Caterers"
-                value={vendorName}
-                onChange={(e) => setVendorName(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          {/* Modal Actions */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => setModalOpen(false)}
               disabled={isSaving}
+              className="rounded-xl"
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" isLoading={isSaving}>
-              {editingItem ? 'Save Changes' : isResident ? 'Submit Suggestion' : 'Add Item'}
+            <Button type="submit" variant="primary" isLoading={isSaving} className="rounded-xl shadow-xs">
+              {editingItem ? 'Save Changes' : isResident ? 'Submit Suggestion' : 'Add Food Item'}
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Delete Modal */}
+      {/* 4. Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteFood}
-        title="Delete Food Item"
+        title="Remove Food Item"
         message={
           <span>
-            Are you sure you want to remove <strong>{deleteTarget?.name}</strong> from the event menu?
+            Are you sure you want to remove <strong>{deleteTarget?.name}</strong> from the Day {deleteTarget?.day_number || 1} menu?
           </span>
         }
-        confirmLabel="Delete Item"
+        confirmLabel="Remove Item"
         variant="danger"
         isLoading={isDeleting}
       />
@@ -628,4 +652,3 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 };
 
 export default EventFoodPage;
-

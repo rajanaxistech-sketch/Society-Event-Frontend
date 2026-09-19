@@ -159,6 +159,18 @@ export const collectionsService = {
     return response.data;
   },
 
+  updateFlatAmount: async (
+    eventId: string,
+    flatId: string,
+    amount: number
+  ): Promise<ApiResponse<any>> => {
+    const response = await axiosClient.post<ApiResponse<any>>(
+      `/events/${eventId}/collections/${flatId}/amount`,
+      { amount }
+    );
+    return response.data;
+  },
+
   getDashboardByEvent: async (eventId: string): Promise<ApiResponse<EventCollectionsDashboardData>> => {
     const response = await axiosClient.get<ApiResponse<EventCollectionsDashboardData>>(
       `/events/${eventId}/collections/dashboard`
