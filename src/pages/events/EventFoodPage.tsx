@@ -25,6 +25,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+import { compressImageFile } from '../../utils/fileHelper';
+
 interface EventFoodPageProps {
   eventId?: string;
 }
@@ -127,6 +129,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   const [imageUrl, setImageUrl] = useState<string>('');
   const [imageTab, setImageTab] = useState<'preset' | 'upload' | 'url'>('preset');
   const [isSaving, setIsSaving] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   // Delete State
   const [deleteTarget, setDeleteTarget] = useState<FoodItemEntity | null>(null);
@@ -205,7 +208,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     setModalOpen(true);
   };
 
-  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -214,17 +217,21 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.warning('Image size must be less than 5MB');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.warning('Image size must be less than 10MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImageUrl(reader.result as string);
-      toast.success('Image loaded successfully');
-    };
-    reader.readAsDataURL(file);
+    try {
+      setIsCompressing(true);
+      const compressed = await compressImageFile(file, 600, 600, 0.75);
+      setImageUrl(compressed);
+      toast.success('Image optimized successfully');
+    } catch (err) {
+      toast.error('Failed to process image file');
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   const handleSaveFood = async (e: React.FormEvent) => {
@@ -567,15 +574,21 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
             {/* File Upload */}
             {imageTab === 'upload' && (
               <div className="space-y-2 pt-1">
-                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-white hover:bg-slate-50 transition-colors">
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-white hover:bg-slate-50 transition-colors relative">
                   <div className="flex flex-col items-center justify-center pt-2 pb-3">
                     <Upload className="w-5 h-5 text-slate-400 mb-1" />
                     <p className="text-xs text-slate-600 font-semibold">
-                      Click to upload image file
+                      {isCompressing ? 'Optimizing photo...' : 'Click to upload image file'}
                     </p>
-                    <p className="text-[10px] text-slate-400">PNG, JPG or WebP (max. 5MB)</p>
+                    <p className="text-[10px] text-slate-400">PNG, JPG or WebP (auto-optimized)</p>
                   </div>
-                  <input type="file" className="hidden" accept="image/*" onChange={handleImageFileUpload} />
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    disabled={isCompressing}
+                    onChange={handleImageFileUpload}
+                  />
                 </label>
               </div>
             )}
@@ -601,7 +614,9 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
                 />
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-slate-700 block">Selected Photo Preview</span>
-                  <span className="text-[10px] text-slate-400 truncate block">{imageUrl}</span>
+                  <span className="text-[10px] text-slate-400 truncate block">
+                    {imageUrl.startsWith('data:') ? 'Custom Uploaded Photo (Optimized)' : imageUrl}
+                  </span>
                 </div>
                 <button
                   type="button"
