@@ -273,8 +273,15 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
             <img
               src={getFileUrl(capturedPreview)}
               alt="UPI Payment Proof"
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = 'none';
+              }}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
+            <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-500">
+              <ImageIcon className="w-6 h-6" />
+            </div>
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
               <Eye className="w-4 h-4" />
             </div>

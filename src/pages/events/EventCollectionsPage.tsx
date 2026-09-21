@@ -35,6 +35,8 @@ import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { getEventTheme } from '../../utils/eventTheme';
 import { getFileUrl } from '../../utils/fileHelper';
 import { UpiProofCapture } from '../../components/common/UpiProofCapture';
+import sampleQrCodeImg from '../../assets/Sample-Qr-Code.png';
+import { SAMPLE_QR_CODE_DATA_URL } from '../../assets/sampleQrCodeData';
 import {
   Plus,
   Edit2,
@@ -195,6 +197,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   // Modals
   // 1. Mark as Paid (Record Payment) Modal State
   const [payModalOpen, setPayModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [payingCollection, setPayingCollection] = useState<EventCollectionItem | null>(null);
   const [payAmount, setPayAmount] = useState('');
   const [payMethod, setPayMethod] = useState('CASH');
@@ -397,7 +400,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : expAmt)));
     setCustomExpectedFee(String(expAmt));
     setIsEditingExpectedFee(false);
-    setPayMethod(flat.paymentMethod || 'UPI');
+    const initialMethod = 'CASH';
+    setPayMethod(initialMethod);
     setTransactionReference('');
     setPayNotes('');
     setProofFile(null);
@@ -405,6 +409,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setChequeNumber('');
     setBankName('');
     setChequeDate('');
+    setIsQrModalOpen(false);
     setPayModalOpen(true);
   };
 
@@ -626,12 +631,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : expAmt)));
     setCustomExpectedFee(String(expAmt));
     setIsEditingExpectedFee(false);
-    const existingMethod = col.payments?.[0]?.payment_method?.code;
-    if (existingMethod) {
-      setPayMethod(existingMethod);
-    } else {
-      setPayMethod((prev) => (availablePaymentMethods.some((m) => m.code === prev) ? prev : availablePaymentMethods[0]?.code || 'UPI'));
-    }
+    const initialMethod = 'CASH';
+    setPayMethod(initialMethod);
     setPayDate(col.payments?.[0]?.payment_date ? col.payments[0].payment_date.split('T')[0] : new Date().toISOString().split('T')[0]);
     setChequeNumber(col.payments?.[0]?.cheque_number || '');
     setBankName(col.payments?.[0]?.bank_name || '');
@@ -640,6 +641,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayNotes(col.payments?.[0]?.notes || '');
     setProofFile(null);
     setProofPreviewUrl(col.payments?.[0]?.proof_url || null);
+    setIsQrModalOpen(false);
     setPayModalOpen(true);
     fetchPaymentMethods();
   };
@@ -1766,7 +1768,12 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   <button
                     key={item.code}
                     type="button"
-                    onClick={() => setPayMethod(item.code)}
+                    onClick={() => {
+                      setPayMethod(item.code);
+                      if (item.code === 'UPI' || item.code === 'QR') {
+                        setIsQrModalOpen(true);
+                      }
+                    }}
                     className={`relative flex flex-col items-start p-2.5 rounded-xl border text-left transition-all ${
                       isSelected
                         ? item.activeClass
@@ -1796,6 +1803,31 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
               })}
             </div>
           </div>
+
+          {/* UPI QR Code Quick View Card */}
+          {(payMethod === 'UPI' || payMethod === 'QR') && (
+            <div className="flex items-center justify-between p-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-slate-50 shadow-xs animate-in fade-in duration-150">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <QrCode className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-indigo-950 block truncate">Society Payment QR Code</span>
+                  <span className="text-[10px] text-slate-500 block truncate">Scan using any UPI app (GPay, PhonePe, Paytm, BHIM)</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsQrModalOpen(true)}
+                className="border-indigo-300 text-indigo-700 bg-white hover:bg-indigo-50 h-8 text-xs font-semibold px-2.5 shadow-xs shrink-0 ml-2"
+              >
+                <QrCode className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                View QR Code
+              </Button>
+            </div>
+          )}
 
           {/* UPI Live Camera Snapshot / Screenshot Upload Section */}
           {(payMethod === 'UPI' || payMethod === 'QR') && (
@@ -1879,6 +1911,95 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         </form>
           );
         })()}
+      </Modal>
+
+      {/* 1b. Society UPI QR Code Modal Popup */}
+      <Modal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        size="sm"
+        title={
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <QrCode className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-slate-900 text-sm sm:text-base block leading-tight">UPI Payment QR</span>
+              <span className="text-[10px] text-slate-500 block font-normal">Scan with GPay, PhonePe, Paytm, or BHIM</span>
+            </div>
+          </div>
+        }
+      >
+        <div className="flex flex-col items-center text-center space-y-3 py-1">
+          {/* Target Flat & Society Details */}
+          <div className="w-full bg-slate-50 rounded-xl p-2.5 border border-slate-200/80 flex items-center justify-between text-xs">
+            <div className="text-left">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Unit / Resident</span>
+              <span className="font-bold text-slate-800">
+                {selectedFlatForPayment
+                  ? `Flat ${selectedFlatForPayment.flatNumber}`
+                  : payingCollection?.flat
+                  ? `Flat ${payingCollection.flat.flat_number}`
+                  : payingCollection?.bungalow
+                  ? `Bungalow ${payingCollection.bungalow.bungalow_number}`
+                  : 'Event Contribution'}
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Amount to Pay</span>
+              <span className="font-extrabold text-indigo-600 text-sm">
+                {formatCurrency(Number(payAmount) || 0)}
+              </span>
+            </div>
+          </div>
+
+          {/* QR Code Container Box */}
+          <div className="relative p-3.5 bg-white rounded-2xl border-2 border-indigo-100 shadow-md flex flex-col items-center w-full max-w-[280px]">
+            <div className="w-52 h-52 sm:w-56 sm:h-56 rounded-xl overflow-hidden bg-white p-1 flex items-center justify-center">
+              <img
+                src={SAMPLE_QR_CODE_DATA_URL || sampleQrCodeImg}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== SAMPLE_QR_CODE_DATA_URL) {
+                    target.src = SAMPLE_QR_CODE_DATA_URL;
+                  }
+                }}
+                alt="Society Payment UPI QR Code"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Red Warning Line under the QR code with * */}
+            <div className="w-full mt-2.5 pt-2 border-t border-rose-200">
+              <p className="text-xs font-bold text-rose-600 flex items-center justify-center gap-1">
+                <span className="text-rose-600 font-extrabold text-sm leading-none">*</span>
+                <span>This is the sample QR code</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Supported UPI apps */}
+          <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 font-medium">
+            <span>Accepted via:</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">GPay</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">PhonePe</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">Paytm</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">BHIM UPI</span>
+          </div>
+
+          {/* Action Button */}
+          <div className="w-full pt-1">
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => setIsQrModalOpen(false)}
+              className="w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 shadow-xs"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              Done / Capture Payment Receipt
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* 2. Adjust Collection Amount Modal */}
