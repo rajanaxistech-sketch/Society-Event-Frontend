@@ -39,7 +39,8 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   // Stop camera helper
   const stopCamera = useCallback(() => {
@@ -55,11 +56,15 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
     setCameraError(null);
     stopCamera();
 
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera access is not supported by your browser.');
+    // If WebRTC is not supported (e.g. non-HTTPS mobile environment), fallback directly to native camera input
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (cameraInputRef.current) {
+        cameraInputRef.current.click();
+        return;
       }
+    }
 
+    try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: mode,
@@ -78,15 +83,38 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
       }
     } catch (err: any) {
       console.error('Camera access error:', err);
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setCameraError('Camera permission was denied. Please allow camera access or upload an image.');
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        setCameraError('No camera found on this device. Please upload a receipt screenshot instead.');
+      // If WebRTC fails (permission denied or no camera device), try triggering native camera input as fallback
+      if (cameraInputRef.current && (err.name === 'NotFoundError' || !navigator.mediaDevices)) {
+        cameraInputRef.current.click();
       } else {
-        setCameraError(err.message || 'Unable to access camera.');
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setCameraError('Camera permission was denied. Please allow camera access or choose a screenshot from gallery.');
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setCameraError('No camera found on this device. Please upload a receipt screenshot instead.');
+        } else {
+          setCameraError(err.message || 'Unable to access live camera.');
+        }
       }
       setIsCameraActive(false);
     }
+  };
+
+  // Trigger native mobile camera directly
+  const handleOpenNativeCamera = () => {
+    setCameraError(null);
+    stopCamera();
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    } else {
+      startCamera();
+    }
+  };
+
+  // Trigger gallery / file picker
+  const handleOpenGallery = () => {
+    setCameraError(null);
+    stopCamera();
+    galleryInputRef.current?.click();
   };
 
   // Flip camera (rear / front)
@@ -129,7 +157,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
     );
   };
 
-  // File upload change handler
+  // File upload change handler (for both camera capture and gallery upload)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -138,14 +166,20 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
       onImageCaptured(file, previewUrl);
       stopCamera();
     }
+    // Reset file inputs so selecting the same file again triggers onChange
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   // Clear captured proof
   const handleRemoveProof = () => {
     setCapturedPreview(null);
     onImageCaptured(null, null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = '';
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
     }
     stopCamera();
   };
@@ -298,7 +332,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
             <div className="flex items-center gap-2 mt-1.5">
               <button
                 type="button"
-                onClick={() => startCamera()}
+                onClick={handleOpenNativeCamera}
                 className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover:underline"
               >
                 <RefreshCw className="w-3 h-3" />
@@ -307,7 +341,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
               <span className="text-slate-300">•</span>
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleOpenGallery}
                 className="text-[11px] font-bold text-slate-600 hover:text-slate-800 flex items-center gap-1 hover:underline"
               >
                 <Upload className="w-3 h-3" />
@@ -325,7 +359,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
             type="button"
             variant="primary"
             size="sm"
-            onClick={() => startCamera()}
+            onClick={handleOpenNativeCamera}
             className="w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white h-9 shadow-xs"
           >
             <Camera className="w-4 h-4 mr-1.5" />
@@ -336,7 +370,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleOpenGallery}
             className="w-full justify-center border-indigo-200 bg-white hover:bg-indigo-50/50 text-indigo-900 h-9"
           >
             <Upload className="w-4 h-4 mr-1.5 text-indigo-600" />
@@ -345,9 +379,18 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
         </div>
       )}
 
-      {/* Hidden File Input */}
+      {/* Hidden File Input for Gallery / File Browser (No capture attribute) */}
       <input
-        ref={fileInputRef}
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Hidden File Input for Mobile Device Camera (With capture="environment") */}
+      <input
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
