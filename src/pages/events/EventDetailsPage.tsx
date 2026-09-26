@@ -170,14 +170,11 @@ export const EventDetailsPage: React.FC = () => {
       <div className="bg-white px-3 py-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
         <button
           onClick={() => {
-            if (activeTab !== 'overview') {
-              setActiveTab('overview');
-            } else {
-              navigate(-1);
-            }
+            navigate(AppRoutes.DASHBOARD);
           }}
           className="w-9 h-9 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition-all active:scale-95"
-          aria-label="Back"
+          aria-label="Back to Dashboard"
+          title="Back to Dashboard"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>

@@ -44,7 +44,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               htmlFor={inputId}
               className={clsx(
                 'font-semibold text-[#1E293B] flex items-center gap-1',
-                isLarge ? 'text-sm sm:text-[15px] mb-0.5' : isSmall ? 'text-[11px]' : 'text-xs'
+                isLarge ? 'text-sm sm:text-base mb-0.5' : isSmall ? 'text-xs' : 'text-xs sm:text-sm'
               )}
             >
               {label}
@@ -52,7 +52,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </label>
             {showCount && props.maxLength && (
               <span className={clsx(
-                "text-[10px] font-medium tracking-tight",
+                "text-xs font-medium tracking-tight",
                 (currentCount || 0) >= props.maxLength ? "text-rose-600 font-semibold" : "text-slate-400"
               )}>
                 {currentCount || 0}/{props.maxLength} max
@@ -82,7 +82,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 ? 'px-3.5 py-2.5 text-sm sm:text-base rounded-xl h-11 sm:h-12 shadow-xs'
                 : isSmall
                 ? 'px-2.5 py-1 text-xs rounded-md h-7 shadow-2xs'
-                : 'px-3 py-1.5 text-xs rounded-lg h-8 sm:h-9 shadow-2xs',
+                : 'px-3 py-2 text-xs sm:text-sm rounded-lg h-9 sm:h-10 shadow-2xs',
               error ? 'border-rose-400 focus:ring-rose-400/20 focus:border-rose-500 bg-rose-50/20' : '',
               leftIcon && (isLarge ? 'pl-11' : 'pl-8'),
               rightIcon && (isLarge ? 'pr-11' : 'pr-8'),
