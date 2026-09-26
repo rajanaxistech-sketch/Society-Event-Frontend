@@ -66,6 +66,9 @@ export const collectionsService = {
       transaction_reference?: string | null;
       proof_url?: string | null;
       notes?: string | null;
+      passes?: number | null;
+      interest_status?: string | null;
+      interestStatus?: string | null;
     }
   ): Promise<ApiResponse<{ payment: PaymentItem; collection: EventCollectionItem }>> => {
     const response = await axiosClient.post<
@@ -174,6 +177,9 @@ export const collectionsService = {
       cheque_number?: string | null;
       bank_name?: string | null;
       cheque_date?: string | null;
+      passes?: number | null;
+      interest_status?: string | null;
+      interestStatus?: string | null;
     }
   ): Promise<ApiResponse<any>> => {
     const response = await axiosClient.post<ApiResponse<any>>(

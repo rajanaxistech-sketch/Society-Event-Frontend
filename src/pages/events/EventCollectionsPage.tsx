@@ -207,6 +207,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const [chequeDate, setChequeDate] = useState('');
   const [transactionReference, setTransactionReference] = useState('');
   const [payNotes, setPayNotes] = useState('');
+  const [passes, setPasses] = useState<number>(1);
+  const [interestStatus, setInterestStatus] = useState<string>('interested');
   const [proofFile, setProofFile] = useState<File | Blob | null>(null);
   const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
   const [enlargedProofUrl, setEnlargedProofUrl] = useState<string | null>(null);
@@ -289,7 +291,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           setBulkPayMethod('');
         }
       }
-    } catch {}
+    } catch { }
   };
 
   const fetchCollections = async () => {
@@ -313,12 +315,10 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     }
   };
 
-  // Seat-Map Matrix State
-  const [viewMode, setViewMode] = useState<'seat-map' | 'table'>('seat-map');
+  // Flat Collections State
   const [matrixData, setMatrixData] = useState<any>(null);
   const [isLoadingMatrix, setIsLoadingMatrix] = useState(false);
   const [selectedTowerIndex, setSelectedTowerIndex] = useState(0);
-  const [selectedFloorNumber, setSelectedFloorNumber] = useState<number | null>(1);
   const [selectedFlatForPayment, setSelectedFlatForPayment] = useState<any>(null);
 
   const fetchMatrix = async (showSpinner = false) => {
@@ -334,23 +334,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       const res = await collectionsService.getMatrix(eventId);
       if (res.success && res.data && res.data.towers?.length > 0) {
         setMatrixData(res.data);
-        const firstTower = res.data.towers[selectedTowerIndex] || res.data.towers[0];
-        if (firstTower?.floors?.length > 0 && (selectedFloorNumber === null || selectedFloorNumber === undefined)) {
-          setSelectedFloorNumber(firstTower.floors[0].floorNumber);
-        }
       } else {
         const mock = generateMockMatrix();
         setMatrixData((prev: any) => prev || mock);
-        if (selectedFloorNumber === null) {
-          setSelectedFloorNumber(1);
-        }
       }
     } catch (err: any) {
       const mock = generateMockMatrix();
       setMatrixData((prev: any) => prev || mock);
-      if (selectedFloorNumber === null) {
-        setSelectedFloorNumber(1);
-      }
     } finally {
       setIsLoadingMatrix(false);
     }
@@ -409,6 +399,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setChequeNumber('');
     setBankName('');
     setChequeDate('');
+    setPasses(flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : (flat.numberOfPasses ? Number(flat.numberOfPasses) : 1));
+    setInterestStatus(flat.interestStatus || flat.interest_status || 'interested');
     setIsQrModalOpen(false);
     setPayModalOpen(true);
   };
@@ -518,12 +510,18 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   flat.amountPaid = enteredAmount;
                   flat.pendingAmount = newPending;
                   flat.paymentMethod = payMethod;
+                  flat.passes = Number(passes);
+                  flat.interestStatus = interestStatus;
+                  flat.interest_status = interestStatus;
                 }
               }
             }
           }
           setMatrixData(updated);
         }
+        selectedFlatForPayment.passes = Number(passes);
+        selectedFlatForPayment.interestStatus = interestStatus;
+        selectedFlatForPayment.interest_status = interestStatus;
         toast.success(
           `🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount} (Balance: ₹${newPending})`
         );
@@ -541,9 +539,34 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         cheque_number: chequeNumber || undefined,
         bank_name: bankName || undefined,
         cheque_date: chequeDate || undefined,
+        passes: Number(passes),
+        interest_status: interestStatus,
+        interestStatus: interestStatus,
       });
 
       if (res.success) {
+        selectedFlatForPayment.passes = Number(passes);
+        selectedFlatForPayment.interestStatus = interestStatus;
+        selectedFlatForPayment.interest_status = interestStatus;
+        if (matrixData) {
+          const updated = JSON.parse(JSON.stringify(matrixData));
+          for (const tower of updated.towers || []) {
+            for (const floor of tower.floors || []) {
+              for (const flat of floor.flats || []) {
+                if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
+                  flat.status = newStatus;
+                  flat.amountPaid = enteredAmount;
+                  flat.pendingAmount = newPending;
+                  flat.paymentMethod = payMethod;
+                  flat.passes = Number(passes);
+                  flat.interestStatus = interestStatus;
+                  flat.interest_status = interestStatus;
+                }
+              }
+            }
+          }
+          setMatrixData(updated);
+        }
         toast.success(res.data?.message || `🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
         setPayModalOpen(false);
         setSelectedFlatForPayment(null);
@@ -564,12 +587,18 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 flat.amountPaid = enteredAmount;
                 flat.pendingAmount = newPending;
                 flat.paymentMethod = payMethod;
+                flat.passes = Number(passes);
+                flat.interestStatus = interestStatus;
+                flat.interest_status = interestStatus;
               }
             }
           }
         }
         setMatrixData(updated);
       }
+      selectedFlatForPayment.passes = Number(passes);
+      selectedFlatForPayment.interestStatus = interestStatus;
+      selectedFlatForPayment.interest_status = interestStatus;
       toast.success(`🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
       setPayModalOpen(false);
       setSelectedFlatForPayment(null);
@@ -639,6 +668,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setChequeDate(col.payments?.[0]?.cheque_date ? col.payments[0].cheque_date.split('T')[0] : '');
     setTransactionReference(col.payments?.[0]?.transaction_reference || '');
     setPayNotes(col.payments?.[0]?.notes || '');
+    setPasses(col.passes !== undefined && col.passes !== null ? Number(col.passes) : 1);
+    setInterestStatus((col as any).interest_status || (col as any).interestStatus || 'interested');
     setProofFile(null);
     setProofPreviewUrl(col.payments?.[0]?.proof_url || null);
     setIsQrModalOpen(false);
@@ -693,9 +724,15 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         transaction_reference: transactionReference || null,
         proof_url: uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || null),
         notes: payNotes || null,
+        passes: Number(passes),
+        interest_status: interestStatus,
+        interestStatus: interestStatus,
       });
 
       if (res.success) {
+        payingCollection.passes = Number(passes);
+        payingCollection.interest_status = interestStatus;
+        payingCollection.interestStatus = interestStatus;
         toast.success(`Payment updated to ${formatCurrency(amt)} successfully.`);
         setPayModalOpen(false);
         fetchCollections();
@@ -1063,96 +1100,79 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   ];
 
   const isStandalone = !propEventId;
-  const eventTheme = event ? getEventTheme(event.name, event.description) : null;
+
+  const currentTower = matrixData?.towers?.[selectedTowerIndex] || matrixData?.towers?.[0];
+
+  const flatList: any[] = useMemo(() => {
+    if (currentTower?.floors && currentTower.floors.length > 0) {
+      return currentTower.floors.flatMap((fl: any) => fl.flats || []);
+    }
+    if (matrixData?.towers && matrixData.towers.length > 0) {
+      return matrixData.towers.flatMap((t: any) => t.floors?.flatMap((fl: any) => fl.flats || []) || []);
+    }
+    if (collections && collections.length > 0) {
+      return collections.map((c) => {
+        const owner =
+          c.flat?.persons?.find((p) => p.is_primary_owner) ||
+          c.flat?.persons?.[0] ||
+          c.bungalow?.persons?.find((p) => p.is_primary_owner) ||
+          c.bungalow?.persons?.[0];
+
+        return {
+          id: c.flat_id || c.id,
+          collectionId: c.id,
+          flatNumber: c.flat?.flat_number || c.bungalow?.bungalow_number || 'Unit',
+          status: c.status,
+          amount: Number(c.expected_amount || 2500),
+          amountPaid: Number(c.amount_paid || 0),
+          pendingAmount: Number(c.pending_amount || 0),
+          residentName: owner?.full_name || 'Resident',
+          rawCollection: c,
+        };
+      });
+    }
+    return [];
+  }, [currentTower, matrixData, collections]);
+
+  const displayedFlats = useMemo(() => {
+    if (!searchQuery.trim()) return flatList;
+    const q = searchQuery.toLowerCase();
+    return flatList.filter(
+      (f: any) =>
+        f.flatNumber?.toString().toLowerCase().includes(q) ||
+        f.residentName?.toString().toLowerCase().includes(q)
+    );
+  }, [flatList, searchQuery]);
 
   return (
-    <div className="space-y-3">
-      {/* 1. Minimalist Route Page Header */}
+    <div className="w-full max-w-lg mx-auto space-y-3 px-1 sm:px-0">
+      {/* 1. Minimal Header (if standalone) */}
       {isStandalone && (
-        <div className="bg-white px-3.5 py-3 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center justify-between gap-2 py-1">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
               onClick={() => navigate('/flat-collections')}
-              className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shrink-0"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors shrink-0"
               title="Back to Flat Collections"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h1 className="text-sm sm:text-base font-extrabold text-slate-900 truncate">
-                  {event?.name || 'Flat Collections'}
-                </h1>
-                {event?.event_year && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/60">
-                    {event.event_year}
-                  </span>
-                )}
-                {event?.is_navratri && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 bg-amber-50 text-amber-700 rounded border border-amber-200/60 flex items-center gap-0.5">
-                    <Sparkles className="w-2.5 h-2.5" /> Navratri
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                {event?.name || 'Flat Collections'}
+              </h1>
+              <p className="text-[10px] text-slate-400 font-normal truncate">
                 {event?.society?.name || 'Society Event'}
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* View Mode Switcher */}
-            <div className="inline-flex p-0.5 bg-slate-100 rounded-xl border border-slate-200/80">
-              <button
-                type="button"
-                onClick={() => setViewMode('seat-map')}
-                className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                  viewMode === 'seat-map'
-                    ? 'bg-white text-indigo-600 shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Seat Map</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                  viewMode === 'table'
-                    ? 'bg-white text-indigo-600 shadow-2xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Ledger</span>
-              </button>
-            </div>
-
-            <PermissionGuard permission={Permissions.COLLECTION_CREATE}>
-              <button
-                type="button"
-                onClick={() => setGenerateConfirmOpen(true)}
-                className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
-                title="Sync Society Units"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
-            </PermissionGuard>
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
-              title="Export Report"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </button>
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={handleRefreshAll}
               disabled={isRefreshing || isLoading || isLoadingMatrix}
-              className="p-1.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 active:scale-95 transition-all"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 active:scale-95 transition-all"
               title="Refresh Data"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-600' : ''}`} />
@@ -1161,7 +1181,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         </div>
       )}
 
-      {/* 2. Unified Minimalist Metrics Card */}
+      {/* 2. Collection Summary Card */}
       {(() => {
         const defaultAmt = Number(event?.default_collection_amount || 2500);
         const totalUnits = matrixData?.summary?.totalUnits ?? matrixData?.summary?.totalFlats ?? 120;
@@ -1173,61 +1193,50 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         const progressPercentage = totalUnits > 0 ? Math.round((paidUnits / totalUnits) * 100) : (totalTarget > 0 ? Math.round((totalCollected / totalTarget) * 100) : 0);
 
         return (
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-2.5">
-            <div className="flex items-end justify-between gap-2">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-none space-y-2.5">
+            <div className="flex items-baseline justify-between gap-2">
               <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Collected</span>
-                  <button
-                    type="button"
-                    onClick={handleRefreshAll}
-                    disabled={isRefreshing || isLoading || isLoadingMatrix}
-                    className="p-1 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-slate-100 active:scale-95 transition-all inline-flex items-center justify-center cursor-pointer"
-                    title="Refresh Total Collected & Flat Matrix"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-600' : ''}`} />
-                  </button>
-                </div>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total Collected</span>
                 <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  <span className="text-xl font-bold text-slate-900 tracking-tight">
                     {formatCurrency(totalCollected)}
                   </span>
-                  <span className="text-xs font-semibold text-slate-400">
+                  <span className="text-xs text-slate-400 font-normal">
                     of {formatCurrency(totalTarget)}
                   </span>
                 </div>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 shrink-0">
-                {progressPercentage}% Collected
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                {progressPercentage}%
               </span>
             </div>
 
-            {/* Smooth Progress Bar */}
-            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+            {/* Thin Minimal Progress Bar */}
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(100, Math.max(0, progressPercentage))}%` }}
               />
             </div>
 
-            {/* 3 Minimalist Stats Pill Columns */}
+            {/* 3 Stats in clean minimal layout */}
             <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-center">
-              <div className="p-1.5 rounded-xl bg-slate-50/70">
-                <span className="text-[9px] font-bold text-slate-400 uppercase block">Pending Due</span>
-                <span className="text-xs sm:text-sm font-extrabold text-rose-600 block mt-0.5">
+              <div className="py-1">
+                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Pending Due</span>
+                <span className="text-xs font-bold text-amber-600 block mt-0.5">
                   {formatCurrency(totalPending)}
                 </span>
               </div>
-              <div className="p-1.5 rounded-xl bg-slate-50/70">
-                <span className="text-[9px] font-bold text-slate-400 uppercase block">Paid Units</span>
-                <span className="text-xs sm:text-sm font-extrabold text-emerald-700 block mt-0.5">
+              <div className="py-1">
+                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Paid Units</span>
+                <span className="text-xs font-bold text-emerald-700 block mt-0.5">
                   {paidUnits} <span className="text-[10px] text-slate-400 font-normal">/ {totalUnits}</span>
                 </span>
               </div>
-              <div className="p-1.5 rounded-xl bg-slate-50/70">
-                <span className="text-[9px] font-bold text-slate-400 uppercase block">Pending Units</span>
-                <span className="text-xs sm:text-sm font-extrabold text-amber-600 block mt-0.5">
-                  {pendingUnits} <span className="text-[10px] text-slate-400 font-normal">left</span>
+              <div className="py-1">
+                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Pending Units</span>
+                <span className="text-xs font-bold text-slate-600 block mt-0.5">
+                  {pendingUnits}
                 </span>
               </div>
             </div>
@@ -1235,354 +1244,149 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         );
       })()}
 
-      {/* 3. Main Content Card */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
-        {viewMode === 'seat-map' ? (
-          /* ================= SEAT MAP DRILLDOWN ================= */
-          <div className="space-y-3.5">
-            {/* Resident's Unit Quick Banner if available */}
-            {matrixData?.userUnit && (
-              <div className="px-3.5 py-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60 flex items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <Home className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span className="font-bold text-slate-900">
-                    Your Unit: {matrixData.userUnit.towerName ? `${getTowerDisplayName({ name: matrixData.userUnit.towerName })}, ` : ''}Flat {matrixData.userUnit.flatNumber}
-                  </span>
-                  <span
-                    className={`px-2 py-0.2 rounded-full text-[10px] font-extrabold ${
-                      matrixData.userUnit.status === 'paid'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {matrixData.userUnit.status === 'paid' ? 'Paid' : 'Payment Due'}
-                  </span>
-                </div>
-                {matrixData.userUnit.status !== 'paid' && (
-                  <button
-                    type="button"
-                    onClick={() => handleSeatMapFlatClick(matrixData.userUnit)}
-                    className="text-xs font-bold text-indigo-700 hover:text-indigo-900 underline shrink-0"
-                  >
-                    Pay ₹{matrixData.userUnit.pendingAmount || matrixData.userUnit.amount}
-                  </button>
-                )}
-              </div>
-            )}
+      {/* 3. Tower / Wing Selector (if multiple towers exist) */}
+      {matrixData?.towers && matrixData.towers.length > 1 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+          {matrixData.towers.map((tower: any, tIdx: number) => {
+            const isSelected = selectedTowerIndex === tIdx;
+            const towerLabel = getTowerDisplayName(tower, tIdx);
+            return (
+              <button
+                key={tower.id || tower.towerName || tower.name || tIdx}
+                type="button"
+                onClick={() => setSelectedTowerIndex(tIdx)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all shrink-0 ${isSelected
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white text-slate-600 border border-slate-200/70 hover:bg-slate-50'
+                  }`}
+              >
+                {towerLabel}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-            {/* Step 1: Tower / Wing Selector */}
-            {matrixData?.towers && matrixData.towers.length > 0 ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                  <span className="text-xs font-bold text-slate-500 uppercase shrink-0 mr-1">Tower / Wing:</span>
-                  {matrixData.towers.map((tower: any, tIdx: number) => {
-                    const isSelected = selectedTowerIndex === tIdx;
-                    const towerLabel = getTowerDisplayName(tower, tIdx);
-                    const totalUnits =
-                      tower.totalUnits ??
-                      tower.floors?.reduce((acc: number, f: any) => acc + (f.totalUnits ?? f.flats?.length ?? 0), 0) ??
-                      0;
-                    const paidUnits =
-                      tower.paidUnits ??
-                      tower.floors?.reduce(
-                        (acc: number, f: any) =>
-                          acc + (f.paidUnits ?? f.flats?.filter((fl: any) => fl.status === 'paid' || fl.isPaid)?.length ?? 0),
-                        0
-                      ) ??
-                      0;
+      {/* 4. Minimal Search Bar */}
+      <div className="relative">
+        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          type="text"
+          placeholder="Search flat number or resident..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full h-8 pl-8 pr-3 text-xs bg-white border border-slate-200/80 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-400"
+        />
+      </div>
 
-                    return (
-                      <button
-                        key={tower.id || tower.towerName || tower.name || tIdx}
-                        type="button"
-                        onClick={() => {
-                          setSelectedTowerIndex(tIdx);
-                          if (tower.floors?.length > 0) {
-                            setSelectedFloorNumber(tower.floors[0].floorNumber);
-                          } else {
-                            setSelectedFloorNumber(null);
-                          }
-                        }}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 border ${
-                          isSelected
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        <Building2 className="w-3.5 h-3.5" />
-                        <span>{towerLabel}</span>
-                        {totalUnits > 0 && (
-                          <span
-                            className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                              isSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'
-                            }`}
-                          >
-                            {paidUnits}/{totalUnits}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+      {/* 5. Flat Collection List View */}
+      {displayedFlats.length > 0 ? (
+        <div className="space-y-1.5">
+          {displayedFlats.map((flat: any) => {
+            const isPaid = flat.status === 'paid';
+            const expectedAmt = Number(flat.amount ?? 2500);
+            const paidAmt = Number(flat.amountPaid ?? (isPaid ? expectedAmt : 0));
+            const pendingAmt = Number(flat.pendingAmount ?? (isPaid ? 0 : expectedAmt));
 
-                {/* Step 2: Floor Selection Pills */}
-                {matrixData.towers[selectedTowerIndex]?.floors && (
-                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 bg-slate-50 p-2 rounded-xl border border-slate-200/60">
-                    <span className="text-[11px] font-bold text-slate-500 uppercase shrink-0 mr-1">Floor:</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedFloorNumber(null)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 ${
-                        selectedFloorNumber === null
-                          ? 'bg-slate-900 text-white shadow-2xs'
-                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            return (
+              <div
+                key={flat.id || flat.flatNumber}
+                onClick={() => handleSeatMapFlatClick(flat)}
+                className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${isPaid
+                  ? 'bg-[#F0FDF4] border-[#DCFCE7] hover:bg-[#E2FBE8]'
+                  : 'bg-[#FEFCE8] border-[#FEF08A] hover:bg-[#FEF9C3]'
+                  }`}
+              >
+                {/* Left Info */}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className={`w-2 h-2 rounded-full shrink-0 ${isPaid ? 'bg-emerald-500' : 'bg-amber-500'
                       }`}
-                    >
-                      All Floors
-                    </button>
-                    {matrixData.towers[selectedTowerIndex].floors.map((floor: any, fIdx: number) => {
-                      const isFloorSelected = selectedFloorNumber === floor.floorNumber;
-                      const floorLabel = getFloorDisplayName(floor);
-                      const totalFloorUnits = floor.totalUnits ?? floor.flats?.length ?? 0;
-                      const paidFloorUnits =
-                        floor.paidUnits ??
-                        floor.flats?.filter((fl: any) => fl.status === 'paid' || fl.isPaid)?.length ??
-                        0;
-
-                      return (
-                        <button
-                          key={floor.id || floor.floorNumber || fIdx}
-                          type="button"
-                          onClick={() => setSelectedFloorNumber(floor.floorNumber)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 flex items-center gap-1 border ${
-                            isFloorSelected
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-xs sm:text-sm text-slate-900">
+                        Flat {flat.flatNumber}
+                      </span>
+                      {flat.isUserFlat && (
+                        <span className="text-[9px] font-medium px-1.5 py-0.2 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/50">
+                          You
+                        </span>
+                      )}
+                      {flat.passes !== undefined && flat.passes !== null && (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-purple-50 text-purple-700 rounded border border-purple-200/50">
+                          {flat.passes} {flat.passes === 1 ? 'Pass' : 'Passes'}
+                        </span>
+                      )}
+                      {flat.interestStatus && flat.interestStatus !== 'interested' && (
+                        <span
+                          className={`text-[9px] font-semibold px-1.5 py-0.2 rounded border ${
+                            flat.interestStatus === 'not_interested'
+                              ? 'bg-slate-100 text-slate-600 border-slate-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200/50'
                           }`}
                         >
-                          <span>{floorLabel}</span>
-                          {totalFloorUnits > 0 && (
-                            <span
-                              className={`text-[9px] px-1 py-0.2 rounded ${
-                                isFloorSelected ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-500'
-                              }`}
-                            >
-                              {paidFloorUnits}/{totalFloorUnits}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
+                          {flat.interestStatus === 'not_interested' ? 'Not Interested' : 'To Confirm'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                      {flat.residentName || (flat.isOccupied ? 'Occupied' : 'Vacant')}
+                    </p>
                   </div>
-                )}
+                </div>
 
-                {/* Step 3: Interactive Flat Grid */}
-                <div className="space-y-4 pt-2">
-                  {matrixData.towers[selectedTowerIndex]?.floors
-                    ?.filter((f: any) => selectedFloorNumber === null || f.floorNumber === selectedFloorNumber)
-                    .map((floor: any, fIdx: number) => {
-                      const floorLabel = getFloorDisplayName(floor);
-                      const totalFloorUnits = floor.totalUnits ?? floor.flats?.length ?? 0;
-                      const paidFloorUnits =
-                        floor.paidUnits ??
-                        floor.flats?.filter((fl: any) => fl.status === 'paid' || fl.isPaid)?.length ??
-                        0;
+                {/* Right Info & Actions */}
+                <div className="flex items-center gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className="text-right">
+                    <span className="text-xs sm:text-sm font-semibold text-slate-900 block leading-tight">
+                      ₹{isPaid ? paidAmt.toLocaleString() : (pendingAmt > 0 ? pendingAmt.toLocaleString() : expectedAmt.toLocaleString())}
+                    </span>
+                    <span
+                      className={`text-[10px] font-medium leading-tight block mt-0.5 ${isPaid ? 'text-emerald-700' : 'text-amber-700'
+                        }`}
+                    >
+                      {isPaid ? 'Paid' : 'Due'}
+                    </span>
+                  </div>
 
-                      return (
-                        <div key={floor.id || floor.floorNumber || fIdx} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-extrabold text-slate-800">
-                                {floorLabel}
-                              </span>
-                              {totalFloorUnits > 0 && (
-                                <span className="text-[10px] text-slate-500 font-medium">
-                                  ({paidFloorUnits} of {totalFloorUnits} paid)
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                  {can(Permissions.COLLECTION_UPDATE) && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSeatMapFlatClick(flat);
+                        setIsEditingExpectedFee(true);
+                      }}
+                      className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
+                      title="Edit Expected Fee"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
-                          {floor.flats.map((flat: any) => {
-                            const isPaid = flat.status === 'paid';
-                            return (
-                              <div
-                                key={flat.id}
-                                onClick={() => handleSeatMapFlatClick(flat)}
-                                className={`p-3 rounded-xl border transition-all cursor-pointer relative flex flex-col justify-between min-h-[96px] ${
-                                  flat.isUserFlat
-                                    ? 'ring-2 ring-indigo-600 ring-offset-2 shadow-sm'
-                                    : ''
-                                } ${
-                                  isPaid
-                                    ? 'bg-emerald-50/70 border-emerald-300 hover:bg-emerald-100/80'
-                                    : 'bg-amber-50/60 border-amber-200 hover:bg-amber-100/80'
-                                }`}
-                              >
-                                {flat.isUserFlat && (
-                                  <span className="absolute -top-2 -right-1.5 bg-indigo-600 text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full shadow-2xs">
-                                    Your Flat
-                                  </span>
-                                )}
-
-                                <div>
-                                  <div className="flex items-center justify-between gap-1">
-                                    <span className="font-extrabold text-sm text-slate-900">
-                                      Flat {flat.flatNumber}
-                                    </span>
-                                    {isPaid ? (
-                                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                                    ) : (
-                                      <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-                                    )}
-                                  </div>
-                                  <span className="text-[11px] text-slate-600 font-medium line-clamp-1 mt-0.5">
-                                    {flat.residentName || (flat.isOccupied ? 'Occupied' : 'Vacant')}
-                                  </span>
-                                </div>
-
-                                <div className="mt-2 pt-1.5 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
-                                  {isPaid ? (
-                                    <span className="font-bold text-emerald-700">
-                                      ₹{flat.amountPaid ?? flat.amount} Paid
-                                    </span>
-                                  ) : (
-                                    <span className="font-bold text-amber-800">
-                                      ₹{flat.pendingAmount ?? flat.amount} Due
-                                    </span>
-                                  )}
-                                  <div className="flex items-center gap-1.5">
-                                    {can(Permissions.COLLECTION_UPDATE) && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSeatMapFlatClick(flat);
-                                          setIsEditingExpectedFee(true);
-                                        }}
-                                        className="text-[10px] font-bold text-slate-500 hover:text-indigo-600 p-0.5 rounded hover:bg-slate-100 transition-colors"
-                                        title="Change Expected Fee for this Flat"
-                                      >
-                                        <Edit2 className="w-3 h-3" />
-                                      </button>
-                                    )}
-                                    {!isPaid && (
-                                      <button
-                                        type="button"
-                                        className="text-[10px] font-extrabold text-indigo-600 hover:text-indigo-800 underline"
-                                      >
-                                        Pay
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {!isPaid && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSeatMapFlatClick(flat);
+                      }}
+                      className="px-2.5 py-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-lg transition-all shadow-xs"
+                    >
+                      Pay
+                    </button>
+                  )}
                 </div>
               </div>
-            ) : isLoadingMatrix ? (
-              <div className="py-12 text-center text-xs text-slate-400">Loading seat map matrix...</div>
-            ) : (
-              <div className="py-12 text-center text-xs text-slate-400">No tower units found for this event.</div>
-            )}
-          </div>
-        ) : (
-          /* ================= TABLE VIEW ================= */
-          <div>
-            {/* Search, Filters, and Bulk Operations Bar */}
-            <div className="space-y-2.5 mb-3.5">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-                {/* Search Input */}
-                <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 flex-1 max-w-md">
-                  <div className="relative flex-1">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      placeholder="Search by Flat No, Resident Name, or Mobile..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full h-8 pl-8 pr-3 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                  </div>
-                  <Button type="submit" variant="outline" size="sm" className="h-8 px-2.5">
-                    Search
-                  </Button>
-                </form>
-
-                {/* Status Filter */}
-                <div className="flex items-center gap-2">
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => {
-                      setStatusFilter(e.target.value);
-                      setMeta((prev) => ({ ...prev, page: 1 }));
-                    }}
-                    className="h-8 px-2.5 py-1 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  >
-                    <option value="">All Payment Statuses</option>
-                    <option value="pending">Not Paid</option>
-                    <option value="partially_paid">Partially Paid</option>
-                    <option value="paid">Paid</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Bulk Action Toolbar when items are selected */}
-              {selectedCollectionIds.length > 0 && (
-                <div className="p-2.5 bg-indigo-50/80 rounded-lg border border-indigo-200 flex items-center justify-between flex-wrap gap-2 text-xs animate-in fade-in">
-                  <span className="font-semibold text-indigo-900">
-                    {selectedCollectionIds.length} unit(s) selected
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <PermissionGuard permission={Permissions.COLLECTION_UPDATE}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setBulkAmountModalOpen(true)}
-                        className="h-7 text-xs bg-white"
-                      >
-                        Bulk Update Amount
-                      </Button>
-                    </PermissionGuard>
-                    <PermissionGuard permission={Permissions.PAYMENT_CREATE}>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={() => {
-                          fetchPaymentMethods();
-                          setBulkPayModalOpen(true);
-                        }}
-                        className="h-7 text-xs"
-                      >
-                        Bulk Mark as Paid
-                      </Button>
-                    </PermissionGuard>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Table
-              columns={columns}
-              data={collections}
-              isLoading={isLoading}
-              emptyText="No collection records registered for this event."
-            />
-
-            <Pagination
-              meta={meta}
-              onPageChange={(page) => setMeta((prev) => ({ ...prev, page }))}
-              onLimitChange={(limit) => setMeta((prev) => ({ ...prev, limit, page: 1 }))}
-            />
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      ) : isLoadingMatrix || isLoading ? (
+        <div className="py-12 text-center text-xs text-slate-400">Loading flat collections...</div>
+      ) : (
+        <div className="py-12 text-center text-xs text-slate-400">No flats found for this selection.</div>
+      )}
 
       {/* 1. Mark as Paid / Self-Pay Modal */}
       <Modal
@@ -1606,12 +1410,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
           return (
             <form onSubmit={selectedFlatForPayment ? handleSeatMapPaySubmit : handleRecordPayment} className="space-y-3.5">
-              {/* Member & Balance Context */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="relative">
+              {/* Member & Balance Context - Minimalist Clean Summary */}
+              <div className="p-2.5 sm:p-3 bg-slate-50/80 rounded-xl border border-slate-200/80">
+                <div className="grid grid-cols-3 divide-x divide-slate-200/80 text-center">
+                  <div className="px-1 flex flex-col items-center justify-center">
                     <div className="flex items-center justify-center gap-1">
-                      <span className="text-slate-500 uppercase text-[10px] font-bold">Expected Fee</span>
+                      <span className="text-slate-400 uppercase text-[9px] sm:text-[10px] font-bold tracking-wider">
+                        Expected
+                      </span>
                       {can(Permissions.COLLECTION_UPDATE) && !isEditingExpectedFee && (
                         <button
                           type="button"
@@ -1619,43 +1425,34 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                             setCustomExpectedFee(String(currentExpectedFee));
                             setIsEditingExpectedFee(true);
                           }}
-                          className="text-indigo-600 hover:text-indigo-800 p-0.5 rounded hover:bg-indigo-100 transition-colors inline-flex"
-                          title="Change Expected Fee for this Flat"
+                          className="text-slate-400 hover:text-indigo-600 p-0.5 rounded transition-colors inline-flex"
+                          title="Change Expected Fee"
                         >
-                          <Edit2 className="w-3 h-3" />
+                          <Edit2 className="w-2.5 h-2.5" />
                         </button>
                       )}
                     </div>
-                    <span className="font-extrabold text-slate-800 text-sm block mt-0.5">
+                    <span className="font-bold text-slate-800 text-xs sm:text-sm mt-0.5">
                       {formatCurrency(currentExpectedFee)}
                     </span>
-                    {can(Permissions.COLLECTION_UPDATE) && !isEditingExpectedFee && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCustomExpectedFee(String(currentExpectedFee));
-                          setIsEditingExpectedFee(true);
-                        }}
-                        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline block mx-auto mt-0.5"
-                      >
-                        Change Fee
-                      </button>
-                    )}
                   </div>
 
-                  <div>
-                    <span className="text-slate-500 uppercase text-[10px] font-bold block">Already Paid</span>
-                    <span className="font-extrabold text-emerald-600 text-sm block mt-0.5">
+                  <div className="px-1 flex flex-col items-center justify-center">
+                    <span className="text-slate-400 uppercase text-[9px] sm:text-[10px] font-bold tracking-wider">
+                      Paid
+                    </span>
+                    <span className="font-bold text-emerald-600 text-xs sm:text-sm mt-0.5">
                       {formatCurrency(currentPaidFee)}
                     </span>
                   </div>
 
-                  <div>
-                    <span className="text-slate-500 uppercase text-[10px] font-bold block">Balance Due</span>
+                  <div className="px-1 flex flex-col items-center justify-center">
+                    <span className="text-slate-400 uppercase text-[9px] sm:text-[10px] font-bold tracking-wider">
+                      Balance Due
+                    </span>
                     <span
-                      className={`font-extrabold text-sm block mt-0.5 ${
-                        currentBalanceDue > 0 ? 'text-rose-600' : 'text-emerald-600'
-                      }`}
+                      className={`font-bold text-xs sm:text-sm mt-0.5 ${currentBalanceDue > 0 ? 'text-rose-600' : 'text-emerald-600'
+                        }`}
                     >
                       {formatCurrency(currentBalanceDue)}
                     </span>
@@ -1664,31 +1461,31 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
                 {/* Inline Fee Editor when editing */}
                 {isEditingExpectedFee && (
-                  <div className="mt-3 pt-2.5 border-t border-slate-200 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <div className="bg-indigo-50/80 p-2.5 rounded-lg border border-indigo-200">
-                      <div className="flex items-center justify-between gap-1 mb-1.5">
-                        <span className="text-[11px] font-bold text-indigo-900 flex items-center gap-1">
+                  <div className="mt-2 pt-2 border-t border-slate-200/80 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="bg-indigo-50/70 p-2 rounded-lg border border-indigo-200">
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="text-[10.5px] font-bold text-indigo-900 flex items-center gap-1">
                           <Edit2 className="w-3 h-3 text-indigo-600" />
-                          Change Expected Fee for this Flat:
+                          Set Expected Fee:
                         </span>
                         <button
                           type="button"
                           onClick={() => setIsEditingExpectedFee(false)}
-                          className="text-[10px] text-slate-500 hover:text-slate-700 font-semibold"
+                          className="text-[10px] text-slate-400 hover:text-slate-600 font-medium"
                         >
                           Cancel
                         </button>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <div className="relative flex-1">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">₹</span>
                           <input
                             type="number"
                             min="0"
-                            placeholder="Enter expected fee"
+                            placeholder="Amount"
                             value={customExpectedFee}
                             onChange={(e) => setCustomExpectedFee(e.target.value)}
-                            className="w-full h-8 pl-6 pr-2.5 text-xs font-bold bg-white border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
+                            className="w-full h-7 pl-6 pr-2 text-xs font-bold bg-white border border-indigo-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800"
                             autoFocus
                           />
                         </div>
@@ -1698,217 +1495,243 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                           variant="primary"
                           onClick={handleSaveExpectedFee}
                           isLoading={isSavingExpectedFee}
-                          className="h-8 px-3 text-xs shrink-0"
+                          className="h-7 px-2.5 text-xs shrink-0"
                         >
-                          Save Fee
+                          Save
                         </Button>
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-1">
-                        Overrides fee for this flat. Remaining balance will update automatically.
-                      </p>
                     </div>
                   </div>
                 )}
               </div>
 
-          <div>
-            <Input
-              label="Payment Amount (₹)"
-              type="number"
-              requiredIndicator
-              placeholder="e.g. 2500"
-              value={payAmount}
-              onChange={(e) => setPayAmount(e.target.value)}
-            />
-          </div>
-
-          {/* Payment Method with Visual Cards & Icons */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Payment Method <span className="text-rose-500">*</span>
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                {
-                  code: 'UPI',
-                  name: 'UPI / Digital QR',
-                  subtitle: 'GPay, PhonePe, QR',
-                  icon: QrCode,
-                  activeClass: 'border-indigo-600 bg-indigo-50/90 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs',
-                  iconColor: 'text-indigo-600 bg-indigo-100',
-                },
-                {
-                  code: 'CASH',
-                  name: 'Cash Payment',
-                  subtitle: 'Physical Currency',
-                  icon: Banknote,
-                  activeClass: 'border-emerald-600 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs',
-                  iconColor: 'text-emerald-600 bg-emerald-100',
-                },
-                {
-                  code: 'CHEQUE',
-                  name: 'Cheque / DD',
-                  subtitle: 'Demand Draft',
-                  icon: FileText,
-                  activeClass: 'border-amber-600 bg-amber-50/90 text-amber-950 ring-2 ring-amber-500/20 shadow-xs',
-                  iconColor: 'text-amber-600 bg-amber-100',
-                },
-                {
-                  code: 'BANK_TRANSFER',
-                  name: 'Bank Transfer',
-                  subtitle: 'NEFT / RTGS / IMPS',
-                  icon: Building2,
-                  activeClass: 'border-sky-600 bg-sky-50/90 text-sky-950 ring-2 ring-sky-500/20 shadow-xs',
-                  iconColor: 'text-sky-600 bg-sky-100',
-                },
-              ].map((item) => {
-                const isSelected = payMethod === item.code || (item.code === 'UPI' && payMethod === 'QR');
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.code}
-                    type="button"
-                    onClick={() => {
-                      setPayMethod(item.code);
-                      if (item.code === 'UPI' || item.code === 'QR') {
-                        setIsQrModalOpen(true);
-                      }
-                    }}
-                    className={`relative flex flex-col items-start p-2.5 rounded-xl border text-left transition-all ${
-                      isSelected
-                        ? item.activeClass
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full mb-1.5">
-                      <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                          isSelected ? item.iconColor : 'bg-slate-100 text-slate-600'
-                        }`}
+              {/* Payment Method with Visual Cards & Icons */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Payment Method <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                  {[
+                    {
+                      code: 'UPI',
+                      name: 'UPI / QR',
+                      subtitle: 'GPay, QR',
+                      icon: QrCode,
+                      activeClass: 'border-indigo-600 bg-indigo-50/90 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs',
+                      iconColor: 'text-indigo-600 bg-indigo-100',
+                    },
+                    {
+                      code: 'CASH',
+                      name: 'Cash',
+                      subtitle: 'Physical',
+                      icon: Banknote,
+                      activeClass: 'border-emerald-600 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs',
+                      iconColor: 'text-emerald-600 bg-emerald-100',
+                    },
+                    {
+                      code: 'CHEQUE',
+                      name: 'Cheque',
+                      subtitle: 'DD / Chq',
+                      icon: FileText,
+                      activeClass: 'border-amber-600 bg-amber-50/90 text-amber-950 ring-2 ring-amber-500/20 shadow-xs',
+                      iconColor: 'text-amber-600 bg-amber-100',
+                    },
+                    {
+                      code: 'BANK_TRANSFER',
+                      name: 'Transfer',
+                      subtitle: 'NEFT / IMPS',
+                      icon: Building2,
+                      activeClass: 'border-sky-600 bg-sky-50/90 text-sky-950 ring-2 ring-sky-500/20 shadow-xs',
+                      iconColor: 'text-sky-600 bg-sky-100',
+                    },
+                  ].map((item) => {
+                    const isSelected = payMethod === item.code || (item.code === 'UPI' && payMethod === 'QR');
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.code}
+                        type="button"
+                        onClick={() => {
+                          setPayMethod(item.code);
+                          if (item.code === 'UPI' || item.code === 'QR') {
+                            setIsQrModalOpen(true);
+                          }
+                        }}
+                        className={`relative flex flex-col items-start p-2 sm:p-2.5 rounded-xl border text-left transition-all ${isSelected
+                          ? item.activeClass
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
+                          }`}
                       >
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      {isSelected && (
-                        <span className="w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-indigo-300 animate-pulse" />
-                      )}
-                    </div>
-                    <span className="text-xs font-bold leading-tight block truncate w-full">
-                      {item.name}
-                    </span>
-                    <span className="text-[10px] text-slate-500 block truncate w-full mt-0.5">
-                      {item.subtitle}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* UPI QR Code Quick View Card */}
-          {(payMethod === 'UPI' || payMethod === 'QR') && (
-            <div className="flex items-center justify-between p-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-slate-50 shadow-xs animate-in fade-in duration-150">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
-                  <QrCode className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-indigo-950 block truncate">Society Payment QR Code</span>
-                  <span className="text-[10px] text-slate-500 block truncate">Scan using any UPI app (GPay, PhonePe, Paytm, BHIM)</span>
+                        <div className="flex items-center justify-between w-full mb-1 sm:mb-1.5">
+                          <div
+                            className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center ${isSelected ? item.iconColor : 'bg-slate-100 text-slate-600'
+                              }`}
+                          >
+                            <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </div>
+                          {isSelected && (
+                            <span className="w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-indigo-300 animate-pulse" />
+                          )}
+                        </div>
+                        <span className="text-[11px] sm:text-xs font-bold leading-tight block truncate w-full">
+                          {item.name}
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate w-full mt-0.5">
+                          {item.subtitle}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsQrModalOpen(true)}
-                className="border-indigo-300 text-indigo-700 bg-white hover:bg-indigo-50 h-8 text-xs font-semibold px-2.5 shadow-xs shrink-0 ml-2"
-              >
-                <QrCode className="w-3.5 h-3.5 mr-1 text-indigo-600" />
-                View QR Code
-              </Button>
-            </div>
-          )}
 
-          {/* UPI Live Camera Snapshot / Screenshot Upload Section */}
-          {(payMethod === 'UPI' || payMethod === 'QR') && (
-            <UpiProofCapture
-              onImageCaptured={(file, preview) => {
-                setProofFile(file);
-                setProofPreviewUrl(preview);
-              }}
-              existingProofUrl={proofPreviewUrl}
-            />
-          )}
-
-          <Input
-            label="Payment Date"
-            type="date"
-            requiredIndicator
-            value={payDate}
-            onChange={(e) => setPayDate(e.target.value)}
-          />
-
-          {payMethod === 'CHEQUE' && (
-            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-3">
-              <span className="text-xs font-bold text-amber-900 block">Cheque Information</span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {/* Payment Amount and Payment Date in one row */}
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                 <Input
-                  label="Cheque Number"
-                  placeholder="e.g. 102938"
+                  label="Payment Amount (₹)"
+                  type="number"
                   requiredIndicator
-                  value={chequeNumber}
-                  onChange={(e) => setChequeNumber(e.target.value)}
+                  placeholder="e.g. 2500"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
                 />
                 <Input
-                  label="Bank Name"
-                  placeholder="e.g. State Bank of India"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                />
-                <Input
-                  label="Cheque Date"
+                  label="Payment Date"
                   type="date"
-                  value={chequeDate}
-                  onChange={(e) => setChequeDate(e.target.value)}
+                  requiredIndicator
+                  value={payDate}
+                  onChange={(e) => setPayDate(e.target.value)}
                 />
               </div>
-            </div>
-          )}
 
-          {payMethod !== 'CHEQUE' && payMethod !== 'CASH' && (
-            <Input
-              label="Transaction / UPI Reference Number"
-              placeholder="e.g. UPI/2026/09/99214"
-              value={transactionReference}
-              onChange={(e) => setTransactionReference(e.target.value)}
-            />
-          )}
+              {/* Passes & Interest Status */}
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                <Select
+                  label="Passes"
+                  value={String(passes)}
+                  onChange={(e) => setPasses(Number(e.target.value))}
+                  options={[
+                    { value: '1', label: '1' },
+                    { value: '2', label: '2' },
+                    { value: '3', label: '3' },
+                    { value: '4', label: '4' },
+                    { value: '5', label: '5' },
+                    { value: '6', label: '6' },
+                    { value: '7', label: '7' },
+                    { value: '8', label: '8' },
+                    { value: '9', label: '9' },
+                    { value: '10', label: '10' },
+                  ]}
+                />
+                <Select
+                  label="Interest Status"
+                  value={interestStatus}
+                  onChange={(e) => setInterestStatus(e.target.value)}
+                  options={[
+                    { value: 'interested', label: 'Interested' },
+                    { value: 'not_interested', label: 'Not Interested' },
+                    { value: 'to_be_confirmed', label: 'To Be Confirmed' },
+                  ]}
+                />
+              </div>
 
-          <Textarea
-            label="Remarks / Receipt Notes"
-            placeholder="e.g. Received full installment, receipt handed over..."
-            rows={2}
-            value={payNotes}
-            onChange={(e) => setPayNotes(e.target.value)}
-          />
+              {/* UPI QR Code Quick View Card */}
+              {(payMethod === 'UPI' || payMethod === 'QR') && (
+                <div className="flex items-center justify-between p-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-slate-50 shadow-xs animate-in fade-in duration-150">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                      <QrCode className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-indigo-950 block truncate">Society Payment QR Code</span>
+                      <span className="text-[10px] text-slate-500 block truncate">Scan using any UPI app (GPay, PhonePe, Paytm, BHIM)</span>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsQrModalOpen(true)}
+                    className="border-indigo-300 text-indigo-700 bg-white hover:bg-indigo-50 h-8 text-xs font-semibold px-2.5 shadow-xs shrink-0 ml-2"
+                  >
+                    <QrCode className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                    View QR Code
+                  </Button>
+                </div>
+              )}
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setPayModalOpen(false);
-                setSelectedFlatForPayment(null);
-              }}
-              disabled={isProcessingPayment}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" isLoading={isProcessingPayment}>
-              {currentPaidFee > 0 ? 'Update Payment Amount' : 'Record Collection Payment'}
-            </Button>
-          </div>
-        </form>
+              {/* UPI Live Camera Snapshot / Screenshot Upload Section */}
+              {(payMethod === 'UPI' || payMethod === 'QR') && (
+                <UpiProofCapture
+                  onImageCaptured={(file, preview) => {
+                    setProofFile(file);
+                    setProofPreviewUrl(preview);
+                  }}
+                  existingProofUrl={proofPreviewUrl}
+                />
+              )}
+
+              {payMethod === 'CHEQUE' && (
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-3">
+                  <span className="text-xs font-bold text-amber-900 block">Cheque Information</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <Input
+                      label="Cheque Number"
+                      placeholder="e.g. 102938"
+                      requiredIndicator
+                      value={chequeNumber}
+                      onChange={(e) => setChequeNumber(e.target.value)}
+                    />
+                    <Input
+                      label="Bank Name"
+                      placeholder="e.g. State Bank of India"
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                    />
+                    <Input
+                      label="Cheque Date"
+                      type="date"
+                      value={chequeDate}
+                      onChange={(e) => setChequeDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {payMethod !== 'CHEQUE' && payMethod !== 'CASH' && (
+                <Input
+                  label="Transaction / UPI Reference Number"
+                  placeholder="e.g. UPI/2026/09/99214"
+                  value={transactionReference}
+                  onChange={(e) => setTransactionReference(e.target.value)}
+                />
+              )}
+
+              <Textarea
+                label="Remarks / Receipt Notes"
+                placeholder="e.g. Received full installment, receipt handed over..."
+                rows={2}
+                value={payNotes}
+                onChange={(e) => setPayNotes(e.target.value)}
+              />
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setPayModalOpen(false);
+                    setSelectedFlatForPayment(null);
+                  }}
+                  disabled={isProcessingPayment}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" isLoading={isProcessingPayment}>
+                  {currentPaidFee > 0 ? 'Update Payment Amount' : 'Record Collection Payment'}
+                </Button>
+              </div>
+            </form>
           );
         })()}
       </Modal>
@@ -1939,10 +1762,10 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 {selectedFlatForPayment
                   ? `Flat ${selectedFlatForPayment.flatNumber}`
                   : payingCollection?.flat
-                  ? `Flat ${payingCollection.flat.flat_number}`
-                  : payingCollection?.bungalow
-                  ? `Bungalow ${payingCollection.bungalow.bungalow_number}`
-                  : 'Event Contribution'}
+                    ? `Flat ${payingCollection.flat.flat_number}`
+                    : payingCollection?.bungalow
+                      ? `Bungalow ${payingCollection.bungalow.bungalow_number}`
+                      : 'Event Contribution'}
               </span>
             </div>
             <div className="text-right">

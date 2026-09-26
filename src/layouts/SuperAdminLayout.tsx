@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Breadcrumbs from './Breadcrumbs';
+import AdminFooter from './AdminFooter';
 
 export const SuperAdminLayout: React.FC = () => {
   return (
@@ -21,20 +22,8 @@ export const SuperAdminLayout: React.FC = () => {
             <Outlet />
           </div>
 
-          {/* Super Admin App Footer */}
-          <footer className="mt-4 pt-2.5 pb-1 border-t border-slate-200/80 text-center text-[11px] text-slate-400 max-w-[1600px] mx-auto w-full">
-            <p>
-              &copy; {new Date().getFullYear()} Society Event Management (Super Admin Platform). Developed by{' '}
-              <a
-                href="https://anaxistech.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-              >
-                AnaxisTech
-              </a>
-            </p>
-          </footer>
+          {/* Admin App Footer */}
+          <AdminFooter />
         </main>
       </div>
     </div>

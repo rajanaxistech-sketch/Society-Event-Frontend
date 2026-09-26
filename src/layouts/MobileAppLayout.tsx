@@ -6,6 +6,7 @@ import { AppRoutes } from '../constants/routes';
 import { circularsService } from '../../src/api/circularsService';
 import { CircularItem } from '../types';
 import MobileBottomSheet from '../components/mobile/MobileBottomSheet';
+import AdminFooter from './AdminFooter';
 import {
   Home,
   Calendar,
@@ -215,21 +216,21 @@ export const MobileAppLayout: React.FC = () => {
         {/* Top Mobile App Header */}
         <header className="h-[58px] bg-white border-b border-slate-200/80 px-3.5 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-xs">
           {/* Society Branding */}
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100 shadow-2xs">
-              <Building2 className="w-4 h-4 text-indigo-600" />
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200/60">
+              <Building2 className="w-3.5 h-3.5 text-slate-600" />
             </div>
             <div
               className="min-w-0 cursor-pointer flex-1"
               onClick={() => setProfileDrawerOpen(true)}
             >
               <div className="flex items-center gap-1">
-                <span className="font-bold text-[13px] text-slate-900 truncate leading-tight tracking-tight">
+                <span className="font-semibold text-xs text-slate-800 truncate leading-tight">
                   {currentSociety?.name || 'Palm Meadows Co-op Housing Society'}
                 </span>
-                {societies.length > 1 && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
+                {societies.length > 1 && <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />}
               </div>
-              <p className="text-[11px] text-indigo-600 font-semibold truncate leading-none mt-0.5">
+              <p className="text-[10px] text-slate-400 font-normal truncate leading-none mt-0.5">
                 {isResident ? 'Resident' : 'Admin'}
               </p>
             </div>
@@ -264,73 +265,80 @@ export const MobileAppLayout: React.FC = () => {
         <main
           className="flex-1 overflow-y-auto overflow-x-hidden px-3.5 py-3.5 space-y-3.5 no-scrollbar bg-[#F8FAFC] relative"
           style={{
-            paddingBottom: 'calc(5.2rem + env(safe-area-inset-bottom, 0px))',
+            paddingBottom: 'calc(6.8rem + env(safe-area-inset-bottom, 0px))',
           }}
         >
           <Outlet />
         </main>
 
-        {/* Persistent Fixed Mobile Bottom Navigation */}
-        <nav
-          className="fixed sm:absolute bottom-0 left-0 right-0 z-40 max-w-[440px] mx-auto bg-white/98 backdrop-blur-md border-t border-slate-200/80 px-2 grid grid-cols-5 items-center shadow-lg"
+        {/* Persistent Fixed Mobile Bottom Navigation & Contact Footer */}
+        <div
+          className="fixed sm:absolute bottom-0 left-0 right-0 z-40 max-w-[440px] mx-auto bg-white/98 backdrop-blur-md border-t border-slate-200/80 shadow-lg flex flex-col"
           style={{
             paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-            height: 'calc(4rem + env(safe-area-inset-bottom, 0px))',
           }}
         >
-          {currentNavItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === AppRoutes.DASHBOARD}
-                className={({ isActive }) =>
-                  clsx(
-                    'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200',
-                    isActive
-                      ? 'text-indigo-600 font-bold'
-                      : 'text-slate-400 hover:text-slate-600 font-medium'
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <div
-                      className={clsx(
-                        'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
-                        isActive ? 'text-indigo-600' : 'text-slate-400'
-                      )}
-                    >
-                      <Icon className="w-[19px] h-[19px]" />
-                    </div>
-                    <span className="text-[10.5px] leading-tight mt-0.5">{item.label}</span>
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
+          {/* Navigation Buttons Row */}
+          <nav className="px-2 grid grid-cols-5 items-center pt-1 pb-0.5">
+            {currentNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === AppRoutes.DASHBOARD}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200',
+                      isActive
+                        ? 'text-indigo-600 font-bold'
+                        : 'text-slate-400 hover:text-slate-600 font-medium'
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <div
+                        className={clsx(
+                          'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
+                          isActive ? 'text-indigo-600' : 'text-slate-400'
+                        )}
+                      >
+                        <Icon className="w-[19px] h-[19px]" />
+                      </div>
+                      <span className="text-[10.5px] leading-tight mt-0.5">{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
+              );
+            })}
 
-          {/* More Drawer Button */}
-          <button
-            type="button"
-            onClick={() => setMoreDrawerOpen(true)}
-            className={clsx(
-              'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200',
-              moreDrawerOpen ? 'text-indigo-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'
-            )}
-          >
-            <div
+            {/* More Drawer Button */}
+            <button
+              type="button"
+              onClick={() => setMoreDrawerOpen(true)}
               className={clsx(
-                'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
-                moreDrawerOpen ? 'text-indigo-600' : 'text-slate-400'
+                'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200',
+                moreDrawerOpen ? 'text-indigo-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'
               )}
             >
-              <Grid className="w-[19px] h-[19px]" />
-            </div>
-            <span className="text-[10.5px] leading-tight mt-0.5">More</span>
-          </button>
-        </nav>
+              <div
+                className={clsx(
+                  'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
+                  moreDrawerOpen ? 'text-indigo-600' : 'text-slate-400'
+                )}
+              >
+                <Grid className="w-[19px] h-[19px]" />
+              </div>
+              <span className="text-[10.5px] leading-tight mt-0.5">More</span>
+            </button>
+          </nav>
+
+          {/* Contact Section Directly Underneath Navigation Buttons */}
+          <div className="border-t border-slate-100/80 py-1 px-1 bg-slate-50/40 overflow-hidden">
+            <AdminFooter />
+          </div>
+        </div>
       </div>
 
       {/* "More" Modules Drawer Bottom Sheet */}

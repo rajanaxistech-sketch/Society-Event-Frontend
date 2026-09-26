@@ -741,6 +741,9 @@ export interface EventCollectionItem {
   expected_amount: number | string;
   amount_paid: number | string;
   pending_amount: number | string;
+  passes?: number | null;
+  interest_status?: 'interested' | 'not_interested' | 'to_be_confirmed' | string | null;
+  interestStatus?: 'interested' | 'not_interested' | 'to_be_confirmed' | string | null;
   status: 'pending' | 'partially_paid' | 'paid' | 'overdue' | string;
   last_payment_date?: string | null;
   receipt_reference?: string | null;

@@ -1,26 +1,33 @@
 import React from "react";
 import { cn } from "../../../utils/cn";
+import societyLogo from "../../../assets/society-logo.png";
 
-const sizeClasses = {
-  xs: "w-3.5 h-3.5",
-  sm: "w-4 h-4",
-  md: "w-6 h-6",
-  lg: "w-8 h-8",
-  xl: "w-12 h-12",
+const containerSizes = {
+  xs: "w-8 h-8",
+  sm: "w-10 h-10",
+  md: "w-16 h-16",
+  lg: "w-24 h-24",
+  xl: "w-32 h-32",
 };
 
-const colorClasses = {
-  primary: "text-blue-600",
-  white: "text-white",
-  gray: "text-gray-500",
-  success: "text-emerald-600",
-  danger: "text-rose-600",
-  warning: "text-amber-500",
+const ringStrokeWidths = {
+  xs: 6,
+  sm: 5,
+  md: 4.5,
+  lg: 4,
+  xl: 3.5,
+};
+
+const labelSizes = {
+  xs: "text-[10px]",
+  sm: "text-[11px]",
+  md: "text-xs",
+  lg: "text-[13px]",
+  xl: "text-sm",
 };
 
 export function Spinner({
   size = "md",
-  color = "primary",
   label,
   className = "",
   ...props
@@ -28,35 +35,92 @@ export function Spinner({
   return (
     <div
       role="status"
-      className={cn("inline-flex items-center gap-2", className)}
+      aria-label={label || "Loading..."}
+      className={cn("inline-flex flex-col items-center justify-center gap-3", className)}
       {...props}
     >
-      <svg
-        className={cn(
-          "animate-spin shrink-0",
-          sizeClasses[size] || sizeClasses.md,
-          colorClasses[color] || color
-        )}
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
-      {label && <span className="text-sm font-medium text-gray-600">{label}</span>}
+      {/* Circular Rotating Loader with Center Logo */}
+      <div className={cn("relative flex items-center justify-center shrink-0", containerSizes[size] || containerSizes.md)}>
+        {/* Soft Ambient Background Pulse Ring */}
+        <div className="absolute inset-1 rounded-full bg-indigo-500/10 animate-ping opacity-25 pointer-events-none" />
+
+        {/* Subtle Static Track Ring */}
+        <svg
+          className="absolute inset-0 w-full h-full -rotate-90 text-indigo-100"
+          viewBox="0 0 100 100"
+          aria-hidden="true"
+        >
+          <circle
+            stroke="currentColor"
+            strokeWidth={ringStrokeWidths[size] || 4}
+            fill="transparent"
+            r="44"
+            cx="50"
+            cy="50"
+          />
+        </svg>
+
+        {/* Primary Circular Spinning Arc */}
+        <svg
+          className="absolute inset-0 w-full h-full animate-spin text-indigo-600"
+          viewBox="0 0 100 100"
+          style={{ animationDuration: "1.2s" }}
+          aria-hidden="true"
+        >
+          <circle
+            stroke="currentColor"
+            strokeWidth={ringStrokeWidths[size] || 4}
+            strokeDasharray="276"
+            strokeDashoffset="180"
+            strokeLinecap="round"
+            fill="transparent"
+            r="44"
+            cx="50"
+            cy="50"
+          />
+        </svg>
+
+        {/* Secondary Counter-rotating Subtle Accent Arc */}
+        <svg
+          className="absolute inset-0 w-full h-full animate-spin text-purple-500/70"
+          viewBox="0 0 100 100"
+          style={{ animationDuration: "2.2s", animationDirection: "reverse" }}
+          aria-hidden="true"
+        >
+          <circle
+            stroke="currentColor"
+            strokeWidth={(ringStrokeWidths[size] || 4) - 1}
+            strokeDasharray="276"
+            strokeDashoffset="230"
+            strokeLinecap="round"
+            fill="transparent"
+            r="44"
+            cx="50"
+            cy="50"
+          />
+        </svg>
+
+        {/* Centered Circular Society Event Management Logo */}
+        <div className="relative z-10 w-[70%] h-[70%] rounded-full overflow-hidden bg-white shadow-xs p-1 flex items-center justify-center border border-slate-100">
+          <img
+            src={societyLogo}
+            alt="Society Event Management"
+            className="w-full h-full object-contain select-none pointer-events-none"
+            loading="eager"
+          />
+        </div>
+      </div>
+
+      {label && (
+        <span
+          className={cn(
+            "font-medium text-slate-600 text-center tracking-tight animate-pulse select-none",
+            labelSizes[size] || labelSizes.md
+          )}
+        >
+          {label}
+        </span>
+      )}
       <span className="sr-only">{label || "Loading..."}</span>
     </div>
   );
@@ -82,8 +146,7 @@ export function Loader({
       )}
       {...props}
     >
-      <Spinner size="lg" color="primary" />
-      {message && <p className="text-sm font-medium text-gray-600">{message}</p>}
+      <Spinner size="lg" label={message} />
     </div>
   );
 }
