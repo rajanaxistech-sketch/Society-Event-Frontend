@@ -135,6 +135,18 @@ export const Permissions = {
   INCOME_CATEGORY_DELETE: 'income_category.delete',
   INCOME_CATEGORY_MANAGE: 'income_category.manage',
 
+  // Advertising
+  ADVERTISEMENT_READ: 'advertisement.read',
+  ADVERTISEMENT_CREATE: 'advertisement.create',
+  ADVERTISEMENT_UPDATE: 'advertisement.update',
+  ADVERTISEMENT_DELETE: 'advertisement.delete',
+  ADVERTISEMENT_MANAGE: 'advertisement.manage',
+  ADVERTISEMENT_CATEGORY_READ: 'advertisement_category.read',
+  ADVERTISEMENT_CATEGORY_CREATE: 'advertisement_category.create',
+  ADVERTISEMENT_CATEGORY_UPDATE: 'advertisement_category.update',
+  ADVERTISEMENT_CATEGORY_DELETE: 'advertisement_category.delete',
+  ADVERTISEMENT_CATEGORY_MANAGE: 'advertisement_category.manage',
+
   // Audit Logs
   AUDIT_READ: 'audit.read',
   AUDIT_LOG_READ: 'audit.read',

@@ -23,6 +23,7 @@ import {
   X,
   Sparkles,
   Wallet,
+  Megaphone,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -102,6 +103,12 @@ export const Sidebar: React.FC = () => {
           to: AppRoutes.CONTRACTS,
           icon: <FileText className="w-4 h-4" />,
           permission: Permissions.CONTRACT_READ,
+        },
+        {
+          label: 'Advertising',
+          to: AppRoutes.ADVERTISING,
+          icon: <Megaphone className="w-4 h-4" />,
+          permission: Permissions.ADVERTISEMENT_READ,
         },
         {
           label: 'Payment Methods',

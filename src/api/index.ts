@@ -28,4 +28,6 @@ export * from './incomeCategoriesService';
 export * from './auditLogsService';
 export * from './contractsService';
 export * from './eventVendorsService';
+export * from './advertisementCategoriesService';
+export * from './advertisementsService';
 

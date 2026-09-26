@@ -1405,4 +1405,102 @@ export interface ContractDashboardStats {
   byServiceGroup: { groupName: string; totalAmount: number }[];
 }
 
+// Advertising Module Types
+export type AdvertisementPaymentStatus = 'pending' | 'partial' | 'completed';
+
+export interface AdvertisementCategoryItem {
+  id: string;
+  societyId?: string | null;
+  society_id?: string | null;
+  society?: { id: string; name: string; code?: string } | null;
+  categoryName: string;
+  category_name?: string;
+  categoryAmount: number;
+  category_amount?: number;
+  categoryDescription?: string | null;
+  category_description?: string | null;
+  numberOfUnits: number;
+  number_of_units?: number;
+  status: 'active' | 'inactive' | string;
+  createdBy?: string | null;
+  created_by?: string | null;
+  creator?: { id: string; fullName: string; email: string } | null;
+  advertisementsCount?: number;
+  createdAt: string;
+  created_at?: string;
+  updatedAt: string;
+  updated_at?: string;
+}
+
+export interface CreateAdvertisementCategoryInput {
+  categoryName: string;
+  categoryAmount: number;
+  categoryDescription?: string | null;
+  numberOfUnits: number;
+  societyId?: string | null;
+  status?: 'active' | 'inactive';
+}
+
+export interface UpdateAdvertisementCategoryInput {
+  categoryName?: string;
+  categoryAmount?: number;
+  categoryDescription?: string | null;
+  numberOfUnits?: number;
+  societyId?: string | null;
+  status?: 'active' | 'inactive';
+}
+
+export interface AdvertisementItem {
+  id: string;
+  societyId?: string | null;
+  society_id?: string | null;
+  society?: { id: string; name: string; code?: string } | null;
+  element: string;
+  advertisementCategoryId: string;
+  advertisement_category_id?: string;
+  advertisementCategory?: {
+    id: string;
+    categoryName: string;
+    category_name?: string;
+    categoryAmount: number;
+    category_amount?: number;
+    numberOfUnits: number;
+    number_of_units?: number;
+    categoryDescription?: string | null;
+  } | null;
+  remarks?: string | null;
+  modeOfPayment: string;
+  mode_of_payment?: string;
+  paymentStatus: AdvertisementPaymentStatus;
+  payment_status?: AdvertisementPaymentStatus;
+  status: 'active' | 'inactive' | string;
+  createdBy?: string | null;
+  created_by?: string | null;
+  creator?: { id: string; fullName: string; email: string } | null;
+  createdAt: string;
+  created_at?: string;
+  updatedAt: string;
+  updated_at?: string;
+}
+
+export interface CreateAdvertisementInput {
+  element: string;
+  advertisementCategoryId: string;
+  remarks?: string | null;
+  modeOfPayment: string;
+  paymentStatus?: AdvertisementPaymentStatus;
+  societyId?: string | null;
+  status?: 'active' | 'inactive';
+}
+
+export interface UpdateAdvertisementInput {
+  element?: string;
+  advertisementCategoryId?: string;
+  remarks?: string | null;
+  modeOfPayment?: string;
+  paymentStatus?: AdvertisementPaymentStatus;
+  societyId?: string | null;
+  status?: 'active' | 'inactive';
+}
+
 

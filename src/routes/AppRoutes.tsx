@@ -102,6 +102,9 @@ import CreateVendorPage from '../pages/vendors/CreateVendorPage';
 import EditVendorPage from '../pages/vendors/EditVendorPage';
 import ExpenseCategoryListPage from '../pages/expense-categories/ExpenseCategoryListPage';
 import IncomeCategoryListPage from '../pages/income-categories/IncomeCategoryListPage';
+import AdvertisingMenuPage from '../pages/advertising/AdvertisingMenuPage';
+import AdvertisementsPage from '../pages/advertising/AdvertisementsPage';
+import AdvertisementCategoriesPage from '../pages/advertising/AdvertisementCategoriesPage';
 import AuditLogListPage from '../pages/audit-logs/AuditLogListPage';
 import AuditLogDetailsPage from '../pages/audit-logs/AuditLogDetailsPage';
 import ContractsListPage from '../pages/contracts/ContractsListPage';
@@ -498,6 +501,40 @@ export const AppRoutes: React.FC = () => {
             element={
               <PermissionRoute permission={Permissions.CIRCULAR_UPDATE}>
                 <EditCircularPage />
+              </PermissionRoute>
+            }
+          />
+
+          {/* Advertising & Categories */}
+          <Route
+            path={Paths.ADVERTISING}
+            element={
+              <PermissionRoute permission={Permissions.ADVERTISEMENT_READ}>
+                <AdvertisingMenuPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.ADVERTISEMENTS}
+            element={
+              <PermissionRoute permission={Permissions.ADVERTISEMENT_READ}>
+                <AdvertisementsPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.ADVERTISEMENT_CATEGORIES}
+            element={
+              <PermissionRoute permission={Permissions.ADVERTISEMENT_CATEGORY_READ}>
+                <AdvertisementCategoriesPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.SETTINGS_ADVERTISEMENT_CATEGORIES}
+            element={
+              <PermissionRoute permission={Permissions.ADVERTISEMENT_CATEGORY_READ}>
+                <AdvertisementCategoriesPage />
               </PermissionRoute>
             }
           />

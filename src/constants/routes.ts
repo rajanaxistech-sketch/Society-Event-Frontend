@@ -106,6 +106,11 @@ export const AppRoutes = {
   VENDOR_EDIT: '/settings/vendors/:id/edit',
   EXPENSE_CATEGORIES: '/settings/expense-categories',
   INCOME_CATEGORIES: '/settings/income-categories',
+  ADVERTISEMENT_CATEGORIES: '/advertising/categories',
+  ADVERTISEMENTS: '/advertising/ads',
+  ADVERTISING: '/advertising',
+  ADVERTISING_HUB: '/advertising',
+  SETTINGS_ADVERTISEMENT_CATEGORIES: '/settings/advertisement-categories',
   AUDIT_LOGS: '/audit-logs',
   AUDIT_LOG_DETAILS: '/audit-logs/:id',
 } as const;

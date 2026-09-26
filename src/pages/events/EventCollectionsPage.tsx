@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { collectionsService } from '../../api/collectionsService';
 import { eventsService } from '../../api/eventsService';
@@ -69,6 +69,10 @@ import {
   Eye,
   Image as ImageIcon,
   X,
+  Ticket,
+  ChevronDown,
+  Check,
+  XCircle,
 } from 'lucide-react';
 
 const isUuid = (val: any): boolean => {
@@ -209,6 +213,28 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const [payNotes, setPayNotes] = useState('');
   const [passes, setPasses] = useState<number>(1);
   const [interestStatus, setInterestStatus] = useState<string>('interested');
+  const [isPassesDropdownOpen, setIsPassesDropdownOpen] = useState(false);
+  const [isInterestDropdownOpen, setIsInterestDropdownOpen] = useState(false);
+  const passesDropdownRef = useRef<HTMLDivElement>(null);
+  const interestDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (passesDropdownRef.current && !passesDropdownRef.current.contains(e.target as Node)) {
+        setIsPassesDropdownOpen(false);
+      }
+      if (interestDropdownRef.current && !interestDropdownRef.current.contains(e.target as Node)) {
+        setIsInterestDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, []);
   const [proofFile, setProofFile] = useState<File | Blob | null>(null);
   const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
   const [enlargedProofUrl, setEnlargedProofUrl] = useState<string | null>(null);
@@ -1031,6 +1057,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       header: 'Status',
       align: 'center',
       render: (row) => {
+        const isNotInt = row.interest_status === 'not_interested' || (row as any).interestStatus === 'not_interested';
+        if (isNotInt) {
+          return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-300">
+              Not Interested
+            </span>
+          );
+        }
         const st = row.status === 'pending' ? 'Not Paid' : row.status === 'partially_paid' ? 'Partial' : 'Paid';
         return <StatusBadge status={row.status} label={st} size="sm" />;
       },
@@ -1127,6 +1161,9 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           amountPaid: Number(c.amount_paid || 0),
           pendingAmount: Number(c.pending_amount || 0),
           residentName: owner?.full_name || 'Resident',
+          passes: c.passes,
+          interestStatus: (c as any).interest_status || (c as any).interestStatus,
+          interest_status: (c as any).interest_status || (c as any).interestStatus,
           rawCollection: c,
         };
       });
@@ -1181,7 +1218,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         </div>
       )}
 
-      {/* 2. Collection Summary Card */}
+      {/* 2. Minimal Collection Summary */}
       {(() => {
         const defaultAmt = Number(event?.default_collection_amount || 2500);
         const totalUnits = matrixData?.summary?.totalUnits ?? matrixData?.summary?.totalFlats ?? 120;
@@ -1190,52 +1227,31 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         const totalCollected = matrixData?.summary?.totalCollected ?? (paidUnits * defaultAmt);
         const totalTarget = matrixData?.summary?.totalTarget ?? (totalUnits * defaultAmt);
         const totalPending = Math.max(0, totalTarget - totalCollected);
-        const progressPercentage = totalUnits > 0 ? Math.round((paidUnits / totalUnits) * 100) : (totalTarget > 0 ? Math.round((totalCollected / totalTarget) * 100) : 0);
 
         return (
-          <div className="bg-white p-3.5 rounded-xl border border-slate-200/70 shadow-none space-y-2.5">
-            <div className="flex items-baseline justify-between gap-2">
-              <div>
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total Collected</span>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className="text-xl font-bold text-slate-900 tracking-tight">
-                    {formatCurrency(totalCollected)}
-                  </span>
-                  <span className="text-xs text-slate-400 font-normal">
-                    of {formatCurrency(totalTarget)}
-                  </span>
-                </div>
+          <div className="bg-white px-2.5 py-2 rounded-xl border border-slate-200/70 shadow-2xs">
+            <div className="grid grid-cols-3 divide-x divide-slate-100 text-center items-center">
+              <div className="px-1 py-0.5">
+                <span className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-tight block whitespace-nowrap">
+                  Total Collected
+                </span>
+                <span className="text-[13px] font-bold text-slate-900 block mt-0.5 whitespace-nowrap">
+                  {formatCurrency(totalCollected)}
+                </span>
               </div>
-              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                {progressPercentage}%
-              </span>
-            </div>
-
-            {/* Thin Minimal Progress Bar */}
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
-                style={{ width: `${Math.min(100, Math.max(0, progressPercentage))}%` }}
-              />
-            </div>
-
-            {/* 3 Stats in clean minimal layout */}
-            <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 text-center">
-              <div className="py-1">
-                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Pending Due</span>
-                <span className="text-xs font-bold text-amber-600 block mt-0.5">
+              <div className="px-1 py-0.5">
+                <span className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-tight block whitespace-nowrap">
+                  Pending Due
+                </span>
+                <span className="text-[13px] font-bold text-amber-600 block mt-0.5 whitespace-nowrap">
                   {formatCurrency(totalPending)}
                 </span>
               </div>
-              <div className="py-1">
-                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Paid Units</span>
-                <span className="text-xs font-bold text-emerald-700 block mt-0.5">
-                  {paidUnits} <span className="text-[10px] text-slate-400 font-normal">/ {totalUnits}</span>
+              <div className="px-1 py-0.5">
+                <span className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-tight block whitespace-nowrap">
+                  Pending Units
                 </span>
-              </div>
-              <div className="py-1">
-                <span className="text-[9px] font-semibold text-slate-400 uppercase block">Pending Units</span>
-                <span className="text-xs font-bold text-slate-600 block mt-0.5">
+                <span className="text-[13px] font-bold text-slate-700 block mt-0.5 whitespace-nowrap">
                   {pendingUnits}
                 </span>
               </div>
@@ -1287,25 +1303,34 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
             const expectedAmt = Number(flat.amount ?? 2500);
             const paidAmt = Number(flat.amountPaid ?? (isPaid ? expectedAmt : 0));
             const pendingAmt = Number(flat.pendingAmount ?? (isPaid ? 0 : expectedAmt));
+            const isNotInterested = flat.interestStatus === 'not_interested' || flat.interest_status === 'not_interested';
 
             return (
               <div
                 key={flat.id || flat.flatNumber}
                 onClick={() => handleSeatMapFlatClick(flat)}
-                className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${isPaid
-                  ? 'bg-[#F0FDF4] border-[#DCFCE7] hover:bg-[#E2FBE8]'
-                  : 'bg-[#FEFCE8] border-[#FEF08A] hover:bg-[#FEF9C3]'
-                  }`}
+                className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                  isNotInterested
+                    ? 'bg-slate-100 border-slate-300/80 hover:bg-slate-200/70 shadow-none'
+                    : isPaid
+                    ? 'bg-[#F0FDF4] border-[#DCFCE7] hover:bg-[#E2FBE8]'
+                    : 'bg-[#FEFCE8] border-[#FEF08A] hover:bg-[#FEF9C3]'
+                }`}
               >
                 {/* Left Info */}
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
-                    className={`w-2 h-2 rounded-full shrink-0 ${isPaid ? 'bg-emerald-500' : 'bg-amber-500'
-                      }`}
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      isNotInterested
+                        ? 'bg-slate-400'
+                        : isPaid
+                        ? 'bg-emerald-500'
+                        : 'bg-amber-500'
+                    }`}
                   />
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-xs sm:text-sm text-slate-900">
+                    <div className="flex items-center flex-wrap gap-1.5">
+                      <span className={`font-semibold text-xs sm:text-sm ${isNotInterested ? 'text-slate-700' : 'text-slate-900'}`}>
                         Flat {flat.flatNumber}
                       </span>
                       {flat.isUserFlat && (
@@ -1313,22 +1338,20 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                           You
                         </span>
                       )}
-                      {flat.passes !== undefined && flat.passes !== null && (
+                      {!isNotInterested && flat.passes !== undefined && flat.passes !== null && (
                         <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-purple-50 text-purple-700 rounded border border-purple-200/50">
                           {flat.passes} {flat.passes === 1 ? 'Pass' : 'Passes'}
                         </span>
                       )}
-                      {flat.interestStatus && flat.interestStatus !== 'interested' && (
-                        <span
-                          className={`text-[9px] font-semibold px-1.5 py-0.2 rounded border ${
-                            flat.interestStatus === 'not_interested'
-                              ? 'bg-slate-100 text-slate-600 border-slate-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200/50'
-                          }`}
-                        >
-                          {flat.interestStatus === 'not_interested' ? 'Not Interested' : 'To Confirm'}
+                      {isNotInterested ? (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded border bg-slate-200 text-slate-700 border-slate-300">
+                          Not Interested
                         </span>
-                      )}
+                      ) : flat.interestStatus === 'to_be_confirmed' || flat.interest_status === 'to_be_confirmed' ? (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded border bg-amber-50 text-amber-700 border-amber-200/50">
+                          To Confirm
+                        </span>
+                      ) : null}
                     </div>
                     <p className="text-[11px] text-slate-400 truncate mt-0.5">
                       {flat.residentName || (flat.isOccupied ? 'Occupied' : 'Vacant')}
@@ -1339,18 +1362,27 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 {/* Right Info & Actions */}
                 <div className="flex items-center gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <div className="text-right">
-                    <span className="text-xs sm:text-sm font-semibold text-slate-900 block leading-tight">
-                      ₹{isPaid ? paidAmt.toLocaleString() : (pendingAmt > 0 ? pendingAmt.toLocaleString() : expectedAmt.toLocaleString())}
-                    </span>
-                    <span
-                      className={`text-[10px] font-medium leading-tight block mt-0.5 ${isPaid ? 'text-emerald-700' : 'text-amber-700'
-                        }`}
-                    >
-                      {isPaid ? 'Paid' : 'Due'}
-                    </span>
+                    {!isNotInterested ? (
+                      <>
+                        <span className="text-xs sm:text-sm font-semibold text-slate-900 block leading-tight">
+                          ₹{isPaid ? paidAmt.toLocaleString() : (pendingAmt > 0 ? pendingAmt.toLocaleString() : expectedAmt.toLocaleString())}
+                        </span>
+                        <span
+                          className={`text-[10px] font-medium leading-tight block mt-0.5 ${
+                            isPaid ? 'text-emerald-700' : 'text-amber-700'
+                          }`}
+                        >
+                          {isPaid ? 'Paid' : 'Due'}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-[11px] font-medium text-slate-500 block leading-tight">
+                        Opted Out
+                      </span>
+                    )}
                   </div>
 
-                  {can(Permissions.COLLECTION_UPDATE) && (
+                  {!isNotInterested && can(Permissions.COLLECTION_UPDATE) && (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -1372,7 +1404,11 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                         e.stopPropagation();
                         handleSeatMapFlatClick(flat);
                       }}
-                      className="px-2.5 py-1 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-lg transition-all shadow-xs"
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all shadow-xs ${
+                        isNotInterested
+                          ? 'text-slate-700 bg-slate-200/90 hover:bg-slate-300 border border-slate-300/80'
+                          : 'text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95'
+                      }`}
                     >
                       Pay
                     </button>
@@ -1395,6 +1431,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           setPayModalOpen(false);
           setSelectedFlatForPayment(null);
           setIsEditingExpectedFee(false);
+          setIsPassesDropdownOpen(false);
+          setIsInterestDropdownOpen(false);
         }}
         title={
           selectedFlatForPayment
@@ -1606,33 +1644,211 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
               {/* Passes & Interest Status */}
               <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                <Select
-                  label="Passes"
-                  value={String(passes)}
-                  onChange={(e) => setPasses(Number(e.target.value))}
-                  options={[
-                    { value: '1', label: '1' },
-                    { value: '2', label: '2' },
-                    { value: '3', label: '3' },
-                    { value: '4', label: '4' },
-                    { value: '5', label: '5' },
-                    { value: '6', label: '6' },
-                    { value: '7', label: '7' },
-                    { value: '8', label: '8' },
-                    { value: '9', label: '9' },
-                    { value: '10', label: '10' },
-                  ]}
-                />
-                <Select
-                  label="Interest Status"
-                  value={interestStatus}
-                  onChange={(e) => setInterestStatus(e.target.value)}
-                  options={[
-                    { value: 'interested', label: 'Interested' },
-                    { value: 'not_interested', label: 'Not Interested' },
-                    { value: 'to_be_confirmed', label: 'To Be Confirmed' },
-                  ]}
-                />
+                {/* 1. Dynamic Themed Passes Dropdown */}
+                <div className="relative" ref={passesDropdownRef}>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Passes <span className="text-slate-400 font-normal text-[10px]">(Allotted)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPassesDropdownOpen(!isPassesDropdownOpen);
+                      setIsInterestDropdownOpen(false);
+                    }}
+                    disabled={interestStatus === 'not_interested'}
+                    className={`w-full h-9 px-3 bg-white border rounded-lg flex items-center justify-between transition-all text-xs font-semibold ${
+                      interestStatus === 'not_interested'
+                        ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
+                        : isPassesDropdownOpen
+                        ? 'border-indigo-500 ring-2 ring-indigo-500/20 text-slate-900 shadow-xs'
+                        : 'border-slate-300 hover:border-slate-400 text-slate-800 shadow-2xs'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="w-5 h-5 rounded bg-purple-50 border border-purple-200/60 flex items-center justify-center shrink-0">
+                        <Ticket className="w-3 h-3 text-purple-600" />
+                      </div>
+                      <span className="font-bold text-slate-800 truncate">
+                        {interestStatus === 'not_interested' ? '0 Passes' : `${passes} ${passes === 1 ? 'Pass' : 'Passes'}`}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
+                        isPassesDropdownOpen ? 'rotate-180 text-indigo-600' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Dynamic Passes Menu */}
+                  {isPassesDropdownOpen && (
+                    <div className="absolute left-0 right-0 mt-1.5 p-2 bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="flex items-center justify-between px-1 mb-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Select Passes
+                        </span>
+                        <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200/50">
+                          {passes} {passes === 1 ? 'Pass' : 'Passes'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                          const isSelected = passes === num;
+                          return (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => {
+                                setPasses(num);
+                                setIsPassesDropdownOpen(false);
+                              }}
+                              className={`h-8 rounded-lg text-xs font-bold flex items-center justify-center transition-all ${
+                                isSelected
+                                  ? 'bg-purple-600 text-white shadow-xs font-black scale-105 ring-2 ring-purple-300'
+                                  : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 border border-slate-200/60'
+                              }`}
+                            >
+                              {num}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-2 pt-1.5 border-t border-slate-100 text-[10px] text-slate-400 text-center">
+                        Passes allotted upon receipt confirmation
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Dynamic Themed Interest Status Dropdown */}
+                <div className="relative" ref={interestDropdownRef}>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Interest Status
+                  </label>
+                  {(() => {
+                    const currentStatus =
+                      interestStatus === 'interested'
+                        ? {
+                            label: 'Interested',
+                            badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+                            icon: CheckCircle2,
+                            iconColor: 'text-emerald-600',
+                          }
+                        : interestStatus === 'not_interested'
+                        ? {
+                            label: 'Not Interested',
+                            badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
+                            icon: XCircle,
+                            iconColor: 'text-slate-500',
+                          }
+                        : {
+                            label: 'To Be Confirmed',
+                            badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/80',
+                            icon: Clock,
+                            iconColor: 'text-amber-600',
+                          };
+                    const StatusIcon = currentStatus.icon;
+
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsInterestDropdownOpen(!isInterestDropdownOpen);
+                            setIsPassesDropdownOpen(false);
+                          }}
+                          className={`w-full h-9 px-3 bg-white border rounded-lg flex items-center justify-between transition-all text-xs font-semibold ${
+                            isInterestDropdownOpen
+                              ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs'
+                              : 'border-slate-300 hover:border-slate-400 shadow-2xs'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border flex items-center gap-1 ${currentStatus.badgeClass}`}>
+                              <StatusIcon className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{currentStatus.label}</span>
+                            </span>
+                          </div>
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
+                              isInterestDropdownOpen ? 'rotate-180 text-indigo-600' : ''
+                            }`}
+                          />
+                        </button>
+
+                        {/* Dynamic Interest Status Menu */}
+                        {isInterestDropdownOpen && (
+                          <div className="absolute left-0 right-0 mt-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
+                            {[
+                              {
+                                value: 'interested',
+                                label: 'Interested',
+                                subtitle: 'Participating in event',
+                                icon: CheckCircle2,
+                                activeClass: 'bg-emerald-50 text-emerald-950 border-emerald-300',
+                                iconBg: 'bg-emerald-100 text-emerald-700',
+                                badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                              },
+                              {
+                                value: 'to_be_confirmed',
+                                label: 'To Be Confirmed',
+                                subtitle: 'Awaiting resident confirmation',
+                                icon: Clock,
+                                activeClass: 'bg-amber-50 text-amber-950 border-amber-300',
+                                iconBg: 'bg-amber-100 text-amber-700',
+                                badgeBg: 'bg-amber-50 text-amber-700 border-amber-200',
+                              },
+                              {
+                                value: 'not_interested',
+                                label: 'Not Interested',
+                                subtitle: 'Not attending this event',
+                                icon: XCircle,
+                                activeClass: 'bg-slate-100 text-slate-900 border-slate-300',
+                                iconBg: 'bg-slate-200 text-slate-700',
+                                badgeBg: 'bg-slate-100 text-slate-700 border-slate-300',
+                              },
+                            ].map((opt) => {
+                              const isSelected = interestStatus === opt.value;
+                              const OptIcon = opt.icon;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setInterestStatus(opt.value);
+                                    if (opt.value === 'not_interested') {
+                                      setPasses(0);
+                                    } else if (passes === 0) {
+                                      setPasses(1);
+                                    }
+                                    setIsInterestDropdownOpen(false);
+                                  }}
+                                  className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-all border ${
+                                    isSelected
+                                      ? opt.activeClass
+                                      : 'border-transparent hover:bg-slate-50 text-slate-700'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${opt.iconBg}`}>
+                                      <OptIcon className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <span className="text-xs font-bold block leading-tight">{opt.label}</span>
+                                      <span className="text-[10px] text-slate-500 block truncate">{opt.subtitle}</span>
+                                    </div>
+                                  </div>
+                                  {isSelected && (
+                                    <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0 ml-1" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
               </div>
 
               {/* UPI QR Code Quick View Card */}
@@ -1722,6 +1938,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   onClick={() => {
                     setPayModalOpen(false);
                     setSelectedFlatForPayment(null);
+                    setIsPassesDropdownOpen(false);
+                    setIsInterestDropdownOpen(false);
                   }}
                   disabled={isProcessingPayment}
                 >

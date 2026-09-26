@@ -28,6 +28,7 @@ import {
   Sparkles,
   Tag,
   Coins,
+  Megaphone,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -55,7 +56,7 @@ export const MobileAppLayout: React.FC = () => {
             setRecentNotices(res.data);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [selectedSocietyId]);
 
@@ -180,6 +181,13 @@ export const MobileAppLayout: React.FC = () => {
       to: AppRoutes.INCOME_CATEGORIES,
       icon: Coins,
       color: 'bg-emerald-50 text-emerald-700',
+    },
+    {
+      title: 'Advertising',
+      description: 'Categories & commercial advertisement spots',
+      to: AppRoutes.ADVERTISING,
+      icon: Megaphone,
+      color: 'bg-purple-50 text-purple-600',
     },
   ];
 

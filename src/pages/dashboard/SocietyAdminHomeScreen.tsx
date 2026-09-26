@@ -11,6 +11,7 @@ import {
   ScrollText,
   DollarSign,
   Utensils,
+  Megaphone,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -103,6 +104,15 @@ export const SocietyAdminHomeScreen: React.FC = () => {
         } else {
           navigate(AppRoutes.EVENTS);
         }
+      },
+    },
+    {
+      title: 'Advertising',
+      icon: Megaphone,
+      iconStyle: 'bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-indigo-100/50',
+      badge: undefined,
+      onClick: () => {
+        navigate(AppRoutes.ADVERTISING);
       },
     },
   ];
