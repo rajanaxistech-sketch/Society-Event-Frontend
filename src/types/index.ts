@@ -1455,6 +1455,17 @@ export interface AdvertisementItem {
   societyId?: string | null;
   society_id?: string | null;
   society?: { id: string; name: string; code?: string } | null;
+  eventId?: string | null;
+  event_id?: string | null;
+  event?: {
+    id: string;
+    name?: string;
+    title?: string;
+    is_navratri?: boolean;
+    isNavratri?: boolean;
+    startDate?: string;
+    start_date?: string;
+  } | null;
   element: string;
   advertisementCategoryId: string;
   advertisement_category_id?: string;
@@ -1473,6 +1484,20 @@ export interface AdvertisementItem {
   mode_of_payment?: string;
   paymentStatus: AdvertisementPaymentStatus;
   payment_status?: AdvertisementPaymentStatus;
+  transactionReference?: string | null;
+  transaction_reference?: string | null;
+  chequeNumber?: string | null;
+  cheque_number?: string | null;
+  bankName?: string | null;
+  bank_name?: string | null;
+  chequeDate?: string | null;
+  cheque_date?: string | null;
+  paymentDate?: string | null;
+  payment_date?: string | null;
+  proofUrl?: string | null;
+  proof_url?: string | null;
+  amountPaid?: number | null;
+  amount_paid?: number | null;
   status: 'active' | 'inactive' | string;
   createdBy?: string | null;
   created_by?: string | null;
@@ -1486,9 +1511,17 @@ export interface AdvertisementItem {
 export interface CreateAdvertisementInput {
   element: string;
   advertisementCategoryId: string;
+  eventId?: string | null;
   remarks?: string | null;
   modeOfPayment: string;
   paymentStatus?: AdvertisementPaymentStatus;
+  transactionReference?: string | null;
+  chequeNumber?: string | null;
+  bankName?: string | null;
+  chequeDate?: string | null;
+  paymentDate?: string | null;
+  proofUrl?: string | null;
+  amountPaid?: number | null;
   societyId?: string | null;
   status?: 'active' | 'inactive';
 }
@@ -1496,9 +1529,17 @@ export interface CreateAdvertisementInput {
 export interface UpdateAdvertisementInput {
   element?: string;
   advertisementCategoryId?: string;
+  eventId?: string | null;
   remarks?: string | null;
   modeOfPayment?: string;
   paymentStatus?: AdvertisementPaymentStatus;
+  transactionReference?: string | null;
+  chequeNumber?: string | null;
+  bankName?: string | null;
+  chequeDate?: string | null;
+  paymentDate?: string | null;
+  proofUrl?: string | null;
+  amountPaid?: number | null;
   societyId?: string | null;
   status?: 'active' | 'inactive';
 }

@@ -64,6 +64,28 @@ const ELEMENT_SUGGESTIONS = [
   'Digital App Notice Banner',
 ];
 
+const formatPaymentMethodName = (m: PaymentMethodItem) => {
+  if (!m) return '';
+  const code = (m.code || '').trim();
+  const name = (m.name || '').trim();
+
+  if (name && name.toLowerCase() !== code.toLowerCase()) {
+    return name;
+  }
+
+  const raw = name || code;
+  if (raw.toUpperCase() === 'UPI') return 'UPI / QR Code';
+  if (raw.toUpperCase() === 'BANK_TRANSFER') return 'Bank Transfer (NEFT/RTGS)';
+  if (raw.toUpperCase() === 'CASH') return 'Cash';
+  if (raw.toUpperCase() === 'CHEQUE') return 'Cheque';
+  if (raw.toUpperCase() === 'ONLINE') return 'Online Portal';
+
+  return raw
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 export const AdvertisingHubPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTabParam = searchParams.get('tab') || 'ads'; // 'ads' or 'categories'
@@ -1029,12 +1051,12 @@ export const AdvertisingHubPage: React.FC = () => {
               <select
                 value={adFormData.modeOfPayment}
                 onChange={(e) => setAdFormData({ ...adFormData, modeOfPayment: e.target.value })}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
               >
                 {paymentMethods.length > 0 ? (
                   paymentMethods.map((m) => (
                     <option key={m.id} value={m.code}>
-                      {m.name} ({m.code})
+                      {formatPaymentMethodName(m)}
                     </option>
                   ))
                 ) : (
@@ -1110,7 +1132,7 @@ export const AdvertisingHubPage: React.FC = () => {
         size="md"
       >
         <form onSubmit={handleSaveCategory} className="space-y-4">
-          {/* Category Name */}
+          {/* 1. Category Name */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
               Category Name <span className="text-rose-500">*</span>
@@ -1130,7 +1152,21 @@ export const AdvertisingHubPage: React.FC = () => {
             )}
           </div>
 
-          {/* Category Amount & Number of Units Row */}
+          {/* 2. Category Description */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Category Description
+            </label>
+            <textarea
+              rows={3}
+              value={catFormData.categoryDescription}
+              onChange={(e) => setCatFormData({ ...catFormData, categoryDescription: e.target.value })}
+              placeholder="e.g. Main entrance banner advertisement with 10x4 ft dimension specifications."
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            />
+          </div>
+
+          {/* 3 & 4. Category Amount & Category Units */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Category Amount */}
             <div>
@@ -1159,10 +1195,10 @@ export const AdvertisingHubPage: React.FC = () => {
               )}
             </div>
 
-            {/* Number of Units */}
+            {/* Category Units */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Number of Units <span className="text-rose-500">*</span>
+                Category Units <span className="text-rose-500">*</span>
               </label>
               <input
                 type="number"
@@ -1180,20 +1216,6 @@ export const AdvertisingHubPage: React.FC = () => {
                 <p className="text-[11px] text-rose-500 mt-1 font-medium">{catFormErrors.numberOfUnits}</p>
               )}
             </div>
-          </div>
-
-          {/* Category Description */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Category Description
-            </label>
-            <textarea
-              rows={3}
-              value={catFormData.categoryDescription}
-              onChange={(e) => setCatFormData({ ...catFormData, categoryDescription: e.target.value })}
-              placeholder="e.g. Main entrance banner advertisement with 10x4 ft dimension specifications."
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-            />
           </div>
 
           {/* Form Actions */}

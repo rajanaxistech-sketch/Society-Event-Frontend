@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { advertisementsService } from '../../api/advertisementsService';
 import { advertisementCategoriesService } from '../../api/advertisementCategoriesService';
 import { paymentMethodsService } from '../../api/paymentMethodsService';
-import { societiesService } from '../../api/societiesService';
+import { eventsService } from '../../api/eventsService';
 import {
   AdvertisementCategoryItem,
   AdvertisementItem,
   AdvertisementPaymentStatus,
   PaginationMeta,
   PaymentMethodItem,
+  EventItem,
 } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
@@ -20,6 +21,9 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import Spinner from '../../components/ui/Spinner';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import sampleQrCodeImg from '../../assets/Sample-Qr-Code.png';
+import { SAMPLE_QR_CODE_DATA_URL } from '../../assets/sampleQrCodeData';
+import { UpiProofCapture } from '../../components/common/UpiProofCapture';
 import {
   ArrowLeft,
   Megaphone,
@@ -27,11 +31,17 @@ import {
   Edit2,
   Trash2,
   RefreshCw,
+  Search,
   CreditCard,
   CheckCircle2,
   Clock,
   AlertCircle,
-  Search,
+  Calendar,
+  QrCode,
+  Banknote,
+  FileText,
+  Building2,
+  Check,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -48,6 +58,42 @@ const ELEMENT_SUGGESTIONS = [
   'Digital App Notice Banner',
 ];
 
+const getEventDisplayName = (ev?: EventItem | null): string => {
+  if (!ev) return '';
+  return ev.name || (ev as any).title || 'Event';
+};
+
+const isNavratriEvent = (ev?: EventItem | null): boolean => {
+  if (!ev) return false;
+  return Boolean(
+    ev.is_navratri ||
+    (ev as any).isNavratri ||
+    /navratri/i.test(ev.name || (ev as any).title || '')
+  );
+};
+
+const formatPaymentMethodName = (m: PaymentMethodItem) => {
+  if (!m) return '';
+  const code = (m.code || '').trim();
+  const name = (m.name || '').trim();
+
+  if (name && name.toLowerCase() !== code.toLowerCase()) {
+    return name;
+  }
+
+  const raw = name || code;
+  if (raw.toUpperCase() === 'UPI') return 'UPI / QR Code';
+  if (raw.toUpperCase() === 'BANK_TRANSFER') return 'Bank Transfer (NEFT/RTGS)';
+  if (raw.toUpperCase() === 'CASH') return 'Cash';
+  if (raw.toUpperCase() === 'CHEQUE') return 'Cheque';
+  if (raw.toUpperCase() === 'ONLINE') return 'Online Portal';
+
+  return raw
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 export const AdvertisementsPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -60,9 +106,16 @@ export const AdvertisementsPage: React.FC = () => {
   const [adsStatusFilter, setAdsStatusFilter] = useState('');
   const [adsCategoryFilter, setAdsCategoryFilter] = useState('');
 
-  // Master options
+  // Events & Master options
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [allCategories, setAllCategories] = useState<AdvertisementCategoryItem[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodItem[]>([]);
+
+  // QR Modal & Proof Capture State
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [proofFile, setProofFile] = useState<File | Blob | null>(null);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
 
   // Form Modal State
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
@@ -71,8 +124,15 @@ export const AdvertisementsPage: React.FC = () => {
   const [adFormData, setAdFormData] = useState({
     element: '',
     advertisementCategoryId: '',
-    modeOfPayment: 'UPI',
+    eventId: '',
+    modeOfPayment: 'CASH',
     paymentStatus: 'pending' as AdvertisementPaymentStatus,
+    amountPaid: '',
+    paymentDate: new Date().toISOString().split('T')[0],
+    transactionReference: '',
+    chequeNumber: '',
+    bankName: '',
+    chequeDate: '',
     remarks: '',
     societyId: '',
   });
@@ -85,13 +145,19 @@ export const AdvertisementsPage: React.FC = () => {
 
   const loadMasterData = async () => {
     try {
-      const [catRes, payRes] = await Promise.all([
+      const [catRes, payRes, eventsRes] = await Promise.all([
         advertisementCategoriesService.getAll({
           limit: 100,
           societyId: selectedSocietyId || undefined,
           status: 'active',
         }).catch(() => null),
         paymentMethodsService.getAll().catch(() => null),
+        eventsService.getAll({
+          societyId: selectedSocietyId || undefined,
+          limit: 100,
+          sortBy: 'start_date',
+          sortOrder: 'asc',
+        }).catch(() => null),
       ]);
 
       if (catRes?.success && catRes.data) {
@@ -99,6 +165,15 @@ export const AdvertisementsPage: React.FC = () => {
       }
       if (payRes?.success && payRes.data) {
         setPaymentMethods(payRes.data);
+      }
+      if (eventsRes?.success && eventsRes.data) {
+        const evList = eventsRes.data;
+        setEvents(evList);
+        if (evList.length > 0) {
+          const navratriEvent = evList.find((e) => isNavratriEvent(e));
+          const defaultEvent = navratriEvent || evList[0];
+          setSelectedEventId((prev) => prev || defaultEvent.id);
+        }
       }
     } catch (err) {
       console.error('Failed to load master data', err);
@@ -114,6 +189,7 @@ export const AdvertisementsPage: React.FC = () => {
         search: adsSearch || undefined,
         paymentStatus: adsStatusFilter || undefined,
         advertisementCategoryId: adsCategoryFilter || undefined,
+        eventId: selectedEventId || undefined,
         societyId: selectedSocietyId || undefined,
       });
 
@@ -136,19 +212,43 @@ export const AdvertisementsPage: React.FC = () => {
 
   useEffect(() => {
     fetchAds();
-  }, [adsMeta.page, adsSearch, adsStatusFilter, adsCategoryFilter, selectedSocietyId]);
+  }, [adsMeta.page, adsSearch, adsStatusFilter, adsCategoryFilter, selectedEventId, selectedSocietyId]);
+
+  const dynamicElementSuggestions = useMemo(() => {
+    const existingAdElements = ads.map((a) => a.element).filter(Boolean);
+    return Array.from(new Set([...ELEMENT_SUGGESTIONS, ...existingAdElements]));
+  }, [ads]);
 
   const handleOpenCreateAdModal = () => {
     setIsEditingAd(false);
     setCurrentAdId(null);
+    const navratriEv = events.find((e) => isNavratriEvent(e));
+    const defaultEvId =
+      selectedEventId ||
+      navratriEv?.id ||
+      (events.length > 0 ? events[0].id : '');
+
+    const defaultCat = allCategories.length > 0 ? allCategories[0] : null;
+    const defaultCatId = defaultCat ? defaultCat.id : '';
+    const defaultAmount = defaultCat ? String(defaultCat.categoryAmount ?? (defaultCat as any).category_amount ?? '') : '';
+
     setAdFormData({
       element: '',
-      advertisementCategoryId: allCategories.length > 0 ? allCategories[0].id : '',
-      modeOfPayment: paymentMethods.length > 0 ? paymentMethods[0].code : 'UPI',
+      advertisementCategoryId: defaultCatId,
+      eventId: defaultEvId,
+      modeOfPayment: 'CASH',
       paymentStatus: 'pending',
+      amountPaid: defaultAmount,
+      paymentDate: new Date().toISOString().split('T')[0],
+      transactionReference: '',
+      chequeNumber: '',
+      bankName: '',
+      chequeDate: '',
       remarks: '',
       societyId: selectedSocietyId || '',
     });
+    setProofFile(null);
+    setProofPreviewUrl(null);
     setAdFormErrors({});
     setIsAdModalOpen(true);
   };
@@ -156,14 +256,38 @@ export const AdvertisementsPage: React.FC = () => {
   const handleOpenEditAdModal = (item: AdvertisementItem) => {
     setIsEditingAd(true);
     setCurrentAdId(item.id);
+    const navratriEv = events.find((e) => isNavratriEvent(e));
+    const fallbackEvId = selectedEventId || navratriEv?.id || (events.length > 0 ? events[0].id : '');
+
+    const catAmount = item.amountPaid != null
+      ? String(item.amountPaid)
+      : (item as any).amount_paid != null
+        ? String((item as any).amount_paid)
+        : item.advertisementCategory?.categoryAmount != null
+          ? String(item.advertisementCategory.categoryAmount)
+          : '';
+
     setAdFormData({
       element: item.element,
       advertisementCategoryId: item.advertisementCategoryId || (item as any).advertisement_category_id || '',
+      eventId: item.eventId || (item as any).event_id || fallbackEvId || '',
       modeOfPayment: item.modeOfPayment || (item as any).mode_of_payment || 'CASH',
       paymentStatus: (item.paymentStatus || (item as any).payment_status || 'pending') as AdvertisementPaymentStatus,
+      amountPaid: catAmount,
+      paymentDate: item.paymentDate
+        ? item.paymentDate.split('T')[0]
+        : (item as any).payment_date
+          ? (item as any).payment_date.split('T')[0]
+          : new Date().toISOString().split('T')[0],
+      transactionReference: item.transactionReference || (item as any).transaction_reference || '',
+      chequeNumber: item.chequeNumber || (item as any).cheque_number || '',
+      bankName: item.bankName || (item as any).bank_name || '',
+      chequeDate: item.chequeDate ? item.chequeDate.split('T')[0] : (item as any).cheque_date ? (item as any).cheque_date.split('T')[0] : '',
       remarks: item.remarks || '',
       societyId: item.societyId || (item as any).society_id || selectedSocietyId || '',
     });
+    setProofFile(null);
+    setProofPreviewUrl(item.proofUrl || (item as any).proof_url || null);
     setAdFormErrors({});
     setIsAdModalOpen(true);
   };
@@ -179,6 +303,9 @@ export const AdvertisementsPage: React.FC = () => {
     if (!adFormData.modeOfPayment.trim()) {
       errors.modeOfPayment = 'Mode of Payment is required';
     }
+    if (adFormData.modeOfPayment === 'CHEQUE' && !adFormData.chequeNumber.trim()) {
+      errors.chequeNumber = 'Cheque Number is required';
+    }
     if (!['pending', 'partial', 'completed'].includes(adFormData.paymentStatus)) {
       errors.paymentStatus = 'Payment status must be Pending, Partial, or Completed';
     }
@@ -192,25 +319,35 @@ export const AdvertisementsPage: React.FC = () => {
 
     try {
       setIsAdSubmitting(true);
+      const navratriEv = events.find((e) => isNavratriEvent(e));
+      const targetEventId =
+        adFormData.eventId ||
+        selectedEventId ||
+        navratriEv?.id ||
+        (events.length > 0 ? events[0].id : undefined);
+
+      const payload = {
+        element: adFormData.element.trim(),
+        advertisementCategoryId: adFormData.advertisementCategoryId,
+        eventId: targetEventId,
+        modeOfPayment: adFormData.modeOfPayment,
+        paymentStatus: adFormData.paymentStatus,
+        amountPaid: adFormData.amountPaid ? Number(adFormData.amountPaid) : undefined,
+        paymentDate: adFormData.paymentDate || undefined,
+        transactionReference: adFormData.transactionReference.trim() || null,
+        chequeNumber: adFormData.chequeNumber.trim() || null,
+        bankName: adFormData.bankName.trim() || null,
+        chequeDate: adFormData.chequeDate || null,
+        proofUrl: proofPreviewUrl || null,
+        remarks: adFormData.remarks.trim() || null,
+        societyId: adFormData.societyId || undefined,
+      };
+
       if (isEditingAd && currentAdId) {
-        await advertisementsService.update(currentAdId, {
-          element: adFormData.element.trim(),
-          advertisementCategoryId: adFormData.advertisementCategoryId,
-          modeOfPayment: adFormData.modeOfPayment,
-          paymentStatus: adFormData.paymentStatus,
-          remarks: adFormData.remarks.trim() || null,
-          societyId: adFormData.societyId || undefined,
-        });
+        await advertisementsService.update(currentAdId, payload);
         toast.success('Advertisement updated successfully');
       } else {
-        await advertisementsService.create({
-          element: adFormData.element.trim(),
-          advertisementCategoryId: adFormData.advertisementCategoryId,
-          modeOfPayment: adFormData.modeOfPayment,
-          paymentStatus: adFormData.paymentStatus,
-          remarks: adFormData.remarks.trim() || null,
-          societyId: adFormData.societyId || undefined,
-        });
+        await advertisementsService.create(payload);
         toast.success('Advertisement created successfully');
       }
       setIsAdModalOpen(false);
@@ -256,23 +393,23 @@ export const AdvertisementsPage: React.FC = () => {
     const norm = (status || '').toLowerCase();
     if (norm === 'completed') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
           Completed
         </span>
       );
     }
     if (norm === 'partial') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-          <Clock className="w-3 h-3 text-blue-600" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+          <Clock className="w-2.5 h-2.5 text-blue-600" />
           Partial
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-        <AlertCircle className="w-3 h-3 text-amber-600" />
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold bg-amber-50 text-amber-700 border border-amber-100">
+        <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
         Pending
       </span>
     );
@@ -288,63 +425,44 @@ export const AdvertisementsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3.5 animate-in fade-in duration-200 pb-8">
-      {/* Header with Back Button */}
-      <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
+    <div className="space-y-3 animate-in fade-in duration-200 pb-8">
+      {/* Sleek Minimalist Header */}
+      <div className="flex items-center justify-between gap-3 pt-1">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => navigate(AppRoutes.ADVERTISING)}
-            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-600 flex items-center justify-center transition-all cursor-pointer"
+            className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/90 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
             title="Back to Advertising"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+          <div className="flex items-center gap-2">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none">
               Advertisements
             </h1>
-            <p className="text-[11px] text-slate-500 font-medium">Manage advertisements & spots</p>
+            {adsMeta.total > 0 && (
+              <span className="text-[11px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">
+                {adsMeta.total}
+              </span>
+            )}
           </div>
         </div>
 
-        <Button variant="primary" size="sm" onClick={handleOpenCreateAdModal}>
-          <Plus className="w-4 h-4 mr-1" />
-          Add Ad
-        </Button>
+        <button
+          type="button"
+          onClick={handleOpenCreateAdModal}
+          className="w-8 h-8 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] active:bg-[#4338CA] text-white flex items-center justify-center shadow-2xs transition-all cursor-pointer shrink-0"
+          title="Add Advertisement"
+          aria-label="Add Advertisement"
+        >
+          <Plus className="w-4.5 h-4.5" />
+        </button>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <span className="text-[10.5px] font-medium text-slate-500 uppercase tracking-wider block">
-            Total Ads
-          </span>
-          <p className="text-lg font-bold text-slate-800 mt-0.5">{adsStats.total}</p>
-        </div>
-        <div className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/60 shadow-2xs">
-          <span className="text-[10.5px] font-semibold text-emerald-700 uppercase tracking-wider block">
-            Completed
-          </span>
-          <p className="text-lg font-bold text-emerald-800 mt-0.5">{adsStats.completed}</p>
-        </div>
-        <div className="bg-blue-50/60 p-3 rounded-2xl border border-blue-200/60 shadow-2xs">
-          <span className="text-[10.5px] font-semibold text-blue-700 uppercase tracking-wider block">
-            Partial
-          </span>
-          <p className="text-lg font-bold text-blue-800 mt-0.5">{adsStats.partial}</p>
-        </div>
-        <div className="bg-amber-50/60 p-3 rounded-2xl border border-amber-200/60 shadow-2xs">
-          <span className="text-[10.5px] font-semibold text-amber-700 uppercase tracking-wider block">
-            Pending
-          </span>
-          <p className="text-lg font-bold text-amber-800 mt-0.5">{adsStats.pending}</p>
-        </div>
-      </div>
-
-      {/* Search & Filters */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-2">
-        <div className="relative flex-1 w-full">
+      {/* Sleek Search & Master Filter Row */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -353,68 +471,139 @@ export const AdvertisementsPage: React.FC = () => {
               setAdsSearch(e.target.value);
               setAdsMeta((prev) => ({ ...prev, page: 1 }));
             }}
-            placeholder="Search by element, category, mode..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            placeholder="Search advertisements..."
+            className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-200/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 shadow-2xs transition-all"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        {events.length > 0 && (
           <select
-            value={adsStatusFilter}
+            value={selectedEventId}
             onChange={(e) => {
-              setAdsStatusFilter(e.target.value);
+              setSelectedEventId(e.target.value);
               setAdsMeta((prev) => ({ ...prev, page: 1 }));
             }}
-            className="flex-1 sm:flex-none text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-700 focus:outline-none"
+            className="text-xs bg-white border border-slate-200/90 rounded-xl px-2.5 py-2 text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 max-w-[130px] truncate cursor-pointer font-medium"
+            title="Filter by event"
           >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="partial">Partial</option>
-            <option value="completed">Completed</option>
+            <option value="">All Events</option>
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {getEventDisplayName(ev)}
+              </option>
+            ))}
           </select>
+        )}
 
+        {allCategories.length > 0 && (
           <select
             value={adsCategoryFilter}
             onChange={(e) => {
               setAdsCategoryFilter(e.target.value);
               setAdsMeta((prev) => ({ ...prev, page: 1 }));
             }}
-            className="flex-1 sm:flex-none text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-700 focus:outline-none"
+            className="text-xs bg-white border border-slate-200/90 rounded-xl px-2.5 py-2 text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 max-w-[120px] truncate cursor-pointer font-medium"
+            title="Filter by category"
           >
             <option value="">All Categories</option>
-            {allCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.categoryName || (c as any).category_name}
+            {allCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.categoryName || (cat as any).category_name}
               </option>
             ))}
           </select>
+        )}
 
-          <button
-            type="button"
-            onClick={() => fetchAds()}
-            className="p-1.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-100 transition-all"
-            title="Refresh"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => fetchAds()}
+          className="p-2 rounded-xl bg-white border border-slate-200/90 text-slate-500 hover:bg-slate-50 hover:text-slate-700 shadow-2xs transition-all cursor-pointer shrink-0"
+          title="Refresh"
+        >
+          <RefreshCw className={clsx('w-4 h-4', adsLoading && 'animate-spin text-indigo-600')} />
+        </button>
       </div>
 
-      {/* Ads List */}
+      {/* Minimalist Status Filter Strip */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+        <button
+          type="button"
+          onClick={() => {
+            setAdsStatusFilter('');
+            setAdsMeta((prev) => ({ ...prev, page: 1 }));
+          }}
+          className={clsx(
+            'px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border',
+            adsStatusFilter === ''
+              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+              : 'bg-white text-slate-600 border-slate-200/90 hover:bg-slate-50 shadow-2xs'
+          )}
+        >
+          All ({adsStats.total})
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAdsStatusFilter('completed');
+            setAdsMeta((prev) => ({ ...prev, page: 1 }));
+          }}
+          className={clsx(
+            'px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border flex items-center gap-1.5',
+            adsStatusFilter === 'completed'
+              ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+              : 'bg-white text-emerald-700 border-slate-200/90 hover:bg-emerald-50/50 shadow-2xs'
+          )}
+        >
+          <span className={clsx('w-1.5 h-1.5 rounded-full', adsStatusFilter === 'completed' ? 'bg-white' : 'bg-emerald-500')} />
+          Completed ({adsStats.completed})
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAdsStatusFilter('partial');
+            setAdsMeta((prev) => ({ ...prev, page: 1 }));
+          }}
+          className={clsx(
+            'px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border flex items-center gap-1.5',
+            adsStatusFilter === 'partial'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+              : 'bg-white text-blue-700 border-slate-200/90 hover:bg-blue-50/50 shadow-2xs'
+          )}
+        >
+          <span className={clsx('w-1.5 h-1.5 rounded-full', adsStatusFilter === 'partial' ? 'bg-white' : 'bg-blue-500')} />
+          Partial ({adsStats.partial})
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setAdsStatusFilter('pending');
+            setAdsMeta((prev) => ({ ...prev, page: 1 }));
+          }}
+          className={clsx(
+            'px-2.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border flex items-center gap-1.5',
+            adsStatusFilter === 'pending'
+              ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
+              : 'bg-white text-amber-700 border-slate-200/90 hover:bg-amber-50/50 shadow-2xs'
+          )}
+        >
+          <span className={clsx('w-1.5 h-1.5 rounded-full', adsStatusFilter === 'pending' ? 'bg-white' : 'bg-amber-500')} />
+          Pending ({adsStats.pending})
+        </button>
+      </div>
+
+      {/* Advertisements List */}
       {adsLoading ? (
-        <div className="bg-white rounded-2xl p-10 flex flex-col items-center justify-center border border-slate-200/80 shadow-xs">
+        <div className="bg-white rounded-xl p-10 flex flex-col items-center justify-center border border-slate-200/80 shadow-2xs">
           <Spinner size="md" label="Loading advertisements..." />
         </div>
       ) : ads.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto mb-2">
-            <Megaphone className="w-6 h-6" />
+        <div className="bg-white rounded-xl p-8 text-center border border-slate-200/80 shadow-2xs">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-2">
+            <Megaphone className="w-5 h-5" />
           </div>
           <h3 className="text-sm font-bold text-slate-800">No advertisements found</h3>
           <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
-            {adsSearch || adsStatusFilter || adsCategoryFilter
-              ? 'No advertisement matched your filters.'
-              : 'Add your first advertisement spot.'}
+            Create advertisement spots to manage sponsors and placements.
           </p>
           <div className="mt-3">
             <Button size="sm" variant="primary" onClick={handleOpenCreateAdModal}>
@@ -424,7 +613,7 @@ export const AdvertisementsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="grid grid-cols-1 gap-2.5">
             {ads.map((ad) => {
               const cat = ad.advertisementCategory;
@@ -432,19 +621,27 @@ export const AdvertisementsPage: React.FC = () => {
               const catAmount = cat?.categoryAmount ?? (cat as any)?.category_amount ?? 0;
               const paymentMode = ad.modeOfPayment || (ad as any).mode_of_payment || 'CASH';
               const paymentStatus = ad.paymentStatus || (ad as any).payment_status || 'pending';
+              const eventObj = events.find((e) => e.id === (ad.eventId || (ad as any).event_id));
+              const eventTitle = ad.event?.name || ad.event?.title || (eventObj ? getEventDisplayName(eventObj) : null);
 
               return (
                 <div
                   key={ad.id}
-                  className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs hover:border-indigo-200 transition-all"
+                  className="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200/80 hover:border-slate-300 shadow-2xs transition-all"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                        <span className="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100">
+                        <span className="text-[10.5px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100/80">
                           {catName}
                         </span>
                         {renderPaymentStatusBadge(paymentStatus)}
+                        {eventTitle && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10.5px] font-medium">
+                            <Calendar className="w-2.5 h-2.5 text-slate-400" />
+                            {eventTitle}
+                          </span>
+                        )}
                       </div>
                       <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug break-words">
                         {ad.element}
@@ -459,7 +656,7 @@ export const AdvertisementsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleOpenEditAdModal(ad)}
-                          className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200/80 flex items-center justify-center transition-all"
+                          className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 border border-slate-200/80 flex items-center justify-center transition-all cursor-pointer"
                           title="Edit"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -467,7 +664,7 @@ export const AdvertisementsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setAdDeleteTarget(ad)}
-                          className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200/80 flex items-center justify-center transition-all"
+                          className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 flex items-center justify-center transition-all cursor-pointer"
                           title="Delete"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -476,13 +673,36 @@ export const AdvertisementsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-1">
-                    <div className="flex items-center gap-1">
-                      <CreditCard className="w-3 h-3 text-slate-400" />
-                      <span>Mode: <strong className="text-slate-700">{paymentMode}</strong></span>
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200/80 font-semibold text-slate-700">
+                        {paymentMode === 'UPI' || paymentMode === 'QR' ? (
+                          <QrCode className="w-3 h-3 text-indigo-600" />
+                        ) : paymentMode === 'CASH' ? (
+                          <Banknote className="w-3 h-3 text-emerald-600" />
+                        ) : paymentMode === 'CHEQUE' ? (
+                          <FileText className="w-3 h-3 text-amber-600" />
+                        ) : (
+                          <Building2 className="w-3 h-3 text-sky-600" />
+                        )}
+                        <span>{paymentMode === 'UPI' ? 'UPI / QR' : paymentMode === 'BANK_TRANSFER' ? 'Transfer' : paymentMode === 'CHEQUE' ? 'Cheque' : 'Cash'}</span>
+                      </div>
+
+                      {(ad.chequeNumber || (ad as any).cheque_number) && (
+                        <span className="text-[10.5px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200/70 font-medium">
+                          Chq #{ad.chequeNumber || (ad as any).cheque_number}
+                        </span>
+                      )}
+
+                      {(ad.transactionReference || (ad as any).transaction_reference) && (
+                        <span className="text-[10.5px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono">
+                          Ref: {ad.transactionReference || (ad as any).transaction_reference}
+                        </span>
+                      )}
                     </div>
+
                     {ad.remarks && (
-                      <p className="text-[10.5px] text-slate-600 italic bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 truncate max-w-[200px]">
+                      <p className="text-[10.5px] text-slate-500 italic bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 truncate max-w-[200px]">
                         "{ad.remarks}"
                       </p>
                     )}
@@ -511,6 +731,7 @@ export const AdvertisementsPage: React.FC = () => {
         size="md"
       >
         <form onSubmit={handleSaveAd} className="space-y-3.5">
+          {/* Select Element */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
               Select Element <span className="text-rose-500">*</span>
@@ -522,12 +743,12 @@ export const AdvertisementsPage: React.FC = () => {
               onChange={(e) => setAdFormData({ ...adFormData, element: e.target.value })}
               placeholder="e.g. Main Entrance Banner, Stage Backdrop"
               className={clsx(
-                'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all',
+                'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800',
                 adFormErrors.element ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'
               )}
             />
             <datalist id="element-suggestions">
-              {ELEMENT_SUGGESTIONS.map((item) => (
+              {dynamicElementSuggestions.map((item) => (
                 <option key={item} value={item} />
               ))}
             </datalist>
@@ -536,15 +757,25 @@ export const AdvertisementsPage: React.FC = () => {
             )}
           </div>
 
+          {/* Select Advertisement Category */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
               Select Advertisement Category <span className="text-rose-500">*</span>
             </label>
             <select
               value={adFormData.advertisementCategoryId}
-              onChange={(e) => setAdFormData({ ...adFormData, advertisementCategoryId: e.target.value })}
+              onChange={(e) => {
+                const newCatId = e.target.value;
+                const chosenCat = allCategories.find((c) => c.id === newCatId);
+                const chosenAmount = chosenCat ? String(chosenCat.categoryAmount ?? (chosenCat as any).category_amount ?? '') : '';
+                setAdFormData({
+                  ...adFormData,
+                  advertisementCategoryId: newCatId,
+                  amountPaid: chosenAmount || adFormData.amountPaid,
+                });
+              }}
               className={clsx(
-                'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all',
+                'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800',
                 adFormErrors.advertisementCategoryId ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'
               )}
             >
@@ -559,6 +790,11 @@ export const AdvertisementsPage: React.FC = () => {
                 );
               })}
             </select>
+            {allCategories.length === 0 && (
+              <p className="text-[11px] text-amber-600 mt-1 font-medium">
+                No active advertisement categories found. Please create one in Category settings.
+              </p>
+            )}
             {adFormErrors.advertisementCategoryId && (
               <p className="text-[11px] text-rose-500 mt-1 font-medium">
                 {adFormErrors.advertisementCategoryId}
@@ -566,50 +802,233 @@ export const AdvertisementsPage: React.FC = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Mode of Payment <span className="text-rose-500">*</span>
-              </label>
-              <select
-                value={adFormData.modeOfPayment}
-                onChange={(e) => setAdFormData({ ...adFormData, modeOfPayment: e.target.value })}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-              >
-                {paymentMethods.length > 0 ? (
-                  paymentMethods.map((m) => (
-                    <option key={m.id} value={m.code}>
-                      {m.name} ({m.code})
-                    </option>
-                  ))
-                ) : (
-                  <>
-                    <option value="UPI">UPI / QR Code</option>
-                    <option value="CASH">Cash</option>
-                    <option value="BANK_TRANSFER">Bank Transfer (NEFT/RTGS)</option>
-                    <option value="CHEQUE">Cheque</option>
-                    <option value="ONLINE">Online Portal</option>
-                  </>
-                )}
-              </select>
+          {/* Payment Method with Visual Cards & Icons */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Payment Method <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+              {[
+                {
+                  code: 'UPI',
+                  name: 'UPI / QR',
+                  subtitle: 'GPay, QR',
+                  icon: QrCode,
+                  activeClass: 'border-indigo-600 bg-indigo-50/90 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs',
+                  iconColor: 'text-indigo-600 bg-indigo-100',
+                },
+                {
+                  code: 'CASH',
+                  name: 'Cash',
+                  subtitle: 'Physical',
+                  icon: Banknote,
+                  activeClass: 'border-emerald-600 bg-emerald-50/90 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs',
+                  iconColor: 'text-emerald-600 bg-emerald-100',
+                },
+                {
+                  code: 'CHEQUE',
+                  name: 'Cheque',
+                  subtitle: 'DD / Chq',
+                  icon: FileText,
+                  activeClass: 'border-amber-600 bg-amber-50/90 text-amber-950 ring-2 ring-amber-500/20 shadow-xs',
+                  iconColor: 'text-amber-600 bg-amber-100',
+                },
+                {
+                  code: 'BANK_TRANSFER',
+                  name: 'Transfer',
+                  subtitle: 'NEFT / IMPS',
+                  icon: Building2,
+                  activeClass: 'border-sky-600 bg-sky-50/90 text-sky-950 ring-2 ring-sky-500/20 shadow-xs',
+                  iconColor: 'text-sky-600 bg-sky-100',
+                },
+              ].map((item) => {
+                const isSelected = adFormData.modeOfPayment === item.code || (item.code === 'UPI' && adFormData.modeOfPayment === 'QR');
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => {
+                      setAdFormData({ ...adFormData, modeOfPayment: item.code });
+                      if (item.code === 'UPI' || item.code === 'QR') {
+                        setIsQrModalOpen(true);
+                      }
+                    }}
+                    className={`relative flex flex-col items-start p-2 sm:p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? item.activeClass
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1 sm:mb-1.5">
+                      <div
+                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center ${
+                          isSelected ? item.iconColor : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+                      {isSelected && (
+                        <span className="w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-indigo-300 animate-pulse" />
+                      )}
+                    </div>
+                    <span className="text-[11px] sm:text-xs font-bold leading-tight block truncate w-full">
+                      {item.name}
+                    </span>
+                    <span className="text-[9px] sm:text-[10px] text-slate-500 block truncate w-full mt-0.5">
+                      {item.subtitle}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
+          {/* Payment Amount and Payment Date in one row */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Payment Amount (₹) <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                value={adFormData.amountPaid}
+                onChange={(e) => setAdFormData({ ...adFormData, amountPaid: e.target.value })}
+                placeholder="e.g. 5000"
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Payment Date <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={adFormData.paymentDate}
+                onChange={(e) => setAdFormData({ ...adFormData, paymentDate: e.target.value })}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
+              />
+            </div>
+          </div>
+
+          {/* UPI QR Code Quick View Card */}
+          {(adFormData.modeOfPayment === 'UPI' || adFormData.modeOfPayment === 'QR') && (
+            <div className="flex items-center justify-between p-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-slate-50 shadow-xs animate-in fade-in duration-150">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <QrCode className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-indigo-950 block truncate">Society Payment QR Code</span>
+                  <span className="text-[10px] text-slate-500 block truncate">Scan using any UPI app (GPay, PhonePe, Paytm, BHIM)</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsQrModalOpen(true)}
+                className="border-indigo-300 text-indigo-700 bg-white hover:bg-indigo-50 h-8 text-xs font-semibold px-2.5 shadow-xs shrink-0 ml-2"
+              >
+                <QrCode className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                View QR Code
+              </Button>
+            </div>
+          )}
+
+          {/* UPI Live Camera Snapshot / Screenshot Upload Section */}
+          {(adFormData.modeOfPayment === 'UPI' || adFormData.modeOfPayment === 'QR') && (
+            <UpiProofCapture
+              onImageCaptured={(file, preview) => {
+                setProofFile(file);
+                setProofPreviewUrl(preview);
+              }}
+              existingProofUrl={proofPreviewUrl}
+            />
+          )}
+
+          {/* Cheque Details */}
+          {adFormData.modeOfPayment === 'CHEQUE' && (
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-3">
+              <span className="text-xs font-bold text-amber-900 block">Cheque Information</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block text-xs font-semibold text-amber-900 mb-1">
+                    Cheque Number <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 102938"
+                    value={adFormData.chequeNumber}
+                    onChange={(e) => setAdFormData({ ...adFormData, chequeNumber: e.target.value })}
+                    className={clsx(
+                      'w-full px-3 py-2 text-xs bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-medium text-slate-800',
+                      adFormErrors.chequeNumber ? 'border-rose-400' : 'border-amber-200'
+                    )}
+                  />
+                  {adFormErrors.chequeNumber && (
+                    <p className="text-[10px] text-rose-500 mt-1 font-medium">{adFormErrors.chequeNumber}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-amber-900 mb-1">
+                    Bank Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. State Bank of India"
+                    value={adFormData.bankName}
+                    onChange={(e) => setAdFormData({ ...adFormData, bankName: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-white border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-medium text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-amber-900 mb-1">
+                    Cheque Date
+                  </label>
+                  <input
+                    type="date"
+                    value={adFormData.chequeDate}
+                    onChange={(e) => setAdFormData({ ...adFormData, chequeDate: e.target.value })}
+                    className="w-full px-3 py-2 text-xs bg-white border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all font-medium text-slate-800"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Transaction / UPI Reference Number */}
+          {adFormData.modeOfPayment !== 'CHEQUE' && adFormData.modeOfPayment !== 'CASH' && (
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Payment Status <span className="text-rose-500">*</span>
+                Transaction / UPI Reference Number
               </label>
-              <select
-                value={adFormData.paymentStatus}
-                onChange={(e) =>
-                  setAdFormData({ ...adFormData, paymentStatus: e.target.value as AdvertisementPaymentStatus })
-                }
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-              >
-                <option value="pending">Pending</option>
-                <option value="partial">Partial</option>
-                <option value="completed">Completed</option>
-              </select>
+              <input
+                type="text"
+                placeholder={adFormData.modeOfPayment === 'UPI' || adFormData.modeOfPayment === 'QR' ? 'e.g. UPI/2026/09/99214' : 'e.g. NEFT/IMPS/2026/09/99214'}
+                value={adFormData.transactionReference}
+                onChange={(e) => setAdFormData({ ...adFormData, transactionReference: e.target.value })}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
+              />
             </div>
+          )}
+
+          {/* Payment Status */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Payment Status <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={adFormData.paymentStatus}
+              onChange={(e) =>
+                setAdFormData({ ...adFormData, paymentStatus: e.target.value as AdvertisementPaymentStatus })
+              }
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
+            >
+              <option value="pending">Pending</option>
+              <option value="partial">Partial</option>
+              <option value="completed">Completed</option>
+            </select>
           </div>
 
           <div>
@@ -621,7 +1040,7 @@ export const AdvertisementsPage: React.FC = () => {
               value={adFormData.remarks}
               onChange={(e) => setAdFormData({ ...adFormData, remarks: e.target.value })}
               placeholder="e.g. Sponsor contact details, placement notes..."
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
             />
           </div>
 
@@ -640,6 +1059,89 @@ export const AdvertisementsPage: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Society UPI QR Code Modal Popup */}
+      <Modal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        size="sm"
+        title={
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <QrCode className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-slate-900 text-sm sm:text-base block leading-tight">UPI Payment QR</span>
+              <span className="text-[10px] text-slate-500 block font-normal">Scan with GPay, PhonePe, Paytm, or BHIM</span>
+            </div>
+          </div>
+        }
+      >
+        <div className="flex flex-col items-center text-center space-y-3 py-1">
+          {/* Target Element & Category Details */}
+          <div className="w-full bg-slate-50 rounded-xl p-2.5 border border-slate-200/80 flex items-center justify-between text-xs">
+            <div className="text-left">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Spot / Element</span>
+              <span className="font-bold text-slate-800 truncate max-w-[150px] block">
+                {adFormData.element || 'Advertisement Spot'}
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Amount to Pay</span>
+              <span className="font-extrabold text-indigo-600 text-sm">
+                {formatCurrency(Number(adFormData.amountPaid) || 0)}
+              </span>
+            </div>
+          </div>
+
+          {/* QR Code Container Box */}
+          <div className="relative p-3.5 bg-white rounded-2xl border-2 border-indigo-100 shadow-md flex flex-col items-center w-full max-w-[280px]">
+            <div className="w-52 h-52 sm:w-56 sm:h-56 rounded-xl overflow-hidden bg-white p-1 flex items-center justify-center">
+              <img
+                src={SAMPLE_QR_CODE_DATA_URL || sampleQrCodeImg}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== SAMPLE_QR_CODE_DATA_URL) {
+                    target.src = SAMPLE_QR_CODE_DATA_URL;
+                  }
+                }}
+                alt="Society Payment UPI QR Code"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Red Warning Line under the QR code with * */}
+            <div className="w-full mt-2.5 pt-2 border-t border-rose-200">
+              <p className="text-xs font-bold text-rose-600 flex items-center justify-center gap-1">
+                <span className="text-rose-600 font-extrabold text-sm leading-none">*</span>
+                <span>This is the sample QR code</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Supported UPI apps */}
+          <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 font-medium">
+            <span>Accepted via:</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">GPay</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">PhonePe</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">Paytm</span>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">BHIM UPI</span>
+          </div>
+
+          {/* Action Button */}
+          <div className="w-full pt-1">
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => setIsQrModalOpen(false)}
+              className="w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 shadow-xs"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              Done / Capture Payment Receipt
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Confirm Delete Dialog */}

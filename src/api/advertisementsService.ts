@@ -10,6 +10,7 @@ import {
 
 export interface AdvertisementsQueryParams extends QueryParams {
   societyId?: string;
+  eventId?: string;
   advertisementCategoryId?: string;
   paymentStatus?: string;
   modeOfPayment?: string;

@@ -19,7 +19,6 @@ import {
   Trash2,
   RefreshCw,
   Search,
-  Sparkles,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -180,45 +179,43 @@ export const AdvertisementCategoriesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3.5 animate-in fade-in duration-200 pb-8">
-      {/* Header with Back Button */}
-      <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
+    <div className="space-y-3 animate-in fade-in duration-200 pb-8">
+      {/* Sleek Minimalist Header */}
+      <div className="flex items-center justify-between gap-3 pt-1">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => navigate(AppRoutes.ADVERTISING)}
-            className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-600 flex items-center justify-center transition-all cursor-pointer"
+            className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/90 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
             title="Back to Advertising"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight">
+          <div className="flex items-center gap-2">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none">
               Advertisement Categories
             </h1>
-            <p className="text-[11px] text-slate-500 font-medium">Category rates & slots</p>
+            {catMeta.total > 0 && (
+              <span className="text-[11px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full">
+                {catMeta.total}
+              </span>
+            )}
           </div>
         </div>
 
-        <Button variant="primary" size="sm" onClick={handleOpenCreateCatModal}>
-          <Plus className="w-4 h-4 mr-1" />
-          Add Category
-        </Button>
+        <button
+          type="button"
+          onClick={handleOpenCreateCatModal}
+          className="w-8 h-8 rounded-xl bg-[#6366F1] hover:bg-[#4F46E5] active:bg-[#4338CA] text-white flex items-center justify-center shadow-2xs transition-all cursor-pointer shrink-0"
+          title="Add Category"
+          aria-label="Add Category"
+        >
+          <Plus className="w-4.5 h-4.5" />
+        </button>
       </div>
 
-      {/* Info Bar */}
-      <div className="bg-purple-50/60 rounded-2xl p-3 border border-purple-100 text-xs text-purple-900 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
-          <span>Categories define rates and available slot units for advertisements.</span>
-        </div>
-        <span className="font-bold text-purple-700 bg-white px-2.5 py-0.5 rounded-full border border-purple-200 shadow-2xs">
-          {catMeta.total}
-        </span>
-      </div>
-
-      {/* Search & Refresh */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2">
+      {/* Search & Refresh Bar */}
+      <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -228,34 +225,34 @@ export const AdvertisementCategoriesPage: React.FC = () => {
               setCatSearch(e.target.value);
               setCatMeta((prev) => ({ ...prev, page: 1 }));
             }}
-            placeholder="Search category name or description..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+            placeholder="Search categories..."
+            className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-200/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 shadow-2xs transition-all"
           />
         </div>
 
         <button
           type="button"
           onClick={() => fetchCategories()}
-          className="p-1.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-100 transition-all"
+          className="p-2 rounded-xl bg-white border border-slate-200/90 text-slate-500 hover:bg-slate-50 hover:text-slate-700 shadow-2xs transition-all cursor-pointer"
           title="Refresh"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className={clsx('w-4 h-4', catLoading && 'animate-spin text-purple-600')} />
         </button>
       </div>
 
       {/* Categories List */}
       {catLoading ? (
-        <div className="bg-white rounded-2xl p-10 flex flex-col items-center justify-center border border-slate-200/80 shadow-xs">
+        <div className="bg-white rounded-xl p-10 flex flex-col items-center justify-center border border-slate-200/80 shadow-2xs">
           <Spinner size="md" label="Loading advertisement categories..." />
         </div>
       ) : categories.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 text-center border border-slate-200/80 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center mx-auto mb-2">
-            <Layers className="w-6 h-6" />
+        <div className="bg-white rounded-xl p-8 text-center border border-slate-200/80 shadow-2xs">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto mb-2">
+            <Layers className="w-5 h-5" />
           </div>
-          <h3 className="text-sm font-bold text-slate-800">No categories created yet</h3>
+          <h3 className="text-sm font-bold text-slate-800">No categories found</h3>
           <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
-            Create advertisement categories (e.g. Banner Advertisement, Event Sponsor).
+            Create advertisement categories to define rates and slots.
           </p>
           <div className="mt-3">
             <Button size="sm" variant="primary" onClick={handleOpenCreateCatModal}>
@@ -265,8 +262,8 @@ export const AdvertisementCategoriesPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-2.5">
+          <div className="grid grid-cols-1 gap-2.5">
             {categories.map((c) => {
               const name = c.categoryName || (c as any).category_name || '';
               const amount = c.categoryAmount ?? (c as any).category_amount ?? 0;
@@ -277,58 +274,52 @@ export const AdvertisementCategoriesPage: React.FC = () => {
               return (
                 <div
                   key={c.id}
-                  className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs hover:border-purple-200 transition-all flex flex-col justify-between"
+                  className="bg-white rounded-xl p-3 sm:p-3.5 border border-slate-200/80 hover:border-slate-300 shadow-2xs transition-all"
                 >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-bold text-slate-900 truncate">
                           {name}
                         </h4>
-                        <span className="inline-block text-[11px] font-semibold text-purple-600 mt-0.5">
-                          {units} {units === 1 ? 'Unit Available' : 'Units Available'}
+                        <span className="text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                          {units} {units === 1 ? 'Unit' : 'Units'}
+                        </span>
+                        <span className="text-[11px] font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                          {adsCount} Active {adsCount === 1 ? 'Ad' : 'Ads'}
                         </span>
                       </div>
-                      <div className="text-right">
-                        <span className="text-sm font-black text-slate-900 block">
-                          {formatCurrency(amount)}
-                        </span>
-                      </div>
+
+                      {desc && (
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                          {desc}
+                        </p>
+                      )}
                     </div>
 
-                    {desc ? (
-                      <p className="text-xs text-slate-600 line-clamp-2 mt-1">
-                        {desc}
-                      </p>
-                    ) : (
-                      <p className="text-[11px] text-slate-400 italic mt-1">
-                        No description provided
-                      </p>
-                    )}
-                  </div>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <span className="text-sm font-bold text-slate-900">
+                        {formatCurrency(amount)}
+                      </span>
 
-                  <div className="mt-3.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                    <span className="bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                      <strong>{adsCount}</strong> Active {adsCount === 1 ? 'Ad' : 'Ads'}
-                    </span>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditCatModal(c)}
-                        className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-purple-50 text-slate-500 hover:text-purple-600 border border-slate-200/80 flex items-center justify-center transition-all"
-                        title="Edit"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCatDeleteTarget(c)}
-                        className="w-7 h-7 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200/80 flex items-center justify-center transition-all"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCatModal(c)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCatDeleteTarget(c)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -374,6 +365,19 @@ export const AdvertisementCategoriesPage: React.FC = () => {
             )}
           </div>
 
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Category Description
+            </label>
+            <textarea
+              rows={3}
+              value={catFormData.categoryDescription}
+              onChange={(e) => setCatFormData({ ...catFormData, categoryDescription: e.target.value })}
+              placeholder="e.g. Main entrance banner advertisement with 10x4 ft dimension specifications."
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+            />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -403,7 +407,7 @@ export const AdvertisementCategoriesPage: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Number of Units <span className="text-rose-500">*</span>
+                Category Units <span className="text-rose-500">*</span>
               </label>
               <input
                 type="number"
@@ -421,19 +425,6 @@ export const AdvertisementCategoriesPage: React.FC = () => {
                 <p className="text-[11px] text-rose-500 mt-1 font-medium">{catFormErrors.numberOfUnits}</p>
               )}
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Category Description
-            </label>
-            <textarea
-              rows={3}
-              value={catFormData.categoryDescription}
-              onChange={(e) => setCatFormData({ ...catFormData, categoryDescription: e.target.value })}
-              placeholder="e.g. Main entrance banner advertisement with 10x4 ft dimension specifications."
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
-            />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">

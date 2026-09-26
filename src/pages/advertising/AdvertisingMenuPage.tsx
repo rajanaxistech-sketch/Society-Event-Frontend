@@ -24,14 +24,14 @@ export const AdvertisingMenuPage: React.FC = () => {
 
   const menuItems = [
     {
-      title: 'Advertisements',
+      title: 'Advertisement',
       icon: Megaphone,
       iconStyle: 'bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-indigo-100/50',
       badge: adsCount,
       to: AppRoutes.ADVERTISEMENTS,
     },
     {
-      title: 'Advertisement Categories',
+      title: 'Advertisement Category',
       icon: Layers,
       iconStyle: 'bg-purple-50 text-purple-600 border border-purple-100 shadow-purple-100/50',
       badge: catCount,
