@@ -231,13 +231,15 @@ export const AdvertisementsPage: React.FC = () => {
     const defaultCat = allCategories.length > 0 ? allCategories[0] : null;
     const defaultCatId = defaultCat ? defaultCat.id : '';
     const defaultAmount = defaultCat ? String(defaultCat.categoryAmount ?? (defaultCat as any).category_amount ?? '') : '';
+    const numAmt = Number(defaultAmount || 0);
+    const defaultStatus: AdvertisementPaymentStatus = numAmt > 0 ? 'completed' : 'pending';
 
     setAdFormData({
-      element: '',
+      element: defaultCat?.categoryName || (defaultCat as any)?.category_name || '',
       advertisementCategoryId: defaultCatId,
       eventId: defaultEvId,
       modeOfPayment: 'CASH',
-      paymentStatus: 'pending',
+      paymentStatus: defaultStatus,
       amountPaid: defaultAmount,
       paymentDate: new Date().toISOString().split('T')[0],
       transactionReference: '',
@@ -259,20 +261,38 @@ export const AdvertisementsPage: React.FC = () => {
     const navratriEv = events.find((e) => isNavratriEvent(e));
     const fallbackEvId = selectedEventId || navratriEv?.id || (events.length > 0 ? events[0].id : '');
 
+    const catId = item.advertisementCategoryId || (item as any).advertisement_category_id || '';
+    const chosenCat = allCategories.find((c) => c.id === catId) || item.advertisementCategory;
+    const catTotalAmount = chosenCat?.categoryAmount != null
+      ? Number(chosenCat.categoryAmount)
+      : (chosenCat as any)?.category_amount != null
+        ? Number((chosenCat as any).category_amount)
+        : 0;
+
     const catAmount = item.amountPaid != null
       ? String(item.amountPaid)
       : (item as any).amount_paid != null
         ? String((item as any).amount_paid)
-        : item.advertisementCategory?.categoryAmount != null
-          ? String(item.advertisementCategory.categoryAmount)
+        : catTotalAmount > 0
+          ? String(catTotalAmount)
           : '';
 
+    const numPaid = Number(catAmount || 0);
+    let computedStatus: AdvertisementPaymentStatus = 'pending';
+    if (numPaid <= 0) {
+      computedStatus = 'pending';
+    } else if (catTotalAmount > 0 && numPaid < catTotalAmount) {
+      computedStatus = 'partial';
+    } else {
+      computedStatus = 'completed';
+    }
+
     setAdFormData({
-      element: item.element,
-      advertisementCategoryId: item.advertisementCategoryId || (item as any).advertisement_category_id || '',
+      element: item.element || chosenCat?.categoryName || (chosenCat as any)?.category_name || '',
+      advertisementCategoryId: catId,
       eventId: item.eventId || (item as any).event_id || fallbackEvId || '',
       modeOfPayment: item.modeOfPayment || (item as any).mode_of_payment || 'CASH',
-      paymentStatus: (item.paymentStatus || (item as any).payment_status || 'pending') as AdvertisementPaymentStatus,
+      paymentStatus: computedStatus,
       amountPaid: catAmount,
       paymentDate: item.paymentDate
         ? item.paymentDate.split('T')[0]
@@ -294,9 +314,6 @@ export const AdvertisementsPage: React.FC = () => {
 
   const validateAdForm = () => {
     const errors: Record<string, string> = {};
-    if (!adFormData.element.trim()) {
-      errors.element = 'Element / Placement is required';
-    }
     if (!adFormData.advertisementCategoryId) {
       errors.advertisementCategoryId = 'Please select an Advertisement Category';
     }
@@ -305,9 +322,6 @@ export const AdvertisementsPage: React.FC = () => {
     }
     if (adFormData.modeOfPayment === 'CHEQUE' && !adFormData.chequeNumber.trim()) {
       errors.chequeNumber = 'Cheque Number is required';
-    }
-    if (!['pending', 'partial', 'completed'].includes(adFormData.paymentStatus)) {
-      errors.paymentStatus = 'Payment status must be Pending, Partial, or Completed';
     }
     setAdFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -326,13 +340,27 @@ export const AdvertisementsPage: React.FC = () => {
         navratriEv?.id ||
         (events.length > 0 ? events[0].id : undefined);
 
+      const chosenCat = allCategories.find((c) => c.id === adFormData.advertisementCategoryId);
+      const catName = chosenCat?.categoryName || (chosenCat as any)?.category_name || 'Advertisement';
+      const catAmount = chosenCat ? Number(chosenCat.categoryAmount ?? (chosenCat as any).category_amount ?? 0) : 0;
+      const numPaid = Number(adFormData.amountPaid || 0);
+
+      let computedStatus: AdvertisementPaymentStatus = 'pending';
+      if (numPaid <= 0) {
+        computedStatus = 'pending';
+      } else if (catAmount > 0 && numPaid < catAmount) {
+        computedStatus = 'partial';
+      } else {
+        computedStatus = 'completed';
+      }
+
       const payload = {
-        element: adFormData.element.trim(),
+        element: adFormData.element.trim() || catName,
         advertisementCategoryId: adFormData.advertisementCategoryId,
         eventId: targetEventId,
         modeOfPayment: adFormData.modeOfPayment,
-        paymentStatus: adFormData.paymentStatus,
-        amountPaid: adFormData.amountPaid ? Number(adFormData.amountPaid) : undefined,
+        paymentStatus: computedStatus,
+        amountPaid: adFormData.amountPaid ? Number(adFormData.amountPaid) : (numPaid > 0 ? numPaid : 0),
         paymentDate: adFormData.paymentDate || undefined,
         transactionReference: adFormData.transactionReference.trim() || null,
         chequeNumber: adFormData.chequeNumber.trim() || null,
@@ -619,6 +647,7 @@ export const AdvertisementsPage: React.FC = () => {
               const cat = ad.advertisementCategory;
               const catName = cat?.categoryName || (cat as any)?.category_name || 'Category';
               const catAmount = cat?.categoryAmount ?? (cat as any)?.category_amount ?? 0;
+              const paidAmount = ad.amountPaid != null ? Number(ad.amountPaid) : (ad as any).amount_paid != null ? Number((ad as any).amount_paid) : 0;
               const paymentMode = ad.modeOfPayment || (ad as any).mode_of_payment || 'CASH';
               const paymentStatus = ad.paymentStatus || (ad as any).payment_status || 'pending';
               const eventObj = events.find((e) => e.id === (ad.eventId || (ad as any).event_id));
@@ -650,7 +679,7 @@ export const AdvertisementsPage: React.FC = () => {
 
                     <div className="text-right shrink-0">
                       <div className="text-xs sm:text-sm font-extrabold text-slate-900">
-                        {formatCurrency(catAmount)}
+                        {formatCurrency(paidAmount)}
                       </div>
                       <div className="flex items-center justify-end gap-1 mt-1">
                         <button
@@ -731,32 +760,6 @@ export const AdvertisementsPage: React.FC = () => {
         size="md"
       >
         <form onSubmit={handleSaveAd} className="space-y-3.5">
-          {/* Select Element */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Select Element <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              list="element-suggestions"
-              value={adFormData.element}
-              onChange={(e) => setAdFormData({ ...adFormData, element: e.target.value })}
-              placeholder="e.g. Main Entrance Banner, Stage Backdrop"
-              className={clsx(
-                'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800',
-                adFormErrors.element ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'
-              )}
-            />
-            <datalist id="element-suggestions">
-              {dynamicElementSuggestions.map((item) => (
-                <option key={item} value={item} />
-              ))}
-            </datalist>
-            {adFormErrors.element && (
-              <p className="text-[11px] text-rose-500 mt-1 font-medium">{adFormErrors.element}</p>
-            )}
-          </div>
-
           {/* Select Advertisement Category */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -768,10 +771,14 @@ export const AdvertisementsPage: React.FC = () => {
                 const newCatId = e.target.value;
                 const chosenCat = allCategories.find((c) => c.id === newCatId);
                 const chosenAmount = chosenCat ? String(chosenCat.categoryAmount ?? (chosenCat as any).category_amount ?? '') : '';
+                const numAmt = Number(chosenAmount || 0);
+                const chosenStatus: AdvertisementPaymentStatus = numAmt > 0 ? 'completed' : 'pending';
                 setAdFormData({
                   ...adFormData,
                   advertisementCategoryId: newCatId,
+                  element: chosenCat ? (chosenCat.categoryName || (chosenCat as any).category_name || '') : adFormData.element,
                   amountPaid: chosenAmount || adFormData.amountPaid,
+                  paymentStatus: chosenStatus,
                 });
               }}
               className={clsx(
@@ -893,7 +900,25 @@ export const AdvertisementsPage: React.FC = () => {
               <input
                 type="number"
                 value={adFormData.amountPaid}
-                onChange={(e) => setAdFormData({ ...adFormData, amountPaid: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const chosenCat = allCategories.find((c) => c.id === adFormData.advertisementCategoryId);
+                  const catAmount = chosenCat ? Number(chosenCat.categoryAmount ?? (chosenCat as any).category_amount ?? 0) : 0;
+                  const numPaid = Number(val || 0);
+                  let computedStatus: AdvertisementPaymentStatus = 'pending';
+                  if (numPaid <= 0) {
+                    computedStatus = 'pending';
+                  } else if (catAmount > 0 && numPaid < catAmount) {
+                    computedStatus = 'partial';
+                  } else {
+                    computedStatus = 'completed';
+                  }
+                  setAdFormData({
+                    ...adFormData,
+                    amountPaid: val,
+                    paymentStatus: computedStatus,
+                  });
+                }}
                 placeholder="e.g. 5000"
                 className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
               />
@@ -909,6 +934,80 @@ export const AdvertisementsPage: React.FC = () => {
                 className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
               />
             </div>
+          </div>
+
+          {/* Dynamic Payment Status Display (Auto-calculated based on Amount Paid vs Category Cost) */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Payment Status <span className="text-slate-400 font-normal text-[10.5px]">(Auto-calculated)</span>
+            </label>
+            {(() => {
+              const chosenCat = allCategories.find((c) => c.id === adFormData.advertisementCategoryId);
+              const catAmount = chosenCat ? Number(chosenCat.categoryAmount ?? (chosenCat as any).category_amount ?? 0) : 0;
+              const numPaid = Number(adFormData.amountPaid || 0);
+
+              if (adFormData.paymentStatus === 'completed') {
+                return (
+                  <div className="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 text-emerald-900 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold block leading-tight">Completed</span>
+                        <span className="text-[10.5px] text-emerald-800/80 block">
+                          Full payment done ({formatCurrency(numPaid || catAmount)} received)
+                        </span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md text-[10.5px] font-bold uppercase tracking-wider bg-emerald-200 text-emerald-950">
+                      Completed
+                    </span>
+                  </div>
+                );
+              }
+
+              if (adFormData.paymentStatus === 'partial') {
+                const remaining = Math.max(0, catAmount - numPaid);
+                return (
+                  <div className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/70 text-blue-900 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                        <Clock className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold block leading-tight">Partial Payment</span>
+                        <span className="text-[10.5px] text-blue-800/80 block">
+                          {formatCurrency(numPaid)} paid • {formatCurrency(remaining)} remaining
+                        </span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md text-[10.5px] font-bold uppercase tracking-wider bg-blue-200 text-blue-950">
+                      Partial
+                    </span>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="p-2.5 rounded-xl border border-amber-200 bg-amber-50/70 text-amber-900 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block leading-tight">Pending</span>
+                      <span className="text-[10.5px] text-amber-800/80 block">
+                        Full payment remaining ({formatCurrency(catAmount)} to be paid)
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md text-[10.5px] font-bold uppercase tracking-wider bg-amber-200 text-amber-950">
+                    Pending
+                  </span>
+                </div>
+              );
+            })()}
           </div>
 
           {/* UPI QR Code Quick View Card */}
@@ -1012,24 +1111,6 @@ export const AdvertisementsPage: React.FC = () => {
               />
             </div>
           )}
-
-          {/* Payment Status */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Payment Status <span className="text-rose-500">*</span>
-            </label>
-            <select
-              value={adFormData.paymentStatus}
-              onChange={(e) =>
-                setAdFormData({ ...adFormData, paymentStatus: e.target.value as AdvertisementPaymentStatus })
-              }
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
-            >
-              <option value="pending">Pending</option>
-              <option value="partial">Partial</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">

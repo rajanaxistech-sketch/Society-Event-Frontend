@@ -207,11 +207,13 @@ export const AdvertisingHubPage: React.FC = () => {
   const handleOpenCreateAdModal = () => {
     setIsEditingAd(false);
     setCurrentAdId(null);
+    const defaultCat = allCategories.length > 0 ? allCategories[0] : null;
+    const defaultCatId = defaultCat ? defaultCat.id : '';
     setAdFormData({
-      element: '',
-      advertisementCategoryId: allCategories.length > 0 ? allCategories[0].id : '',
+      element: defaultCat?.categoryName || (defaultCat as any)?.category_name || '',
+      advertisementCategoryId: defaultCatId,
       modeOfPayment: paymentMethods.length > 0 ? paymentMethods[0].code : 'UPI',
-      paymentStatus: 'pending',
+      paymentStatus: 'completed',
       remarks: '',
       societyId: selectedSocietyId || '',
     });
@@ -222,11 +224,13 @@ export const AdvertisingHubPage: React.FC = () => {
   const handleOpenEditAdModal = (item: AdvertisementItem) => {
     setIsEditingAd(true);
     setCurrentAdId(item.id);
+    const catId = item.advertisementCategoryId || (item as any).advertisement_category_id || '';
+    const chosenCat = allCategories.find((c) => c.id === catId) || item.advertisementCategory;
     setAdFormData({
-      element: item.element,
-      advertisementCategoryId: item.advertisementCategoryId || (item as any).advertisement_category_id || '',
+      element: item.element || chosenCat?.categoryName || (chosenCat as any)?.category_name || '',
+      advertisementCategoryId: catId,
       modeOfPayment: item.modeOfPayment || (item as any).mode_of_payment || 'CASH',
-      paymentStatus: (item.paymentStatus || (item as any).payment_status || 'pending') as AdvertisementPaymentStatus,
+      paymentStatus: (item.paymentStatus || (item as any).payment_status || 'completed') as AdvertisementPaymentStatus,
       remarks: item.remarks || '',
       societyId: item.societyId || (item as any).society_id || selectedSocietyId || '',
     });
@@ -236,17 +240,11 @@ export const AdvertisingHubPage: React.FC = () => {
 
   const validateAdForm = () => {
     const errors: Record<string, string> = {};
-    if (!adFormData.element.trim()) {
-      errors.element = 'Element / Placement is required';
-    }
     if (!adFormData.advertisementCategoryId) {
       errors.advertisementCategoryId = 'Please select an Advertisement Category';
     }
     if (!adFormData.modeOfPayment.trim()) {
       errors.modeOfPayment = 'Mode of Payment is required';
-    }
-    if (!['pending', 'partial', 'completed'].includes(adFormData.paymentStatus)) {
-      errors.paymentStatus = 'Payment status must be Pending, Partial, or Completed';
     }
     setAdFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -258,9 +256,12 @@ export const AdvertisingHubPage: React.FC = () => {
 
     try {
       setIsAdSubmitting(true);
+      const chosenCat = allCategories.find((c) => c.id === adFormData.advertisementCategoryId);
+      const catName = chosenCat?.categoryName || (chosenCat as any)?.category_name || 'Advertisement';
+
       if (isEditingAd && currentAdId) {
         await advertisementsService.update(currentAdId, {
-          element: adFormData.element.trim(),
+          element: adFormData.element.trim() || catName,
           advertisementCategoryId: adFormData.advertisementCategoryId,
           modeOfPayment: adFormData.modeOfPayment,
           paymentStatus: adFormData.paymentStatus,
@@ -270,7 +271,7 @@ export const AdvertisingHubPage: React.FC = () => {
         toast.success('Advertisement updated successfully');
       } else {
         await advertisementsService.create({
-          element: adFormData.element.trim(),
+          element: adFormData.element.trim() || catName,
           advertisementCategoryId: adFormData.advertisementCategoryId,
           modeOfPayment: adFormData.modeOfPayment,
           paymentStatus: adFormData.paymentStatus,
@@ -761,7 +762,7 @@ export const AdvertisingHubPage: React.FC = () => {
                         {/* Amount & Actions */}
                         <div className="text-right shrink-0">
                           <div className="text-sm font-extrabold text-slate-900">
-                            {formatCurrency(catAmount)}
+                            {formatCurrency(ad.amountPaid != null ? Number(ad.amountPaid) : (ad as any).amount_paid != null ? Number((ad as any).amount_paid) : 0)}
                           </div>
                           <div className="flex items-center justify-end gap-1 mt-1.5">
                             <button
@@ -977,34 +978,6 @@ export const AdvertisingHubPage: React.FC = () => {
         size="md"
       >
         <form onSubmit={handleSaveAd} className="space-y-4">
-          {/* Select Element */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              Select Element <span className="text-rose-500">*</span>
-            </label>
-            <div className="space-y-1.5">
-              <input
-                type="text"
-                list="element-suggestions"
-                value={adFormData.element}
-                onChange={(e) => setAdFormData({ ...adFormData, element: e.target.value })}
-                placeholder="e.g. Main Entrance Banner, Stage Backdrop"
-                className={clsx(
-                  'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all',
-                  adFormErrors.element ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'
-                )}
-              />
-              <datalist id="element-suggestions">
-                {ELEMENT_SUGGESTIONS.map((item) => (
-                  <option key={item} value={item} />
-                ))}
-              </datalist>
-            </div>
-            {adFormErrors.element && (
-              <p className="text-[11px] text-rose-500 mt-1 font-medium">{adFormErrors.element}</p>
-            )}
-          </div>
-
           {/* Select Advertisement Category */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -1012,7 +985,15 @@ export const AdvertisingHubPage: React.FC = () => {
             </label>
             <select
               value={adFormData.advertisementCategoryId}
-              onChange={(e) => setAdFormData({ ...adFormData, advertisementCategoryId: e.target.value })}
+              onChange={(e) => {
+                const newCatId = e.target.value;
+                const chosenCat = allCategories.find((c) => c.id === newCatId);
+                setAdFormData({
+                  ...adFormData,
+                  advertisementCategoryId: newCatId,
+                  element: chosenCat ? (chosenCat.categoryName || (chosenCat as any).category_name || '') : adFormData.element,
+                });
+              }}
               className={clsx(
                 'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all',
                 adFormErrors.advertisementCategoryId ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'
@@ -1041,53 +1022,32 @@ export const AdvertisingHubPage: React.FC = () => {
             )}
           </div>
 
-          {/* Mode of Payment & Payment Status Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Mode of Payment */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Mode of Payment <span className="text-rose-500">*</span>
-              </label>
-              <select
-                value={adFormData.modeOfPayment}
-                onChange={(e) => setAdFormData({ ...adFormData, modeOfPayment: e.target.value })}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
-              >
-                {paymentMethods.length > 0 ? (
-                  paymentMethods.map((m) => (
-                    <option key={m.id} value={m.code}>
-                      {formatPaymentMethodName(m)}
-                    </option>
-                  ))
-                ) : (
-                  <>
-                    <option value="UPI">UPI / QR Code</option>
-                    <option value="CASH">Cash</option>
-                    <option value="BANK_TRANSFER">Bank Transfer (NEFT/RTGS)</option>
-                    <option value="CHEQUE">Cheque</option>
-                    <option value="ONLINE">Online Portal</option>
-                  </>
-                )}
-              </select>
-            </div>
-
-            {/* Payment Status */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Payment Status <span className="text-rose-500">*</span>
-              </label>
-              <select
-                value={adFormData.paymentStatus}
-                onChange={(e) =>
-                  setAdFormData({ ...adFormData, paymentStatus: e.target.value as AdvertisementPaymentStatus })
-                }
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-              >
-                <option value="pending">Pending</option>
-                <option value="partial">Partial</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
+          {/* Mode of Payment */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Mode of Payment <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={adFormData.modeOfPayment}
+              onChange={(e) => setAdFormData({ ...adFormData, modeOfPayment: e.target.value })}
+              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800"
+            >
+              {paymentMethods.length > 0 ? (
+                paymentMethods.map((m) => (
+                  <option key={m.id} value={m.code}>
+                    {formatPaymentMethodName(m)}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="UPI">UPI / QR Code</option>
+                  <option value="CASH">Cash</option>
+                  <option value="BANK_TRANSFER">Bank Transfer (NEFT/RTGS)</option>
+                  <option value="CHEQUE">Cheque</option>
+                  <option value="ONLINE">Online Portal</option>
+                </>
+              )}
+            </select>
           </div>
 
           {/* Remarks */}
