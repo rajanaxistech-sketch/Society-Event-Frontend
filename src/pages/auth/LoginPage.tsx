@@ -61,19 +61,20 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-4 text-center">
-        <h3 className="text-lg font-bold text-slate-900">Sign In to Your Account</h3>
-        <p className="text-[11px] text-slate-500 mt-0.5">
+      <div className="mb-6 text-center">
+        <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Sign In to Your Account</h3>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
           Enter your administrative credentials to access the platform.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
           label="Email Address"
           type="email"
+          inputSize="lg"
           placeholder="admin@societyevents.com"
-          leftIcon={<Mail className="w-3.5 h-3.5" />}
+          leftIcon={<Mail className="w-4.5 h-4.5" />}
           error={errors.email?.message}
           requiredIndicator
           {...register('email')}
@@ -82,21 +83,22 @@ export const LoginPage: React.FC = () => {
         <Input
           label="Password"
           type="password"
+          inputSize="lg"
           placeholder="••••••••"
-          leftIcon={<Lock className="w-3.5 h-3.5" />}
+          leftIcon={<Lock className="w-4.5 h-4.5" />}
           error={errors.password?.message}
           requiredIndicator
           {...register('password')}
         />
 
-        <div className="pt-1.5">
+        <div className="pt-2">
           <Button
             type="submit"
             variant="primary"
-            size="sm"
-            className="w-full justify-center"
+            size="lg"
+            className="w-full justify-center text-sm sm:text-base h-11 sm:h-12 rounded-xl font-semibold shadow-md shadow-indigo-200"
             isLoading={isLoading}
-            leftIcon={<LogIn className="w-3.5 h-3.5" />}
+            leftIcon={<LogIn className="w-4.5 h-4.5" />}
           >
             Sign In
           </Button>

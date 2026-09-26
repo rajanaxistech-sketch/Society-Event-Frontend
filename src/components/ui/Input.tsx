@@ -1,7 +1,7 @@
 import React from 'react';
 import clsx from 'clsx';
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -10,6 +10,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   requiredIndicator?: boolean;
   showCount?: boolean;
   currentCount?: number;
+  inputSize?: 'sm' | 'md' | 'lg';
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -23,6 +24,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       requiredIndicator,
       showCount,
       currentCount,
+      inputSize = 'md',
       className = '',
       id,
       ...props
@@ -31,11 +33,20 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
+    const isLarge = inputSize === 'lg';
+    const isSmall = inputSize === 'sm';
+
     return (
       <div className="w-full flex flex-col gap-1">
         {label && (
           <div className="flex items-center justify-between">
-            <label htmlFor={inputId} className="text-xs font-semibold text-[#1E293B] flex items-center gap-1">
+            <label
+              htmlFor={inputId}
+              className={clsx(
+                'font-semibold text-[#1E293B] flex items-center gap-1',
+                isLarge ? 'text-sm sm:text-[15px] mb-0.5' : isSmall ? 'text-[11px]' : 'text-xs'
+              )}
+            >
               {label}
               {(requiredIndicator || props.required) && <span className="text-rose-500">*</span>}
             </label>
@@ -51,7 +62,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         <div className="relative flex items-center">
           {leftIcon && (
-            <div className="absolute left-2.5 text-slate-400 pointer-events-none flex items-center justify-center">
+            <div
+              className={clsx(
+                "absolute text-slate-400 pointer-events-none flex items-center justify-center",
+                isLarge ? "left-3.5" : "left-2.5"
+              )}
+            >
               {leftIcon}
             </div>
           )}
@@ -59,26 +75,36 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             className={clsx(
-              'w-full px-3 py-1.5 text-xs text-[#1E293B] bg-white border border-[#CBD5E1] rounded-lg transition-all placeholder:text-slate-400 shadow-2xs h-8 sm:h-9',
+              'w-full bg-white border border-[#CBD5E1] transition-all placeholder:text-slate-400',
               'hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 focus:border-[#6366F1]',
               'disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed',
+              isLarge
+                ? 'px-3.5 py-2.5 text-sm sm:text-base rounded-xl h-11 sm:h-12 shadow-xs'
+                : isSmall
+                ? 'px-2.5 py-1 text-xs rounded-md h-7 shadow-2xs'
+                : 'px-3 py-1.5 text-xs rounded-lg h-8 sm:h-9 shadow-2xs',
               error ? 'border-rose-400 focus:ring-rose-400/20 focus:border-rose-500 bg-rose-50/20' : '',
-              leftIcon && 'pl-8',
-              rightIcon && 'pr-8',
+              leftIcon && (isLarge ? 'pl-11' : 'pl-8'),
+              rightIcon && (isLarge ? 'pr-11' : 'pr-8'),
               className
             )}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-2.5 text-slate-400 flex items-center justify-center">
+            <div
+              className={clsx(
+                "absolute text-slate-400 flex items-center justify-center",
+                isLarge ? "right-3.5" : "right-2.5"
+              )}
+            >
               {rightIcon}
             </div>
           )}
         </div>
         {error ? (
-          <p className="text-[11px] text-red-600 font-medium mt-0.5">{error}</p>
+          <p className={clsx("text-red-600 font-medium mt-0.5", isLarge ? "text-xs sm:text-sm" : "text-[11px]")}>{error}</p>
         ) : helperText ? (
-          <p className="text-[11px] text-slate-500 mt-0.5">{helperText}</p>
+          <p className={clsx("text-slate-500 mt-0.5", isLarge ? "text-xs sm:text-sm" : "text-[11px]")}>{helperText}</p>
         ) : null}
       </div>
     );

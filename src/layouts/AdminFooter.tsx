@@ -1,5 +1,6 @@
 import React from 'react';
 import { Phone, Mail, ExternalLink } from 'lucide-react';
+import anaxistechLogo from '../assets/anaxistech-logo.png';
 
 interface AdminFooterProps {
   className?: string;
@@ -20,12 +21,14 @@ export const AdminFooter: React.FC<AdminFooterProps> = ({ className = '', showBo
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Powered by AnaxisTech (opens official website in new tab)"
-          className="inline-flex items-center gap-0.5 font-medium text-slate-500 hover:text-indigo-600 transition-colors group shrink-0 focus:outline-hidden focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-xs"
+          className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-indigo-600 transition-colors group shrink-0 focus:outline-hidden focus-visible:ring-1 focus-visible:ring-indigo-500 rounded-xs"
         >
           <span>Powered by</span>
-          <span className="font-semibold text-indigo-600 group-hover:text-indigo-700 group-hover:underline">
-            AnaxisTech
-          </span>
+          <img
+            src={anaxistechLogo}
+            alt="AnaxisTech"
+            className="h-3.5 sm:h-4 w-auto object-contain inline-block transition-transform duration-200 group-hover:scale-105"
+          />
           <ExternalLink className="w-2 h-2 text-indigo-400 group-hover:text-indigo-600 opacity-70 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true" />
         </a>
 

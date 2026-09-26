@@ -1466,6 +1466,7 @@ export interface AdvertisementItem {
     startDate?: string;
     start_date?: string;
   } | null;
+  name?: string;
   element: string;
   advertisementCategoryId: string;
   advertisement_category_id?: string;
@@ -1509,6 +1510,7 @@ export interface AdvertisementItem {
 }
 
 export interface CreateAdvertisementInput {
+  name?: string;
   element: string;
   advertisementCategoryId: string;
   eventId?: string | null;
@@ -1527,6 +1529,7 @@ export interface CreateAdvertisementInput {
 }
 
 export interface UpdateAdvertisementInput {
+  name?: string;
   element?: string;
   advertisementCategoryId?: string;
   eventId?: string | null;

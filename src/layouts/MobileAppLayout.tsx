@@ -1,34 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { usePermission } from '../hooks/usePermission';
 import { AppRoutes } from '../constants/routes';
 import { circularsService } from '../../src/api/circularsService';
-import { CircularItem } from '../types';
+import { eventsService } from '../../src/api/eventsService';
+import { CircularItem, EventItem } from '../types';
+import { encodeId } from '../utils/idObfuscator';
 import MobileBottomSheet from '../components/mobile/MobileBottomSheet';
 import AdminFooter from './AdminFooter';
 import {
   Home,
-  Calendar,
-  Users,
   ScrollText,
-  Grid,
+  DollarSign,
+  Utensils,
+  Megaphone,
   Bell,
   Building2,
   ChevronDown,
   LogOut,
-  Layers,
-  FileText,
-  UploadCloud,
-  Settings,
-  Shield,
-  Store,
-  CreditCard,
   CheckCircle2,
-  Sparkles,
-  Tag,
-  Coins,
-  Megaphone,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -38,15 +29,15 @@ export const MobileAppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [recentNotices, setRecentNotices] = useState<CircularItem[]>([]);
+  const [primaryEvent, setPrimaryEvent] = useState<EventItem | null>(null);
 
   const societies = user?.societies || [];
   const currentSociety = societies.find((s) => s.id === selectedSocietyId) || societies[0];
 
-  // Fetch recent notices for notifications drawer
+  // Fetch recent notices for notifications drawer and upcoming events for tab routing
   useEffect(() => {
     if (selectedSocietyId) {
       circularsService
@@ -57,6 +48,19 @@ export const MobileAppLayout: React.FC = () => {
           }
         })
         .catch(() => { });
+
+      eventsService
+        .getAll({ societyId: selectedSocietyId, limit: 10, sortBy: 'start_date', sortOrder: 'asc' })
+        .then((res) => {
+          if (res?.success && res.data && res.data.length > 0) {
+            setPrimaryEvent(res.data[0]);
+          } else {
+            setPrimaryEvent(null);
+          }
+        })
+        .catch(() => {
+          setPrimaryEvent(null);
+        });
     }
   }, [selectedSocietyId]);
 
@@ -67,155 +71,66 @@ export const MobileAppLayout: React.FC = () => {
 
   // Close drawers when route changes
   useEffect(() => {
-    setMoreDrawerOpen(false);
     setProfileDrawerOpen(false);
     setNotificationsOpen(false);
   }, [location.pathname]);
 
-  // Primary bottom navigation items
-  const adminNavItems = [
-    { label: 'Home', to: AppRoutes.DASHBOARD, icon: Home },
-    { label: 'Events', to: AppRoutes.EVENTS, icon: Calendar },
-    { label: 'Residents', to: AppRoutes.RESIDENTS, icon: Users },
-    { label: 'Circulars', to: AppRoutes.CIRCULARS, icon: ScrollText },
-  ];
+  const getEventTabPath = (tab: string, fallback: string) => {
+    return primaryEvent ? `/events/${encodeId(primaryEvent.id)}?tab=${tab}` : fallback;
+  };
 
-  const residentNavItems = [
-    { label: 'Home', to: AppRoutes.DASHBOARD, icon: Home },
-    { label: 'Events', to: AppRoutes.EVENTS, icon: Calendar },
-    { label: 'Circulars', to: AppRoutes.CIRCULARS, icon: ScrollText },
-    { label: 'Directory', to: AppRoutes.RESIDENTS, icon: Users },
-  ];
-
-  const currentNavItems = isResident ? residentNavItems : adminNavItems;
-
-  // Secondary modules for "More" drawer
-  const adminMoreModules = [
+  // 5 Footer Navigation items (Home + 4 Quick Launcher Modules)
+  const navItems = [
     {
-      title: 'Towers & Blocks',
-      description: 'Manage blocks & wings',
-      to: AppRoutes.BLOCKS,
-      icon: Layers,
-      color: 'bg-indigo-50 text-indigo-600',
+      label: 'Home',
+      icon: Home,
+      to: AppRoutes.DASHBOARD,
+      isActive: location.pathname === AppRoutes.DASHBOARD || location.pathname === '/',
+      onClick: () => navigate(AppRoutes.DASHBOARD),
     },
     {
-      title: 'Flats & Units',
-      description: 'Apartment units & residents',
-      to: AppRoutes.FLATS,
-      icon: Building2,
-      color: 'bg-indigo-50 text-indigo-600',
-    },
-    {
-      title: 'Bungalows & Villas',
-      description: 'Independent residential units',
-      to: AppRoutes.BUNGALOWS,
-      icon: Building2,
-      color: 'bg-teal-50 text-teal-600',
-    },
-    {
-      title: 'Contracts & Work Orders',
-      description: 'Vendor commercial agreements & payments',
-      to: AppRoutes.CONTRACTS,
-      icon: FileText,
-      color: 'bg-indigo-50 text-indigo-600',
-    },
-    {
-      title: 'Payment Methods',
-      description: 'UPI QR, Bank accounts & Cash',
-      to: AppRoutes.PAYMENT_METHODS,
-      icon: CreditCard,
-      color: 'bg-emerald-50 text-emerald-600',
-    },
-    {
-      title: 'Reports & Analytics',
-      description: 'Collections & exportable reports',
-      to: AppRoutes.REPORTS_HUB,
-      icon: FileText,
-      color: 'bg-purple-50 text-purple-600',
-    },
-    {
-      title: 'Bulk Data Import',
-      description: 'Upload residents & unit spreadsheets',
-      to: AppRoutes.IMPORTS,
-      icon: UploadCloud,
-      color: 'bg-amber-50 text-amber-700',
-    },
-    {
-      title: 'User Management',
-      description: 'Admin users & staff accounts',
-      to: AppRoutes.USERS,
-      icon: Users,
-      color: 'bg-indigo-50 text-indigo-600',
-    },
-    {
-      title: 'Roles & Permissions',
-      description: 'Role access matrix',
-      to: AppRoutes.ROLES,
-      icon: Shield,
-      color: 'bg-slate-100 text-slate-700',
-    },
-    {
-      title: 'System Settings',
-      description: 'Preferences & configurations',
-      to: AppRoutes.SETTINGS,
-      icon: Settings,
-      color: 'bg-slate-100 text-slate-700',
-    },
-    {
-      title: 'Vendor Master',
-      description: 'Approved contractors & suppliers',
-      to: AppRoutes.VENDORS,
-      icon: Store,
-      color: 'bg-indigo-50 text-indigo-700',
-    },
-    {
-      title: 'Expense Categories',
-      description: 'Vendor contract & item heads',
-      to: AppRoutes.EXPENSE_CATEGORIES,
-      icon: Tag,
-      color: 'bg-rose-50 text-rose-600',
-    },
-    {
-      title: 'Income Categories',
-      description: 'Collection & sponsorship heads',
-      to: AppRoutes.INCOME_CATEGORIES,
-      icon: Coins,
-      color: 'bg-emerald-50 text-emerald-700',
-    },
-    {
-      title: 'Advertising',
-      description: 'Categories & commercial advertisement spots',
-      to: AppRoutes.ADVERTISING,
-      icon: Megaphone,
-      color: 'bg-purple-50 text-purple-600',
-    },
-  ];
-
-  const residentMoreModules = [
-    {
-      title: 'Society Circulars',
-      description: 'Official notices & rules',
-      to: AppRoutes.CIRCULARS,
+      label: 'Circulars',
       icon: ScrollText,
-      color: 'bg-indigo-50 text-indigo-600',
+      to: getEventTabPath('circulars', AppRoutes.CIRCULARS),
+      isActive:
+        location.pathname.startsWith('/circulars') ||
+        (location.pathname.startsWith('/events') && location.search.includes('tab=circulars')),
+      onClick: () => {
+        navigate(getEventTabPath('circulars', AppRoutes.CIRCULARS));
+      },
     },
     {
-      title: 'Community Events',
-      description: 'Upcoming festivals & celebrations',
-      to: AppRoutes.EVENTS,
-      icon: Calendar,
-      color: 'bg-purple-50 text-purple-600',
+      label: 'Flat Collections',
+      icon: DollarSign,
+      to: getEventTabPath('collections', AppRoutes.FLAT_COLLECTIONS),
+      isActive:
+        location.pathname.startsWith('/flat-collections') ||
+        (location.pathname.startsWith('/events') && location.search.includes('tab=collections')),
+      onClick: () => {
+        navigate(getEventTabPath('collections', AppRoutes.FLAT_COLLECTIONS));
+      },
     },
     {
-      title: 'Resident Directory',
-      description: 'Neighbor directory & contacts',
-      to: AppRoutes.RESIDENTS,
-      icon: Users,
-      color: 'bg-emerald-50 text-emerald-600',
+      label: 'Food Menu',
+      icon: Utensils,
+      to: getEventTabPath('food', AppRoutes.EVENTS),
+      isActive:
+        (location.pathname.startsWith('/events') && location.search.includes('tab=food')) ||
+        location.pathname.startsWith('/food'),
+      onClick: () => {
+        navigate(getEventTabPath('food', AppRoutes.EVENTS));
+      },
+    },
+    {
+      label: 'Advertising',
+      icon: Megaphone,
+      to: AppRoutes.ADVERTISING,
+      isActive: location.pathname.startsWith('/advertising'),
+      onClick: () => {
+        navigate(AppRoutes.ADVERTISING);
+      },
     },
   ];
-
-  const moreModules = isResident ? residentMoreModules : adminMoreModules;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900/10 via-slate-800/5 to-slate-900/10 flex items-center justify-center sm:py-3 sm:px-2 antialiased selection:bg-indigo-100 selection:text-indigo-800">
@@ -287,59 +202,37 @@ export const MobileAppLayout: React.FC = () => {
           }}
         >
           {/* Navigation Buttons Row */}
-          <nav className="px-2 grid grid-cols-5 items-center pt-1 pb-0.5">
-            {currentNavItems.map((item) => {
+          <nav className="px-1.5 grid grid-cols-5 items-center pt-1 pb-0.5" aria-label="Footer Navigation">
+            {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === AppRoutes.DASHBOARD}
-                  className={({ isActive }) =>
-                    clsx(
-                      'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200',
-                      isActive
-                        ? 'text-indigo-600 font-bold'
-                        : 'text-slate-400 hover:text-slate-600 font-medium'
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <div
-                        className={clsx(
-                          'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
-                          isActive ? 'text-indigo-600' : 'text-slate-400'
-                        )}
-                      >
-                        <Icon className="w-[19px] h-[19px]" />
-                      </div>
-                      <span className="text-[10.5px] leading-tight mt-0.5">{item.label}</span>
-                    </>
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={item.onClick}
+                  className={clsx(
+                    'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-150 cursor-pointer group focus:outline-hidden',
+                    item.isActive
+                      ? 'text-indigo-600 font-bold'
+                      : 'text-slate-400 hover:text-slate-600 font-medium'
                   )}
-                </NavLink>
+                  aria-label={item.label}
+                  aria-current={item.isActive ? 'page' : undefined}
+                >
+                  <div
+                    className={clsx(
+                      'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
+                      item.isActive ? 'text-indigo-600' : 'text-slate-400'
+                    )}
+                  >
+                    <Icon className="w-[19px] h-[19px]" />
+                  </div>
+                  <span className="text-[9.5px] min-[380px]:text-[10px] leading-tight mt-0.5 text-center truncate max-w-full px-0.5">
+                    {item.label}
+                  </span>
+                </button>
               );
             })}
-
-            {/* More Drawer Button */}
-            <button
-              type="button"
-              onClick={() => setMoreDrawerOpen(true)}
-              className={clsx(
-                'flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200',
-                moreDrawerOpen ? 'text-indigo-600 font-bold' : 'text-slate-400 hover:text-slate-600 font-medium'
-              )}
-            >
-              <div
-                className={clsx(
-                  'w-7 h-6 flex items-center justify-center rounded-lg transition-colors',
-                  moreDrawerOpen ? 'text-indigo-600' : 'text-slate-400'
-                )}
-              >
-                <Grid className="w-[19px] h-[19px]" />
-              </div>
-              <span className="text-[10.5px] leading-tight mt-0.5">More</span>
-            </button>
           </nav>
 
           {/* Contact Section Directly Underneath Navigation Buttons */}
@@ -348,48 +241,6 @@ export const MobileAppLayout: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* "More" Modules Drawer Bottom Sheet */}
-      <MobileBottomSheet
-        isOpen={moreDrawerOpen}
-        onClose={() => setMoreDrawerOpen(false)}
-        title="All Modules & Services"
-        subtitle="Quick access to society management tools"
-      >
-        <div className="grid grid-cols-2 gap-2.5">
-          {moreModules.map((module, idx) => {
-            const Icon = module.icon;
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  navigate(module.to);
-                  setMoreDrawerOpen(false);
-                }}
-                className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-card text-left hover:border-indigo-200 transition-all duration-200 active:scale-95 group flex flex-col justify-between"
-              >
-                <div
-                  className={clsx(
-                    'w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mb-2 group-hover:scale-105 transition-transform shadow-2xs',
-                    module.color
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                </div>
-                <div>
-                  <h5 className="font-bold text-slate-900 text-xs group-hover:text-indigo-600 transition-colors leading-tight">
-                    {module.title}
-                  </h5>
-                  <p className="text-[10px] text-slate-400 truncate mt-0.5 font-medium leading-tight">
-                    {module.description}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </MobileBottomSheet>
 
       {/* Notifications Drawer Bottom Sheet */}
       <MobileBottomSheet

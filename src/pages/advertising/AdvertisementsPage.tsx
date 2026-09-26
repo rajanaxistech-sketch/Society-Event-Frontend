@@ -314,6 +314,9 @@ export const AdvertisementsPage: React.FC = () => {
 
   const validateAdForm = () => {
     const errors: Record<string, string> = {};
+    if (!adFormData.element.trim()) {
+      errors.element = 'Name is required';
+    }
     if (!adFormData.advertisementCategoryId) {
       errors.advertisementCategoryId = 'Please select an Advertisement Category';
     }
@@ -354,8 +357,10 @@ export const AdvertisementsPage: React.FC = () => {
         computedStatus = 'completed';
       }
 
-      const payload = {
-        element: adFormData.element.trim() || catName,
+      const adName = adFormData.element.trim() || catName;
+      const payload: any = {
+        name: adName,
+        element: adName,
         advertisementCategoryId: adFormData.advertisementCategoryId,
         eventId: targetEventId,
         modeOfPayment: adFormData.modeOfPayment,
@@ -760,6 +765,40 @@ export const AdvertisementsPage: React.FC = () => {
         size="md"
       >
         <form onSubmit={handleSaveAd} className="space-y-3.5">
+          {/* Advertisement Name */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Entrance Gate, Main Stage Backdrop, Sponsor Standee"
+              value={adFormData.element}
+              onChange={(e) => setAdFormData({ ...adFormData, element: e.target.value })}
+              className={clsx(
+                'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800',
+                adFormErrors.element ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'
+              )}
+            />
+            {adFormErrors.element && (
+              <p className="text-[11px] text-rose-500 mt-1 font-medium">{adFormErrors.element}</p>
+            )}
+            {/* Quick Suggestions Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+              <span className="text-[10px] text-slate-400 font-medium">Suggestions:</span>
+              {dynamicElementSuggestions.slice(0, 4).map((sug) => (
+                <button
+                  key={sug}
+                  type="button"
+                  onClick={() => setAdFormData({ ...adFormData, element: sug })}
+                  className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[10px] font-medium transition-colors border border-slate-200/60 cursor-pointer"
+                >
+                  {sug}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Select Advertisement Category */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -776,7 +815,7 @@ export const AdvertisementsPage: React.FC = () => {
                 setAdFormData({
                   ...adFormData,
                   advertisementCategoryId: newCatId,
-                  element: chosenCat ? (chosenCat.categoryName || (chosenCat as any).category_name || '') : adFormData.element,
+                  element: adFormData.element.trim() ? adFormData.element : (chosenCat ? (chosenCat.categoryName || (chosenCat as any).category_name || '') : ''),
                   amountPaid: chosenAmount || adFormData.amountPaid,
                   paymentStatus: chosenStatus,
                 });

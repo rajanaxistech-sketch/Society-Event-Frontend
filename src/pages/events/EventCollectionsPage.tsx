@@ -80,6 +80,51 @@ const isUuid = (val: any): boolean => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val);
 };
 
+export const getBlockPrefix = (towerOrBlock: any, fallbackIndex?: number): string => {
+  if (!towerOrBlock) return fallbackIndex !== undefined ? String.fromCharCode(65 + fallbackIndex) : '';
+  
+  const code = (towerOrBlock.code || '').toString().trim();
+  const name = (towerOrBlock.name || towerOrBlock.towerName || towerOrBlock.blockName || '').toString().trim();
+
+  // If short alphanumeric code without space (e.g. 'A', 'B', 'T-A', 'BLK-A')
+  if (code && code.length <= 4 && !code.includes(' ')) {
+    return code.toUpperCase();
+  }
+
+  // Extract from name: e.g. "Tower A" -> "A", "Block B" -> "B", "Wing C" -> "C", "Tower-1" -> "1"
+  const match = name.match(/^(?:tower|block|wing|building)\s*[-_]?\s*([a-zA-Z0-9]+)$/i);
+  if (match && match[1]) {
+    return match[1].toUpperCase();
+  }
+
+  if (name) {
+    const cleaned = name.replace(/^(?:tower|block|wing|building)\s*/i, '').trim().toUpperCase();
+    if (cleaned) return cleaned;
+    return name.toUpperCase();
+  }
+
+  return fallbackIndex !== undefined ? String.fromCharCode(65 + fallbackIndex) : '';
+};
+
+export const formatFlatDisplayNumber = (
+  flatNumber: string | number | undefined | null,
+  blockPrefix?: string
+): string => {
+  if (flatNumber === undefined || flatNumber === null || flatNumber === '') return 'Unit';
+  const raw = String(flatNumber).trim();
+  if (!blockPrefix) return raw;
+
+  const cleanPrefix = blockPrefix.trim().toUpperCase();
+  // Check if raw already begins with the prefix (e.g., "A-101", "A101", "A 101", "A-201")
+  const regex = new RegExp(`^${cleanPrefix}[-_\\s]*`, 'i');
+  if (regex.test(raw)) {
+    const numPart = raw.replace(regex, '');
+    return numPart ? `${cleanPrefix}-${numPart}` : raw;
+  }
+
+  return `${cleanPrefix}-${raw}`;
+};
+
 const getTowerDisplayName = (tower: any, index?: number): string => {
   if (!tower) return index !== undefined ? `Tower ${index + 1}` : 'Tower';
   const rawName = (tower.name || tower.towerName || tower.code || (index !== undefined ? `${index + 1}` : '')).toString().trim();
@@ -127,14 +172,17 @@ const generateMockMatrix = () => {
           floorPaid++;
           towerPaid++;
         }
+        const flatNum = `${f}0${idx + 1}`;
         flats.push({
-          id: `tower-${name.toLowerCase()}-${f}0${idx + 1}${suf}`,
-          flatNumber: `${f}0${idx + 1}${suf}`,
+          id: `tower-${name.toLowerCase()}-${flatNum}`,
+          flatNumber: flatNum,
+          displayFlatNumber: `${name}-${flatNum}`,
+          blockPrefix: name,
           status: isPaid ? 'paid' : 'pending',
           amount: 2500,
           amountPaid: isPaid ? 2500 : 0,
           pendingAmount: isPaid ? 0 : 2500,
-          residentName: `Resident ${f}0${idx + 1}${suf}`,
+          residentName: `Resident ${flatNum}`,
           phone: '+91 98765 43210',
           paymentMethod: isPaid ? (idx % 2 === 0 ? 'UPI' : 'Cheque') : undefined,
         });
@@ -152,6 +200,7 @@ const generateMockMatrix = () => {
     return {
       name: `Tower ${name}`,
       towerName: name,
+      code: name,
       totalUnits: 40,
       paidUnits: towerPaid,
       pendingUnits: 40 - towerPaid,
@@ -458,14 +507,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
             setMatrixData(updated);
           }
           selectedFlatForPayment.amount = newFee;
-          toast.success(`Expected fee updated to ₹${newFee} for Flat ${selectedFlatForPayment.flatNumber}`);
+          toast.success(`Expected fee updated to ₹${newFee} for Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber}`);
           setIsEditingExpectedFee(false);
           return;
         }
 
         const res = await collectionsService.updateFlatAmount(eventId, selectedFlatForPayment.id, newFee);
         if (res.success) {
-          toast.success(`Expected fee updated to ₹${newFee} for Flat ${selectedFlatForPayment.flatNumber}`);
+          toast.success(`Expected fee updated to ₹${newFee} for Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber}`);
           setIsEditingExpectedFee(false);
           selectedFlatForPayment.amount = newFee;
           fetchMatrix(false);
@@ -549,7 +598,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         selectedFlatForPayment.interestStatus = interestStatus;
         selectedFlatForPayment.interest_status = interestStatus;
         toast.success(
-          `🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount} (Balance: ₹${newPending})`
+          `🎉 Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount} (Balance: ₹${newPending})`
         );
         setPayModalOpen(false);
         setSelectedFlatForPayment(null);
@@ -593,7 +642,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           }
           setMatrixData(updated);
         }
-        toast.success(res.data?.message || `🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
+        toast.success(res.data?.message || `🎉 Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
         setPayModalOpen(false);
         setSelectedFlatForPayment(null);
         fetchMatrix();
@@ -625,7 +674,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       selectedFlatForPayment.passes = Number(passes);
       selectedFlatForPayment.interestStatus = interestStatus;
       selectedFlatForPayment.interest_status = interestStatus;
-      toast.success(`🎉 Flat ${selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
+      toast.success(`🎉 Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
       setPayModalOpen(false);
       setSelectedFlatForPayment(null);
     } finally {
@@ -976,11 +1025,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       header: 'Flat / Unit',
       render: (row) => {
         if (row.flat) {
+          const prefix = getBlockPrefix(row.flat.floor?.block);
+          const dispNum = formatFlatDisplayNumber(row.flat.flat_number, prefix);
           return (
             <div className="flex items-center gap-1.5 font-bold text-slate-900 text-xs">
               <Home className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
               <span>
-                Flat {row.flat.flat_number}{' '}
+                Flat {dispNum}{' '}
                 <span className="font-normal text-slate-400">({row.flat.floor?.block?.name || 'Block'})</span>
               </span>
             </div>
@@ -1139,10 +1190,30 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
   const flatList: any[] = useMemo(() => {
     if (currentTower?.floors && currentTower.floors.length > 0) {
-      return currentTower.floors.flatMap((fl: any) => fl.flats || []);
+      const prefix = getBlockPrefix(currentTower, selectedTowerIndex);
+      return currentTower.floors.flatMap((fl: any) =>
+        (fl.flats || []).map((f: any) => ({
+          ...f,
+          displayFlatNumber: formatFlatDisplayNumber(f.flatNumber, prefix),
+          blockPrefix: prefix,
+          towerName: currentTower.name || currentTower.towerName,
+        }))
+      );
     }
     if (matrixData?.towers && matrixData.towers.length > 0) {
-      return matrixData.towers.flatMap((t: any) => t.floors?.flatMap((fl: any) => fl.flats || []) || []);
+      return matrixData.towers.flatMap((t: any, tIdx: number) => {
+        const prefix = getBlockPrefix(t, tIdx);
+        return (
+          t.floors?.flatMap((fl: any) =>
+            (fl.flats || []).map((f: any) => ({
+              ...f,
+              displayFlatNumber: formatFlatDisplayNumber(f.flatNumber, prefix),
+              blockPrefix: prefix,
+              towerName: t.name || t.towerName,
+            }))
+          ) || []
+        );
+      });
     }
     if (collections && collections.length > 0) {
       return collections.map((c) => {
@@ -1152,10 +1223,20 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           c.bungalow?.persons?.find((p) => p.is_primary_owner) ||
           c.bungalow?.persons?.[0];
 
+        const block = c.flat?.floor?.block;
+        const prefix = block ? getBlockPrefix(block) : getBlockPrefix(currentTower, selectedTowerIndex);
+        const rawFlatNumber = c.flat?.flat_number || c.bungalow?.bungalow_number || 'Unit';
+        const displayFlatNumber = c.flat
+          ? formatFlatDisplayNumber(rawFlatNumber, prefix)
+          : `Bungalow ${rawFlatNumber}`;
+
         return {
           id: c.flat_id || c.id,
           collectionId: c.id,
-          flatNumber: c.flat?.flat_number || c.bungalow?.bungalow_number || 'Unit',
+          flatNumber: rawFlatNumber,
+          displayFlatNumber,
+          blockPrefix: prefix,
+          towerName: block?.name || currentTower?.name,
           status: c.status,
           amount: Number(c.expected_amount || 2500),
           amountPaid: Number(c.amount_paid || 0),
@@ -1169,16 +1250,28 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       });
     }
     return [];
-  }, [currentTower, matrixData, collections]);
+  }, [currentTower, selectedTowerIndex, matrixData, collections]);
 
   const displayedFlats = useMemo(() => {
     if (!searchQuery.trim()) return flatList;
-    const q = searchQuery.toLowerCase();
-    return flatList.filter(
-      (f: any) =>
-        f.flatNumber?.toString().toLowerCase().includes(q) ||
-        f.residentName?.toString().toLowerCase().includes(q)
-    );
+    const q = searchQuery.toLowerCase().trim();
+    const cleanQ = q.replace(/[-_\s]/g, '');
+
+    return flatList.filter((f: any) => {
+      const rawNum = String(f.flatNumber || '').toLowerCase();
+      const displayNum = String(f.displayFlatNumber || f.flatNumber || '').toLowerCase();
+      const resident = String(f.residentName || '').toLowerCase();
+
+      const cleanRawNum = rawNum.replace(/[-_\s]/g, '');
+      const cleanDisplayNum = displayNum.replace(/[-_\s]/g, '');
+
+      return (
+        displayNum.includes(q) ||
+        rawNum.includes(q) ||
+        resident.includes(q) ||
+        (cleanQ.length > 0 && (cleanDisplayNum.includes(cleanQ) || cleanRawNum.includes(cleanQ)))
+      );
+    });
   }, [flatList, searchQuery]);
 
   return (
@@ -1288,7 +1381,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
           type="text"
-          placeholder="Search flat number or resident..."
+          placeholder="Search flat number (e.g. A-101) or resident..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full h-8 pl-8 pr-3 text-xs bg-white border border-slate-200/80 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-400"
@@ -1331,7 +1424,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   <div className="min-w-0">
                     <div className="flex items-center flex-wrap gap-1.5">
                       <span className={`font-semibold text-xs sm:text-sm ${isNotInterested ? 'text-slate-700' : 'text-slate-900'}`}>
-                        Flat {flat.flatNumber}
+                        Flat {flat.displayFlatNumber || flat.flatNumber}
                       </span>
                       {flat.isUserFlat && (
                         <span className="text-[9px] font-medium px-1.5 py-0.2 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/50">
@@ -1436,8 +1529,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         }}
         title={
           selectedFlatForPayment
-            ? `${Number(selectedFlatForPayment.amountPaid || 0) > 0 ? 'Update Payment' : 'Record Payment'}: Flat ${selectedFlatForPayment.flatNumber}`
-            : `${Number(payingCollection?.amount_paid || 0) > 0 ? 'Update Payment' : 'Record Payment'}: ${payingCollection?.flat ? `Flat ${payingCollection.flat.flat_number}` : `Bungalow ${payingCollection?.bungalow?.bungalow_number}`}`
+            ? `${Number(selectedFlatForPayment.amountPaid || 0) > 0 ? 'Update Payment' : 'Record Payment'}: Flat ${selectedFlatForPayment.displayFlatNumber || formatFlatDisplayNumber(selectedFlatForPayment.flatNumber, selectedFlatForPayment.blockPrefix || getBlockPrefix(currentTower, selectedTowerIndex))}`
+            : `${Number(payingCollection?.amount_paid || 0) > 0 ? 'Update Payment' : 'Record Payment'}: ${payingCollection?.flat ? `Flat ${formatFlatDisplayNumber(payingCollection.flat.flat_number, getBlockPrefix(payingCollection.flat.floor?.block))}` : `Bungalow ${payingCollection?.bungalow?.bungalow_number}`}`
         }
         description="Record contribution receipt via UPI, Cash, or Cheque."
       >
@@ -1978,9 +2071,9 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
               <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Unit / Resident</span>
               <span className="font-bold text-slate-800">
                 {selectedFlatForPayment
-                  ? `Flat ${selectedFlatForPayment.flatNumber}`
+                  ? `Flat ${selectedFlatForPayment.displayFlatNumber || formatFlatDisplayNumber(selectedFlatForPayment.flatNumber, selectedFlatForPayment.blockPrefix || getBlockPrefix(currentTower, selectedTowerIndex))}`
                   : payingCollection?.flat
-                    ? `Flat ${payingCollection.flat.flat_number}`
+                    ? `Flat ${formatFlatDisplayNumber(payingCollection.flat.flat_number, getBlockPrefix(payingCollection.flat.floor?.block))}`
                     : payingCollection?.bungalow
                       ? `Bungalow ${payingCollection.bungalow.bungalow_number}`
                       : 'Event Contribution'}
@@ -2092,7 +2185,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       <Modal
         isOpen={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}
-        title={`Payment Ledger: ${historyTarget?.flat ? `Flat ${historyTarget.flat.flat_number}` : `Bungalow ${historyTarget?.bungalow?.bungalow_number}`}`}
+        title={`Payment Ledger: ${historyTarget?.flat ? `Flat ${formatFlatDisplayNumber(historyTarget.flat.flat_number, getBlockPrefix(historyTarget.flat.floor?.block))}` : `Bungalow ${historyTarget?.bungalow?.bungalow_number}`}`}
         description="Complete chronological receipt audit trail for this residential unit."
       >
         <div className="space-y-3">

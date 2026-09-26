@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import anaxistechLogo from '../assets/anaxistech-logo.png';
 import { usePermission } from '../hooks/usePermission';
 import { useUIStore } from '../store/uiStore';
 import { AppRoutes } from '../constants/routes';
@@ -308,8 +309,11 @@ export const Sidebar: React.FC = () => {
               <span className="text-[9px] text-slate-500 font-medium">Live</span>
             </div>
           </div>
-          <div className="text-[9px] text-slate-400">
-            Powered by <span className="text-[#6366F1] font-semibold">AnaxisTech</span>
+          <div className="text-[9px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+            <span>Powered by</span>
+            <a href="https://anaxistech.com/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
+              <img src={anaxistechLogo} alt="AnaxisTech" className="h-3.5 w-auto object-contain" />
+            </a>
           </div>
         </div>
       </aside>
