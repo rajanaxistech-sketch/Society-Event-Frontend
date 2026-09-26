@@ -210,7 +210,7 @@ export const AdvertisingHubPage: React.FC = () => {
     const defaultCat = allCategories.length > 0 ? allCategories[0] : null;
     const defaultCatId = defaultCat ? defaultCat.id : '';
     setAdFormData({
-      element: defaultCat?.categoryName || (defaultCat as any)?.category_name || '',
+      element: '',
       advertisementCategoryId: defaultCatId,
       modeOfPayment: paymentMethods.length > 0 ? paymentMethods[0].code : 'UPI',
       paymentStatus: 'completed',
@@ -225,9 +225,8 @@ export const AdvertisingHubPage: React.FC = () => {
     setIsEditingAd(true);
     setCurrentAdId(item.id);
     const catId = item.advertisementCategoryId || (item as any).advertisement_category_id || '';
-    const chosenCat = allCategories.find((c) => c.id === catId) || item.advertisementCategory;
     setAdFormData({
-      element: item.element || chosenCat?.categoryName || (chosenCat as any)?.category_name || '',
+      element: item.element || '',
       advertisementCategoryId: catId,
       modeOfPayment: item.modeOfPayment || (item as any).mode_of_payment || 'CASH',
       paymentStatus: (item.paymentStatus || (item as any).payment_status || 'completed') as AdvertisementPaymentStatus,
@@ -984,58 +983,42 @@ export const AdvertisingHubPage: React.FC = () => {
         size="md"
       >
         <form onSubmit={handleSaveAd} className="space-y-4">
-          {/* Advertisement Name */}
+          {/* Person / Advertiser Name */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
+            <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
               Name <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
-              placeholder="e.g. Entrance Gate, Main Stage Backdrop, Sponsor Standee"
+              placeholder="e.g. Raj Shah, Amit Patel, Ramesh Mehta"
               value={adFormData.element}
               onChange={(e) => setAdFormData({ ...adFormData, element: e.target.value })}
               className={clsx(
-                'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800',
+                'w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-slate-800',
                 adFormErrors.element ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'
               )}
             />
             {adFormErrors.element && (
-              <p className="text-[11px] text-rose-500 mt-1 font-medium">{adFormErrors.element}</p>
+              <p className="text-xs text-rose-500 mt-1 font-medium">{adFormErrors.element}</p>
             )}
-            {/* Suggestions */}
-            <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-              <span className="text-[10px] text-slate-400 font-medium">Suggestions:</span>
-              {ELEMENT_SUGGESTIONS.slice(0, 4).map((sug) => (
-                <button
-                  key={sug}
-                  type="button"
-                  onClick={() => setAdFormData({ ...adFormData, element: sug })}
-                  className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 text-[10px] font-medium transition-colors border border-slate-200/60 cursor-pointer"
-                >
-                  {sug}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Select Advertisement Category */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
+            <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
               Select Advertisement Category <span className="text-rose-500">*</span>
             </label>
             <select
               value={adFormData.advertisementCategoryId}
               onChange={(e) => {
                 const newCatId = e.target.value;
-                const chosenCat = allCategories.find((c) => c.id === newCatId);
                 setAdFormData({
                   ...adFormData,
                   advertisementCategoryId: newCatId,
-                  element: adFormData.element.trim() ? adFormData.element : (chosenCat ? (chosenCat.categoryName || (chosenCat as any).category_name || '') : ''),
                 });
               }}
               className={clsx(
-                'w-full px-3 py-2 text-xs bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all',
+                'w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all',
                 adFormErrors.advertisementCategoryId ? 'border-rose-400 bg-rose-50/20' : 'border-slate-200'
               )}
             >
