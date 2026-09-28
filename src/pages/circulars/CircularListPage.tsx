@@ -179,45 +179,44 @@ export const CircularListPage: React.FC = () => {
     }
   };
 
+  const isPdfFile = (item: CircularItem) =>
+    item.file_type === 'pdf' || item.file_url?.toLowerCase().endsWith('.pdf');
+
   const adminColumns: Column<CircularItem>[] = [
     {
-      key: 'serial_number',
-      header: 'Serial No.',
-      render: (item) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100">
-          {item.serial_number || '—'}
-        </span>
-      ),
-    },
-    {
       key: 'title',
-      header: 'Circular Name',
+      header: 'Circular Title & Notice',
       render: (item) => (
-        <div className="flex items-center gap-2.5 py-0.5">
-          <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 shrink-0 flex items-center justify-center border border-indigo-100/80">
-            {item.file_type === 'pdf' || item.file_url?.toLowerCase().endsWith('.pdf') ? (
-              <FileText className="w-3.5 h-3.5 text-rose-500" />
+        <div className="flex items-start gap-2.5 py-1">
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 shrink-0 flex items-center justify-center border border-indigo-100/80 mt-0.5 shadow-2xs">
+            {isPdfFile(item) ? (
+              <FileText className="w-4 h-4 text-rose-500" />
             ) : item.file_url ? (
-              <ImageIcon className="w-3.5 h-3.5 text-indigo-500" />
+              <ImageIcon className="w-4 h-4 text-indigo-500" />
             ) : (
-              <ScrollText className="w-3.5 h-3.5 text-slate-500" />
+              <ScrollText className="w-4 h-4 text-slate-500" />
             )}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 max-w-md">
             <div className="flex items-center gap-1.5">
               <span
                 onClick={() => handleOpenCircular(item)}
                 className="font-bold text-slate-900 hover:text-indigo-600 transition-colors cursor-pointer text-xs sm:text-[13px] truncate"
-                title={item.file_url ? 'Click to open document in new tab' : 'Click to view'}
+                title={item.file_url ? 'Click to open document' : 'Click to view'}
               >
                 {item.title}
               </span>
               {isRecent(item.published_at) && (
-                <span className="px-1 py-0.2 text-[8px] font-extrabold uppercase bg-emerald-100 text-emerald-700 rounded">
+                <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-emerald-100 text-emerald-700 rounded">
                   New
                 </span>
               )}
             </div>
+            {item.description && (
+              <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                {item.description}
+              </p>
+            )}
           </div>
         </div>
       ),
@@ -241,7 +240,7 @@ export const CircularListPage: React.FC = () => {
       key: 'society',
       header: 'Society',
       render: (item) => (
-        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 truncate max-w-[200px]">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 truncate max-w-[180px]">
           <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
           <span className="truncate">{item.society?.name || '—'}</span>
         </div>
@@ -259,7 +258,11 @@ export const CircularListPage: React.FC = () => {
             className="inline-flex items-center gap-1.5 text-slate-700 hover:text-indigo-600 transition-colors group"
             title="Open attachment in new tab"
           >
-            <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase rounded bg-slate-100 group-hover:bg-indigo-50 group-hover:text-indigo-600 text-slate-700 border border-slate-200 group-hover:border-indigo-200 transition-colors">
+            <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded border transition-colors ${
+              isPdfFile(item)
+                ? 'bg-rose-50 text-rose-700 border-rose-200 group-hover:bg-rose-100'
+                : 'bg-indigo-50 text-indigo-700 border-indigo-200 group-hover:bg-indigo-100'
+            }`}>
               {item.file_type || 'FILE'}
             </span>
             {item.file_size && (
@@ -278,7 +281,7 @@ export const CircularListPage: React.FC = () => {
     },
     {
       key: 'published_at',
-      header: 'Published / Date',
+      header: 'Date',
       render: (item) => (
         <div className="text-[11px] text-slate-600 leading-tight">
           <span className="font-semibold block text-slate-800">
@@ -300,7 +303,7 @@ export const CircularListPage: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => handleOpenCircular(item)}
-            title={item.file_url ? 'Open Document in New Tab' : 'View Circular'}
+            title={item.file_url ? 'Open Document' : 'View Circular'}
             className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
           >
             <Eye className="w-3.5 h-3.5" />
@@ -372,8 +375,8 @@ export const CircularListPage: React.FC = () => {
             </h1>
             <p className="text-[11px] text-slate-500">
               {isResident
-                ? 'Official notices, collection instructions, and event announcements for your society'
-                : 'Publish, distribute, and manage official society circulars and event communications'}
+                ? 'Official notices, guidelines, and event announcements for your society'
+                : 'Publish and manage official society circulars, announcements, and notice documents'}
             </p>
           </div>
         </div>
@@ -467,7 +470,7 @@ export const CircularListPage: React.FC = () => {
           description={
             isResident
               ? 'New society announcements and official circulars will appear here as soon as they are published by your committee.'
-              : 'Create your first official circular to communicate important information, collections, and instructions to society residents.'
+              : 'Create your first official circular to communicate important information, guidelines, and notices to society residents.'
           }
           action={
             canManage ? (
@@ -487,9 +490,9 @@ export const CircularListPage: React.FC = () => {
       ) : !isSuperAdmin ? (
         /* ================= MOBILE / RESIDENT CARDS GRID ================= */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
-          {circulars.map((item, index) => {
+          {circulars.map((item) => {
             const hasNewTag = isRecent(item.published_at);
-            const serialNo = item.serial_number || `CIRC-${String(index + 1).padStart(2, '0')}`;
+            const isPdf = isPdfFile(item);
 
             return (
               <Card
@@ -497,17 +500,27 @@ export const CircularListPage: React.FC = () => {
                 className="flex flex-col justify-between hover:shadow-card-hover transition-all duration-200 border border-slate-200/80 rounded-xl group"
               >
                 <div>
-                  {/* Top Bar with Serial No, Event Tag & New indicator & Status */}
+                  {/* Top Bar with Event Tag, New indicator & Status */}
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        #{serialNo}
-                      </span>
-
-                      {item.event && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
-                          <Sparkles className="w-2.5 h-2.5 text-purple-500" />
+                      {item.event ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                          <Sparkles className="w-3 h-3 text-purple-500" />
                           {item.event.name}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600">
+                          General Notice
+                        </span>
+                      )}
+
+                      {item.file_url && (
+                        <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase border ${
+                          isPdf
+                            ? 'bg-rose-50 text-rose-700 border-rose-100'
+                            : 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                        }`}>
+                          {item.file_type || (isPdf ? 'PDF' : 'IMAGE')}
                         </span>
                       )}
                     </div>
@@ -530,12 +543,19 @@ export const CircularListPage: React.FC = () => {
                   >
                     {item.title}
                   </h3>
+
+                  {/* Description Preview */}
+                  {item.description && (
+                    <p className="text-[11px] text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                      {item.description}
+                    </p>
+                  )}
                 </div>
 
                 {/* Footer with Metadata & Actions */}
                 <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                    <Calendar className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5 text-[10.5px] text-slate-400">
+                    <Calendar className="w-3 h-3 text-slate-400" />
                     <span>{formatDate(item.published_at || item.created_at)}</span>
                   </div>
 
@@ -564,11 +584,11 @@ export const CircularListPage: React.FC = () => {
                       <>
                         <a
                           href={getFileUrl(item.file_url)}
-                          download={item.file_name || `Circular_${serialNo}.pdf`}
+                          download={item.file_name || `Circular_${item.title}.pdf`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1 rounded text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                          title="Download PDF"
+                          title="Download attachment"
                         >
                           <Download className="w-3.5 h-3.5" />
                         </a>
@@ -579,7 +599,7 @@ export const CircularListPage: React.FC = () => {
                           rightIcon={<ExternalLink className="w-2.5 h-2.5" />}
                           className="text-[11px] font-bold py-0.5 px-2"
                         >
-                          PDF
+                          {isPdf ? 'PDF' : 'View'}
                         </Button>
                       </>
                     ) : (
@@ -589,7 +609,7 @@ export const CircularListPage: React.FC = () => {
                         onClick={() => handleOpenCircular(item)}
                         className="text-[11px] font-bold py-0.5 px-2"
                       >
-                        View
+                        Read
                       </Button>
                     )}
                   </div>

@@ -785,10 +785,10 @@ export const AdvertisementsPage: React.FC = () => {
             )}
           </div>
 
-          {/* Select Advertisement Category */}
+          {/* Description */}
           <div>
             <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
-              Select Advertisement Category <span className="text-rose-500">*</span>
+              Description: <span className="text-rose-500">*</span>
             </label>
             <select
               value={adFormData.advertisementCategoryId}
@@ -885,17 +885,15 @@ export const AdvertisementsPage: React.FC = () => {
                         setIsQrModalOpen(true);
                       }
                     }}
-                    className={`relative flex flex-col items-start p-2.5 sm:p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? item.activeClass
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
-                    }`}
+                    className={`relative flex flex-col items-start p-2.5 sm:p-3 rounded-xl border text-left transition-all cursor-pointer ${isSelected
+                      ? item.activeClass
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
+                      }`}
                   >
                     <div className="flex items-center justify-between w-full mb-1.5">
                       <div
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${
-                          isSelected ? item.iconColor : 'bg-slate-100 text-slate-600'
-                        }`}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${isSelected ? item.iconColor : 'bg-slate-100 text-slate-600'
+                          }`}
                       >
                         <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                       </div>

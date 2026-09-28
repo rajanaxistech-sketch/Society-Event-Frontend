@@ -153,7 +153,6 @@ const getFloorDisplayName = (floor: any): string => {
 const generateMockMatrix = () => {
   const towers = ['A', 'B', 'C'].map((name) => {
     let towerTotal = 40;
-    let towerPaid = 0;
     const floors: Array<{
       floorNumber: number;
       name: string;
@@ -165,27 +164,24 @@ const generateMockMatrix = () => {
     }> = [];
     for (let f = 1; f <= 10; f++) {
       const flats: any[] = [];
-      let floorPaid = 0;
       const suffixes = ['A', 'B', 'C', 'D'];
       suffixes.forEach((suf, idx) => {
-        const isPaid = !((f % 3 === 0 && idx === 1) || (f === 4 && idx === 2) || (f === 7 && idx === 0) || (f === 9 && idx === 3));
-        if (isPaid) {
-          floorPaid++;
-          towerPaid++;
-        }
         const flatNum = `${f}0${idx + 1}`;
         flats.push({
           id: `tower-${name.toLowerCase()}-${flatNum}`,
           flatNumber: flatNum,
           displayFlatNumber: `${name}-${flatNum}`,
           blockPrefix: name,
-          status: isPaid ? 'paid' : 'pending',
-          amount: 2500,
-          amountPaid: isPaid ? 2500 : 0,
-          pendingAmount: isPaid ? 0 : 2500,
+          status: 'pending',
+          amount: 4000,
+          amountPaid: 0,
+          pendingAmount: 4000,
+          passes: 0,
+          interestStatus: 'interested',
+          interest_status: 'interested',
           residentName: `Resident ${flatNum}`,
           phone: '+91 98765 43210',
-          paymentMethod: isPaid ? (idx % 2 === 0 ? 'UPI' : 'Cheque') : undefined,
+          paymentMethod: undefined,
         });
       });
       floors.push({
@@ -193,8 +189,8 @@ const generateMockMatrix = () => {
         name: `Floor ${f}`,
         floorName: `Floor ${f}`,
         totalUnits: 4,
-        paidUnits: floorPaid,
-        pendingUnits: 4 - floorPaid,
+        paidUnits: 0,
+        pendingUnits: 4,
         flats,
       });
     }
@@ -203,23 +199,23 @@ const generateMockMatrix = () => {
       towerName: name,
       code: name,
       totalUnits: 40,
-      paidUnits: towerPaid,
-      pendingUnits: 40 - towerPaid,
+      paidUnits: 0,
+      pendingUnits: 40,
       floors,
     };
   });
 
   const totalUnits = 120;
-  const paidUnits = towers.reduce((acc, t) => acc + t.paidUnits, 0);
+  const paidUnits = 0;
 
   return {
     summary: {
       totalUnits,
       paidUnits,
-      pendingUnits: totalUnits - paidUnits,
-      totalTarget: totalUnits * 2500,
-      totalCollected: paidUnits * 2500,
-      progressPercentage: Math.round((paidUnits / totalUnits) * 100),
+      pendingUnits: totalUnits,
+      totalTarget: totalUnits * 4000,
+      totalCollected: 0,
+      progressPercentage: 0,
     },
     towers,
   };
@@ -261,7 +257,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const [chequeDate, setChequeDate] = useState('');
   const [transactionReference, setTransactionReference] = useState('');
   const [payNotes, setPayNotes] = useState('');
-  const [passes, setPasses] = useState<number>(1);
+  const [passes, setPasses] = useState<number>(0);
   const [interestStatus, setInterestStatus] = useState<string>('interested');
   const [isPassesDropdownOpen, setIsPassesDropdownOpen] = useState(false);
   const [isInterestDropdownOpen, setIsInterestDropdownOpen] = useState(false);
@@ -459,7 +455,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const handleSeatMapFlatClick = (flat: any) => {
     setPayingCollection(null);
     setSelectedFlatForPayment(flat);
-    const expAmt = Number(flat.amount ?? 2500);
+    const expAmt = Number(flat.amount ?? 4000);
     const paidAmt = Number(flat.amountPaid ?? 0);
     const pendingAmt = Math.max(0, expAmt - paidAmt);
     // If flat already has a payment, populate with the paid amount so admin can edit it; otherwise pending/expected amount
@@ -475,7 +471,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setChequeNumber('');
     setBankName('');
     setChequeDate('');
-    setPasses(flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : (flat.numberOfPasses ? Number(flat.numberOfPasses) : 1));
+    setPasses(flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : (flat.numberOfPasses ? Number(flat.numberOfPasses) : 0));
     setInterestStatus(flat.interestStatus || flat.interest_status || 'interested');
     setIsQrModalOpen(false);
     setPayModalOpen(true);
@@ -744,7 +740,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setChequeDate(col.payments?.[0]?.cheque_date ? col.payments[0].cheque_date.split('T')[0] : '');
     setTransactionReference(col.payments?.[0]?.transaction_reference || '');
     setPayNotes(col.payments?.[0]?.notes || '');
-    setPasses(col.passes !== undefined && col.passes !== null ? Number(col.passes) : 1);
+    setPasses(col.passes !== undefined && col.passes !== null ? Number(col.passes) : 0);
     setInterestStatus((col as any).interest_status || (col as any).interestStatus || 'interested');
     setProofFile(null);
     setProofPreviewUrl(col.payments?.[0]?.proof_url || null);
@@ -1239,13 +1235,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           blockPrefix: prefix,
           towerName: block?.name || currentTower?.name,
           status: c.status,
-          amount: Number(c.expected_amount || 2500),
+          amount: Number(c.expected_amount || 4000),
           amountPaid: Number(c.amount_paid || 0),
-          pendingAmount: Number(c.pending_amount || 0),
+          pendingAmount: Number(c.pending_amount || (Number(c.amount_paid || 0) > 0 ? Math.max(0, Number(c.expected_amount || 4000) - Number(c.amount_paid)) : Number(c.expected_amount || 4000))),
           residentName: owner?.full_name || 'Resident',
-          passes: c.passes,
-          interestStatus: (c as any).interest_status || (c as any).interestStatus,
-          interest_status: (c as any).interest_status || (c as any).interestStatus,
+          passes: c.passes !== undefined && c.passes !== null ? Number(c.passes) : 0,
+          interestStatus: (c as any).interest_status || (c as any).interestStatus || 'interested',
+          interest_status: (c as any).interest_status || (c as any).interestStatus || 'interested',
           rawCollection: c,
         };
       });
@@ -1394,7 +1390,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         <div className="space-y-1.5">
           {displayedFlats.map((flat: any) => {
             const isPaid = flat.status === 'paid';
-            const expectedAmt = Number(flat.amount ?? 2500);
+            const expectedAmt = Number(flat.amount ?? 4000);
             const paidAmt = Number(flat.amountPaid ?? (isPaid ? expectedAmt : 0));
             const pendingAmt = Number(flat.pendingAmount ?? (isPaid ? 0 : expectedAmt));
             const isNotInterested = flat.interestStatus === 'not_interested' || flat.interest_status === 'not_interested';
@@ -1432,9 +1428,10 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                           You
                         </span>
                       )}
-                      {!isNotInterested && flat.passes !== undefined && flat.passes !== null && (
+                      {!isNotInterested && (
                         <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-purple-50 text-purple-700 rounded border border-purple-200/50">
-                          {flat.passes} {flat.passes === 1 ? 'Pass' : 'Passes'}
+                          {flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0}{' '}
+                          {(flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0) === 1 ? 'Pass' : 'Passes'}
                         </span>
                       )}
                       {isNotInterested ? (
@@ -1536,7 +1533,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         description="Record contribution receipt via UPI, Cash, or Cheque."
       >
         {(() => {
-          const currentExpectedFee = Number(selectedFlatForPayment?.amount ?? payingCollection?.expected_amount ?? 2500);
+          const currentExpectedFee = Number(selectedFlatForPayment?.amount ?? payingCollection?.expected_amount ?? 4000);
           const currentPaidFee = Number(selectedFlatForPayment?.amountPaid ?? payingCollection?.amount_paid ?? 0);
           const currentBalanceDue = Math.max(0, currentExpectedFee - currentPaidFee);
 
@@ -1784,8 +1781,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                           {passes} {passes === 1 ? 'Pass' : 'Passes'}
                         </span>
                       </div>
-                      <div className="grid grid-cols-5 gap-1.5">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                      <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
+                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
                           const isSelected = passes === num;
                           return (
                             <button
@@ -1795,7 +1792,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                                 setPasses(num);
                                 setIsPassesDropdownOpen(false);
                               }}
-                              className={`h-8.5 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center transition-all ${
+                              className={`h-8 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center transition-all ${
                                 isSelected
                                   ? 'bg-purple-600 text-white shadow-xs font-black scale-105 ring-2 ring-purple-300'
                                   : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 border border-slate-200/60'
@@ -1911,8 +1908,6 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                                     setInterestStatus(opt.value);
                                     if (opt.value === 'not_interested') {
                                       setPasses(0);
-                                    } else if (passes === 0) {
-                                      setPasses(1);
                                     }
                                     setIsInterestDropdownOpen(false);
                                   }}

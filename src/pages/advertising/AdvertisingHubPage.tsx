@@ -1003,10 +1003,10 @@ export const AdvertisingHubPage: React.FC = () => {
             )}
           </div>
 
-          {/* Select Advertisement Category */}
+          {/* Description */}
           <div>
             <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1">
-              Select Advertisement Category <span className="text-rose-500">*</span>
+              Description <span className="text-rose-500">*</span>
             </label>
             <select
               value={adFormData.advertisementCategoryId}
