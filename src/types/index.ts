@@ -810,10 +810,26 @@ export interface FoodItemEntity {
   notes?: string | null;
   image_url?: string | null;
   day_number?: number | null;
+  day_title?: string | null;
+  day_subtitle?: string | null;
+  menu_date?: string | null;
+  day_price?: number | null;
+  price_unit?: string | null;
   meal_type?: string | null;
   created_at: string;
   event?: EventItem;
 }
+
+export interface FoodDayMetaInput {
+  day_number?: number;
+  day_title?: string;
+  day_subtitle?: string;
+  menu_date?: string;
+  day_price?: number | null;
+  price_unit?: string;
+  image_url?: string | null;
+}
+
 
 export interface DressCodeItem {
   id: string;

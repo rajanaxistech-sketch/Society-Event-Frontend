@@ -1,5 +1,5 @@
 import axiosClient from './axiosClient';
-import { ApiResponse, FoodItemEntity, PaginatedResponse, QueryParams } from '../types';
+import { ApiResponse, FoodItemEntity, FoodDayMetaInput, PaginatedResponse, QueryParams } from '../types';
 
 export const foodService = {
   listByEvent: async (eventId: string, params?: QueryParams): Promise<PaginatedResponse<FoodItemEntity>> => {
@@ -26,4 +26,15 @@ export const foodService = {
     const response = await axiosClient.delete<ApiResponse<null>>(`/food/${id}`);
     return response.data;
   },
+
+  updateDayMeta: async (eventId: string, dayNumber: number, data: FoodDayMetaInput): Promise<ApiResponse<any>> => {
+    const response = await axiosClient.patch<ApiResponse<any>>(`/events/${eventId}/food-days/${dayNumber}`, data);
+    return response.data;
+  },
+
+  deleteDay: async (eventId: string, dayNumber: number): Promise<ApiResponse<{ deletedCount: number }>> => {
+    const response = await axiosClient.delete<ApiResponse<{ deletedCount: number }>>(`/events/${eventId}/food-days/${dayNumber}`);
+    return response.data;
+  },
 };
+

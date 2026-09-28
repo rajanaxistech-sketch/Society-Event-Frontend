@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { foodService } from '../../api/foodService';
 import { eventsService } from '../../api/eventsService';
-import { FoodItemEntity, EventItem } from '../../types';
+import { FoodItemEntity, EventItem, FoodDayMetaInput } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
 import { Permissions } from '../../constants/permissions';
@@ -18,19 +18,30 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Utensils,
   Camera,
   FolderOpen,
   X,
   ChevronRight,
-  ImageIcon,
+  Calendar,
+  Tag,
+  Sparkles,
 } from 'lucide-react';
 
 interface EventFoodPageProps {
   eventId?: string;
 }
 
-const NAVRATRI_FOOD_DAYS = [
+interface DayItemStructure {
+  day: number;
+  title: string;
+  subtitle: string;
+  date?: string;
+  price?: number | null;
+  priceUnit?: string;
+  photo?: string | null;
+}
+
+const NAVRATRI_FOOD_DAYS: DayItemStructure[] = [
   { day: 1, title: 'Day 1', subtitle: 'Prasad & Fruits' },
   { day: 2, title: 'Day 2', subtitle: 'Sugar & Sweets' },
   { day: 3, title: 'Day 3', subtitle: 'Milk Delicacies' },
@@ -42,9 +53,30 @@ const NAVRATRI_FOOD_DAYS = [
   { day: 9, title: 'Day 9', subtitle: 'Mahaprasad Feast' },
 ];
 
+const formatDateDisplay = (dateStr?: string | null): string | null => {
+  if (!dateStr) return null;
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString('en-IN', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return null;
+  }
+};
+
 const parseFoodItem = (item: FoodItemEntity): FoodItemEntity => {
   let imageUrl = item.image_url || null;
   let dayNumber = item.day_number ?? null;
+  let dayTitle = item.day_title || null;
+  let daySubtitle = item.day_subtitle || null;
+  let menuDate = item.menu_date || (item.food_datetime ? item.food_datetime.slice(0, 10) : null);
+  let dayPrice = item.day_price !== undefined ? item.day_price : null;
+  let priceUnit = item.price_unit || 'per plate';
   let cleanNotes = item.notes || '';
 
   if (item.notes && item.notes.trim().startsWith('{')) {
@@ -52,13 +84,20 @@ const parseFoodItem = (item: FoodItemEntity): FoodItemEntity => {
       const parsed = JSON.parse(item.notes);
       if (parsed.image_url) imageUrl = parsed.image_url;
       if (parsed.day_number !== undefined && parsed.day_number !== null) dayNumber = Number(parsed.day_number);
+      if (parsed.dayNumber !== undefined && parsed.dayNumber !== null) dayNumber = Number(parsed.dayNumber);
+      if (parsed.day_title) dayTitle = parsed.day_title;
+      if (parsed.dayTitle) dayTitle = parsed.dayTitle;
+      if (parsed.day_subtitle) daySubtitle = parsed.day_subtitle;
+      if (parsed.menu_date) menuDate = parsed.menu_date;
+      if (parsed.day_price !== undefined && parsed.day_price !== null) dayPrice = Number(parsed.day_price);
+      if (parsed.price_unit) priceUnit = parsed.price_unit;
       if (parsed.note !== undefined) cleanNotes = parsed.note;
     } catch (_) {}
   }
 
   if (dayNumber === null) {
     const text = `${item.name} ${item.description || ''} ${item.notes || ''}`.toLowerCase();
-    const match = text.match(/day\s*[-:]?\s*([1-9])/i);
+    const match = text.match(/day\s*[-:]?\s*(\d+)/i);
     if (match && match[1]) {
       dayNumber = parseInt(match[1], 10);
     }
@@ -68,6 +107,11 @@ const parseFoodItem = (item: FoodItemEntity): FoodItemEntity => {
     ...item,
     image_url: imageUrl,
     day_number: dayNumber || 1,
+    day_title: dayTitle,
+    day_subtitle: daySubtitle,
+    menu_date: menuDate,
+    day_price: dayPrice,
+    price_unit: priceUnit,
     notes: cleanNotes,
   };
 };
@@ -82,9 +126,33 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   const [foodItems, setFoodItems] = useState<FoodItemEntity[]>([]);
   const [selectedDayTab, setSelectedDayTab] = useState<number | null>(1);
 
-  // Day Photos: map of dayNumber -> imageUrl
-  const [dayPhotosOverride, setDayPhotosOverride] = useState<Record<number, string | null>>({});
+  // Day metadata overrides (local cache / state)
+  const [dayMetaOverrides, setDayMetaOverrides] = useState<Record<number, Partial<FoodDayMetaInput>>>({});
   const [isUploadingPhoto, setIsUploadingPhoto] = useState<number | null>(null);
+
+  // Add / Edit Day Modal
+  const [dayModalOpen, setDayModalOpen] = useState(false);
+  const [isEditingDay, setIsEditingDay] = useState(false);
+  const [dayForm, setDayForm] = useState<{
+    dayNumber: number;
+    dayTitle: string;
+    daySubtitle: string;
+    menuDate: string;
+    dayPrice: string;
+    priceUnit: string;
+  }>({
+    dayNumber: 1,
+    dayTitle: '',
+    daySubtitle: '',
+    menuDate: '',
+    dayPrice: '',
+    priceUnit: 'per plate',
+  });
+  const [isSavingDay, setIsSavingDay] = useState(false);
+
+  // Delete Day Target
+  const [deleteDayTarget, setDeleteDayTarget] = useState<number | null>(null);
+  const [isDeletingDay, setIsDeletingDay] = useState(false);
 
   // Batch Multi-Add Modal
   const [batchModalOpen, setBatchModalOpen] = useState(false);
@@ -99,15 +167,15 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   const [inlineDishName, setInlineDishName] = useState('');
   const [isAddingInline, setIsAddingInline] = useState(false);
 
-  // Single Edit Modal
+  // Single Edit Dish Modal
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FoodItemEntity | null>(null);
   const [editName, setEditName] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // Delete State
+  // Single Delete Dish State
   const [deleteTarget, setDeleteTarget] = useState<FoodItemEntity | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingDish, setIsDeletingDish] = useState(false);
 
   // Hidden File Inputs
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -127,26 +195,12 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     }
   }, [eventId]);
 
-  const isNavratri = event?.is_navratri || event?.name?.toLowerCase().includes('navratri');
-
-  const daysList = useMemo(() => {
-    if (isNavratri) return NAVRATRI_FOOD_DAYS;
-    if (!event) return [];
-    const start = new Date(event.start_date);
-    const end = event.end_date ? new Date(event.end_date) : start;
-    const diffDays = Math.max(1, Math.round(Math.max(0, end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-    if (diffDays <= 1) return [];
-    return Array.from({ length: diffDays }, (_, i) => ({
-      day: i + 1,
-      title: `Day ${i + 1}`,
-      subtitle: `Day ${i + 1} Menu`,
-    }));
-  }, [event, isNavratri]);
+  const isNavratri = Boolean(event?.is_navratri || event?.name?.toLowerCase().includes('navratri'));
 
   const fetchFoodItems = async () => {
     if (!eventId) return;
     try {
-      const res = await foodService.listByEvent(eventId, { page: 1, limit: 200 });
+      const res = await foodService.listByEvent(eventId, { page: 1, limit: 300 });
       if (res.success && res.data) {
         setFoodItems(res.data.map(parseFoodItem));
       }
@@ -159,25 +213,102 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     fetchFoodItems();
   }, [eventId]);
 
-  const dayPhotos = useMemo(() => {
-    const map: Record<number, string> = {};
+  // Aggregate dynamic days list
+  const daysList: DayItemStructure[] = useMemo(() => {
+    const dayMap = new Map<number, DayItemStructure>();
+
+    // 1. Initial base template days
+    if (isNavratri) {
+      NAVRATRI_FOOD_DAYS.forEach((d) => {
+        dayMap.set(d.day, { ...d });
+      });
+    } else if (event) {
+      const start = new Date(event.start_date);
+      const end = event.end_date ? new Date(event.end_date) : start;
+      const diffDays = Math.max(1, Math.round(Math.max(0, end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+      for (let i = 1; i <= diffDays; i++) {
+        const currentDate = new Date(start);
+        currentDate.setDate(start.getDate() + (i - 1));
+        dayMap.set(i, {
+          day: i,
+          title: `Day ${i}`,
+          subtitle: `Day ${i} Menu`,
+          date: currentDate.toISOString().slice(0, 10),
+        });
+      }
+    }
+
+    // 2. Discover days from loaded food items
     foodItems.forEach((item) => {
       const d = item.day_number || 1;
-      if (item.image_url && !map[d]) {
-        map[d] = item.image_url;
-      }
-    });
-    Object.entries(dayPhotosOverride).forEach(([dayStr, url]) => {
-      const d = Number(dayStr);
-      if (url === null) {
-        delete map[d];
-      } else if (url) {
-        map[d] = url;
-      }
-    });
-    return map;
-  }, [foodItems, dayPhotosOverride]);
+      const existing = dayMap.get(d) || {
+        day: d,
+        title: item.day_title || `Day ${d}`,
+        subtitle: item.day_subtitle || `Day ${d} Menu`,
+      };
 
+      if (item.day_title) existing.title = item.day_title;
+      if (item.day_subtitle) existing.subtitle = item.day_subtitle;
+      if (item.menu_date) existing.date = item.menu_date;
+      if (item.day_price !== undefined && item.day_price !== null) existing.price = item.day_price;
+      if (item.price_unit) existing.priceUnit = item.price_unit;
+      if (item.image_url) existing.photo = item.image_url;
+
+      dayMap.set(d, existing);
+    });
+
+    // 3. Apply local overrides
+    Object.entries(dayMetaOverrides).forEach(([dayStr, meta]) => {
+      const d = Number(dayStr);
+      const current = dayMap.get(d) || {
+        day: d,
+        title: `Day ${d}`,
+        subtitle: `Day ${d} Menu`,
+      };
+      if (meta.day_title) current.title = meta.day_title;
+      if (meta.day_subtitle !== undefined) current.subtitle = meta.day_subtitle;
+      if (meta.menu_date !== undefined) current.date = meta.menu_date;
+      if (meta.day_price !== undefined) current.price = meta.day_price;
+      if (meta.price_unit !== undefined) current.priceUnit = meta.price_unit;
+      if (meta.image_url !== undefined) current.photo = meta.image_url;
+      dayMap.set(d, current);
+    });
+
+    if (dayMap.size === 0) {
+      dayMap.set(1, { day: 1, title: 'Day 1', subtitle: 'Day 1 Menu' });
+    }
+
+    return Array.from(dayMap.values()).sort((a, b) => a.day - b.day);
+  }, [event, isNavratri, foodItems, dayMetaOverrides]);
+
+  // Selected Day's active meta
+  const activeDayMeta = useMemo(() => {
+    if (selectedDayTab === null) return null;
+    return (
+      daysList.find((d) => d.day === selectedDayTab) || {
+        day: selectedDayTab,
+        title: `Day ${selectedDayTab}`,
+        subtitle: `Day ${selectedDayTab} Menu`,
+      }
+    );
+  }, [daysList, selectedDayTab]);
+
+  // Filtered dishes for current selected tab
+  const filteredFoodItems = useMemo(() => {
+    if (selectedDayTab === null) return foodItems;
+    return foodItems.filter((item) => {
+      if (item.day_number !== null && item.day_number !== undefined) {
+        return item.day_number === selectedDayTab;
+      }
+      const nameL = item.name.toLowerCase();
+      const descL = (item.description || '').toLowerCase();
+      const target = `day ${selectedDayTab}`;
+      const target2 = `day-${selectedDayTab}`;
+      return nameL.includes(target) || nameL.includes(target2) || descL.includes(target) || descL.includes(target2);
+    });
+  }, [foodItems, selectedDayTab]);
+
+  // Photo handlers
   const handleProcessImageFile = async (file: File, targetDay: number) => {
     if (!file.type.startsWith('image/')) {
       toast.warning('Please select a valid image file');
@@ -191,22 +322,13 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     try {
       setIsUploadingPhoto(targetDay);
       const compressedDataUrl = await compressImageFile(file, 900, 600, 0.8);
-      setDayPhotosOverride((prev) => ({ ...prev, [targetDay]: compressedDataUrl }));
+      setDayMetaOverrides((prev) => ({
+        ...prev,
+        [targetDay]: { ...prev[targetDay], image_url: compressedDataUrl },
+      }));
 
-      const dayItems = foodItems.filter((i) => i.day_number === targetDay);
-      if (dayItems.length > 0) {
-        await Promise.all(
-          dayItems.map((item) =>
-            foodService.update(item.id, {
-              image_url: compressedDataUrl,
-              day_number: targetDay,
-            })
-          )
-        );
-      } else if (eventId) {
-        await foodService.createForEvent(eventId, {
-          name: isNavratri ? `Day ${targetDay} Feast` : `Day ${targetDay} Menu`,
-          day_number: targetDay,
+      if (eventId) {
+        await foodService.updateDayMeta(eventId, targetDay, {
           image_url: compressedDataUrl,
         });
         fetchFoodItems();
@@ -238,20 +360,18 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   const handleRemoveDayPhoto = async (targetDay: number) => {
     try {
       setIsUploadingPhoto(targetDay);
-      setDayPhotosOverride((prev) => ({ ...prev, [targetDay]: null }));
+      setDayMetaOverrides((prev) => ({
+        ...prev,
+        [targetDay]: { ...prev[targetDay], image_url: null },
+      }));
 
-      const dayItems = foodItems.filter((i) => i.day_number === targetDay && i.image_url);
-      if (dayItems.length > 0) {
-        await Promise.all(
-          dayItems.map((item) =>
-            foodService.update(item.id, {
-              image_url: undefined,
-            })
-          )
-        );
+      if (eventId) {
+        await foodService.updateDayMeta(eventId, targetDay, {
+          image_url: null,
+        });
+        toast.success(`Photo removed for Day ${targetDay}`);
+        fetchFoodItems();
       }
-      toast.success(`Photo removed for Day ${targetDay}`);
-      fetchFoodItems();
     } catch (err) {
       toast.error('Failed to remove photo');
     } finally {
@@ -259,6 +379,100 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     }
   };
 
+  // Open "Add Day" modal
+  const handleOpenAddDayModal = () => {
+    const nextDayNum = daysList.length > 0 ? Math.max(...daysList.map((d) => d.day)) + 1 : 1;
+    let suggestedDate = '';
+    if (event?.start_date) {
+      const d = new Date(event.start_date);
+      d.setDate(d.getDate() + (nextDayNum - 1));
+      suggestedDate = d.toISOString().slice(0, 10);
+    } else {
+      suggestedDate = new Date().toISOString().slice(0, 10);
+    }
+
+    setDayForm({
+      dayNumber: nextDayNum,
+      dayTitle: `Day ${nextDayNum}`,
+      daySubtitle: '',
+      menuDate: suggestedDate,
+      dayPrice: '',
+      priceUnit: 'per plate',
+    });
+    setIsEditingDay(false);
+    setDayModalOpen(true);
+  };
+
+  // Open "Edit Day Info" modal
+  const handleOpenEditDayModal = (targetDayMeta: DayItemStructure) => {
+    setDayForm({
+      dayNumber: targetDayMeta.day,
+      dayTitle: targetDayMeta.title || `Day ${targetDayMeta.day}`,
+      daySubtitle: targetDayMeta.subtitle || '',
+      menuDate: targetDayMeta.date || '',
+      dayPrice: targetDayMeta.price !== undefined && targetDayMeta.price !== null ? String(targetDayMeta.price) : '',
+      priceUnit: targetDayMeta.priceUnit || 'per plate',
+    });
+    setIsEditingDay(true);
+    setDayModalOpen(true);
+  };
+
+  // Save Day (Add or Edit)
+  const handleSaveDayForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eventId) return;
+
+    try {
+      setIsSavingDay(true);
+      const parsedPrice = dayForm.dayPrice.trim() ? parseFloat(dayForm.dayPrice) : null;
+
+      const payload: FoodDayMetaInput = {
+        day_number: dayForm.dayNumber,
+        day_title: dayForm.dayTitle.trim() || `Day ${dayForm.dayNumber}`,
+        day_subtitle: dayForm.daySubtitle.trim() || undefined,
+        menu_date: dayForm.menuDate || undefined,
+        day_price: isNaN(parsedPrice as number) ? null : parsedPrice,
+        price_unit: dayForm.priceUnit || 'per plate',
+      };
+
+      await foodService.updateDayMeta(eventId, dayForm.dayNumber, payload);
+
+      setDayMetaOverrides((prev) => ({
+        ...prev,
+        [dayForm.dayNumber]: payload,
+      }));
+
+      toast.success(isEditingDay ? `Day ${dayForm.dayNumber} updated` : `Day ${dayForm.dayNumber} added successfully`);
+      setDayModalOpen(false);
+      setSelectedDayTab(dayForm.dayNumber);
+      fetchFoodItems();
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, 'Failed to save day'));
+    } finally {
+      setIsSavingDay(false);
+    }
+  };
+
+  // Delete Day Confirmation
+  const handleDeleteDay = async () => {
+    if (!eventId || deleteDayTarget === null) return;
+    try {
+      setIsDeletingDay(true);
+      await foodService.deleteDay(eventId, deleteDayTarget);
+      toast.success(`Day ${deleteDayTarget} deleted`);
+      setDeleteDayTarget(null);
+
+      const remaining = daysList.filter((d) => d.day !== deleteDayTarget);
+      setSelectedDayTab(remaining.length > 0 ? remaining[0].day : null);
+      fetchFoodItems();
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, 'Failed to delete day'));
+    } finally {
+      setIsDeletingDay(false);
+    }
+  };
+
+  // Batch Multi-Add Modal
   const handleOpenBatchModal = (targetDay?: number) => {
     const d = targetDay || (selectedDayTab !== null ? selectedDayTab : 1);
     setBatchDayNumber(d);
@@ -308,13 +522,19 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
     try {
       setIsSavingBatch(true);
-      const dayPhoto = dayPhotos[batchDayNumber] || undefined;
+      const targetMeta = daysList.find((d) => d.day === batchDayNumber);
+
       await Promise.all(
         finalItems.map((itemName) =>
           foodService.createForEvent(eventId, {
             name: itemName,
             day_number: batchDayNumber,
-            image_url: dayPhoto,
+            day_title: targetMeta?.title,
+            day_subtitle: targetMeta?.subtitle,
+            menu_date: targetMeta?.date,
+            day_price: targetMeta?.price,
+            price_unit: targetMeta?.priceUnit,
+            image_url: targetMeta?.photo || undefined,
           })
         )
       );
@@ -329,19 +549,26 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     }
   };
 
+  // Inline Quick Add
   const handleInlineQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     const name = inlineDishName.trim();
     if (!name || !eventId) return;
 
     const targetDay = selectedDayTab !== null ? selectedDayTab : 1;
+    const targetMeta = daysList.find((d) => d.day === targetDay);
+
     try {
       setIsAddingInline(true);
-      const dayPhoto = dayPhotos[targetDay] || undefined;
       const res = await foodService.createForEvent(eventId, {
         name,
         day_number: targetDay,
-        image_url: dayPhoto,
+        day_title: targetMeta?.title,
+        day_subtitle: targetMeta?.subtitle,
+        menu_date: targetMeta?.date,
+        day_price: targetMeta?.price,
+        price_unit: targetMeta?.priceUnit,
+        image_url: targetMeta?.photo || undefined,
       });
 
       if (res.success) {
@@ -357,6 +584,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     }
   };
 
+  // Single Dish Edit
   const handleOpenEditModal = (item: FoodItemEntity) => {
     setEditingItem(item);
     setEditName(item.name);
@@ -388,10 +616,11 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     }
   };
 
+  // Single Dish Delete
   const handleDeleteFood = async () => {
     if (!deleteTarget) return;
     try {
-      setIsDeleting(true);
+      setIsDeletingDish(true);
       const res = await foodService.delete(deleteTarget.id);
       if (res.success) {
         toast.success('Dish removed');
@@ -403,35 +632,12 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete dish'));
     } finally {
-      setIsDeleting(false);
+      setIsDeletingDish(false);
     }
   };
 
-  const activeDayMeta = useMemo(() => {
-    if (selectedDayTab === null) return null;
-    return daysList.find((d) => d.day === selectedDayTab) || {
-      day: selectedDayTab,
-      title: `Day ${selectedDayTab}`,
-      subtitle: `Day ${selectedDayTab} Menu`,
-    };
-  }, [daysList, selectedDayTab]);
-
-  const filteredFoodItems = useMemo(() => {
-    if (selectedDayTab === null) return foodItems;
-    return foodItems.filter((item) => {
-      if (item.day_number !== null && item.day_number !== undefined) {
-        return item.day_number === selectedDayTab;
-      }
-      const nameL = item.name.toLowerCase();
-      const descL = (item.description || '').toLowerCase();
-      const target = `day ${selectedDayTab}`;
-      const target2 = `day-${selectedDayTab}`;
-      return nameL.includes(target) || nameL.includes(target2) || descL.includes(target) || descL.includes(target2);
-    });
-  }, [foodItems, selectedDayTab]);
-
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pb-8">
       {/* Hidden File Inputs for Camera and Gallery */}
       <input
         type="file"
@@ -455,131 +661,231 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
         }}
       />
 
-      {/* 1. ULTRA-MINIMALIST DAY PILL SELECTOR */}
-      {daysList.length > 0 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setSelectedDayTab(null)}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-              selectedDayTab === null
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-600'
-            }`}
-          >
-            All ({foodItems.length})
-          </button>
+      {/* 1. ULTRA-MINIMALIST CLEAN DAY SELECTOR WITH "+ ADD DAY" */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setSelectedDayTab(null)}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+            selectedDayTab === null
+              ? 'bg-indigo-600 text-white shadow-xs'
+              : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+          }`}
+        >
+          All ({foodItems.length})
+        </button>
 
-          {daysList.map((d) => {
-            const isSelected = selectedDayTab === d.day;
-            const countForDay = foodItems.filter(
-              (item) => item.day_number === d.day || (!item.day_number && (item.name + ' ' + (item.description || '')).toLowerCase().includes(`day ${d.day}`))
-            ).length;
+        {daysList.map((d) => {
+          const isSelected = selectedDayTab === d.day;
+          const countForDay = foodItems.filter(
+            (item) =>
+              item.day_number === d.day ||
+              (!item.day_number && (item.name + ' ' + (item.description || '')).toLowerCase().includes(`day ${d.day}`))
+          ).length;
 
-            return (
-              <button
-                key={d.day}
-                type="button"
-                onClick={() => setSelectedDayTab(d.day)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                  isSelected
-                    ? 'bg-indigo-600 text-white shadow-xs'
-                    : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-600'
-                }`}
-              >
-                <span>{d.title}</span>
-                {countForDay > 0 && (
-                  <span className={`text-[10px] font-bold ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
-                    {countForDay}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+          return (
+            <button
+              key={d.day}
+              type="button"
+              onClick={() => setSelectedDayTab(d.day)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                isSelected
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
+              }`}
+            >
+              <span>Day {d.day}</span>
+              {countForDay > 0 && (
+                <span className={`text-[10px] font-bold ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
+                  {countForDay}
+                </span>
+              )}
+            </button>
+          );
+        })}
+
+        {/* Minimalist + Add Day Button for Admin */}
+        {!isResident && (
+          <PermissionGuard permission={Permissions.FOOD_MANAGE}>
+            <button
+              type="button"
+              onClick={handleOpenAddDayModal}
+              className="px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 shadow-2xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Day</span>
+            </button>
+          </PermissionGuard>
+        )}
+      </div>
 
       {/* 2. SINGLE DAY VIEW */}
       {selectedDayTab !== null && activeDayMeta && (
         <div className="space-y-3">
-          {/* DAY PHOTO BANNER (Minimalist) */}
-          {dayPhotos[selectedDayTab] ? (
-            <div className="relative h-36 sm:h-44 w-full rounded-2xl overflow-hidden bg-slate-900 shadow-2xs group">
+          {/* DAY HERO CARD (MINIMALIST WHITE DESIGN) */}
+          {activeDayMeta.photo ? (
+            <div className="relative h-40 sm:h-48 w-full rounded-2xl overflow-hidden bg-slate-900 shadow-2xs group">
               <img
-                src={dayPhotos[selectedDayTab]}
-                alt={`Day ${selectedDayTab}`}
+                src={activeDayMeta.photo}
+                alt={activeDayMeta.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20" />
 
-              <div className="absolute bottom-2.5 left-3 text-white">
-                <span className="text-xs font-bold block">{activeDayMeta.title} • {activeDayMeta.subtitle}</span>
+              {/* Day Titles and Metadata on Banner */}
+              <div className="absolute bottom-2.5 left-3 right-3 text-white space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base font-extrabold tracking-tight">
+                    Day {activeDayMeta.day}
+                  </span>
+                  {activeDayMeta.subtitle && (
+                    <span className="text-xs sm:text-sm font-medium text-slate-200 truncate">
+                      • {activeDayMeta.subtitle}
+                    </span>
+                  )}
+                </div>
+
+                {/* Date and Price Chips */}
+                <div className="flex items-center flex-wrap gap-1.5 text-[11px]">
+                  {activeDayMeta.date && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-xs font-semibold text-slate-100">
+                      <Calendar className="w-3 h-3 text-indigo-300" />
+                      {formatDateDisplay(activeDayMeta.date)}
+                    </span>
+                  )}
+
+                  {activeDayMeta.price !== undefined && activeDayMeta.price !== null ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/90 backdrop-blur-xs font-bold text-white">
+                      <Tag className="w-3 h-3" />
+                      ₹{activeDayMeta.price} <span className="font-normal opacity-90">({activeDayMeta.priceUnit || 'per plate'})</span>
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
+              {/* Admin Action Buttons */}
               {!isResident && (
                 <div className="absolute top-2 right-2 flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => triggerCamera(selectedDayTab)}
-                    className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
-                    title="Camera"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => triggerGallery(selectedDayTab)}
-                    className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
-                    title="Gallery"
-                  >
-                    <FolderOpen className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveDayPhoto(selectedDayTab)}
-                    className="p-1.5 rounded-lg bg-black/50 hover:bg-rose-600 text-white backdrop-blur-xs text-[11px] font-medium cursor-pointer transition-all"
-                    title="Remove Photo"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                  <PermissionGuard permission={Permissions.FOOD_MANAGE}>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditDayModal(activeDayMeta)}
+                      className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
+                      title="Edit Day Details & Price"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerCamera(selectedDayTab)}
+                      className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
+                      title="Camera"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => triggerGallery(selectedDayTab)}
+                      className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
+                      title="Gallery"
+                    >
+                      <FolderOpen className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDayPhoto(selectedDayTab)}
+                      className="p-1.5 rounded-lg bg-black/50 hover:bg-rose-600 text-white backdrop-blur-xs text-[11px] font-medium cursor-pointer transition-all"
+                      title="Remove Photo"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </PermissionGuard>
                 </div>
               )}
             </div>
           ) : (
-            /* Minimalist single-line banner without heavy borders */
-            <div className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-xl border border-slate-200/60 text-xs">
-              <div className="flex items-center gap-2 text-slate-700 min-w-0">
-                <ImageIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="font-semibold truncate">{activeDayMeta.title} • {activeDayMeta.subtitle}</span>
-              </div>
+            /* MINIMALIST CLEAN WHITE DAY CARD */
+            <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-2xs space-y-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1.5 min-w-0">
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="text-[15px] font-bold text-slate-800 tracking-tight">
+                      Day {activeDayMeta.day}
+                    </span>
+                    {activeDayMeta.subtitle && (
+                      <span className="text-xs font-semibold text-indigo-600">
+                        • {activeDayMeta.subtitle}
+                      </span>
+                    )}
+                  </div>
 
-              {!isResident && (
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => triggerCamera(selectedDayTab)}
-                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
-                  >
-                    <Camera className="w-3 h-3 text-indigo-600" />
-                    <span>Camera</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => triggerGallery(selectedDayTab)}
-                    className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
-                  >
-                    <FolderOpen className="w-3 h-3 text-indigo-600" />
-                    <span>Upload</span>
-                  </button>
+                  <div className="flex items-center flex-wrap gap-2 text-[11px]">
+                    {activeDayMeta.date ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-semibold">
+                        <Calendar className="w-3 h-3 text-slate-500" />
+                        {formatDateDisplay(activeDayMeta.date)}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-slate-400 text-[10.5px]">
+                        <Calendar className="w-3 h-3" /> No date
+                      </span>
+                    )}
+
+                    {activeDayMeta.price !== undefined && activeDayMeta.price !== null ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-bold">
+                        <Tag className="w-3 h-3 text-emerald-600" />
+                        ₹{activeDayMeta.price} <span className="font-normal opacity-90">({activeDayMeta.priceUnit || 'per plate'})</span>
+                      </span>
+                    ) : (
+                      !isResident && (
+                        <span className="inline-flex items-center gap-1 text-slate-400 text-[10.5px]">
+                          <Tag className="w-3 h-3" /> Price not set
+                        </span>
+                      )
+                    )}
+                  </div>
                 </div>
-              )}
+
+                {/* Right Action Buttons */}
+                {!isResident && (
+                  <PermissionGuard permission={Permissions.FOOD_MANAGE}>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditDayModal(activeDayMeta)}
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer transition-all"
+                        title="Edit Day & Price"
+                      >
+                        <Edit2 className="w-3 h-3 text-slate-600" />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => triggerGallery(selectedDayTab)}
+                        className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs cursor-pointer transition-all"
+                        title="Upload Photo"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteDayTarget(selectedDayTab)}
+                        className="p-1.5 bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg text-xs cursor-pointer transition-all"
+                        title="Delete Day"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </PermissionGuard>
+                )}
+              </div>
             </div>
           )}
 
-          {/* DISHES HEADER & BATCH ADD */}
-          <div className="flex items-center justify-between px-1 pt-1">
+          {/* DISHES HEADER & MULTI-ADD */}
+          <div className="flex items-center justify-between px-1 pt-0.5">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              {activeDayMeta.title} Menu ({filteredFoodItems.length})
+              Day {activeDayMeta.day} Menu ({filteredFoodItems.length})
             </span>
             <button
               type="button"
@@ -593,18 +899,20 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
           {/* DISHES LIST */}
           {filteredFoodItems.length === 0 ? (
-            <div className="py-6 text-center text-xs text-slate-400">
-              No dishes listed for {activeDayMeta.title}.
+            <div className="py-7 text-center bg-white rounded-2xl border border-slate-200/70 p-4 space-y-1 shadow-2xs">
+              <Sparkles className="w-5 h-5 text-indigo-400 mx-auto" />
+              <p className="text-xs font-semibold text-slate-700">No dishes listed for Day {activeDayMeta.day}</p>
+              <p className="text-[11px] text-slate-400">Quick add dishes below or use Add Dishes.</p>
             </div>
           ) : (
             <div className="space-y-1.5">
               {filteredFoodItems.map((item, index) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-xl border border-slate-200/70 p-2.5 flex items-center justify-between gap-2.5 transition-colors group hover:border-slate-300"
+                  className="bg-white rounded-xl border border-slate-200/80 p-2.5 flex items-center justify-between gap-2.5 transition-colors group hover:border-slate-300 shadow-2xs"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-500 font-semibold text-[10.5px] flex items-center justify-center shrink-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center shrink-0">
                       {index + 1}
                     </span>
                     <span className="text-[13.5px] font-semibold text-slate-800 tracking-tight truncate">
@@ -642,18 +950,18 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
           {/* INLINE QUICK ADD BAR */}
           {!isResident && (
             <form onSubmit={handleInlineQuickAdd} className="pt-0.5">
-              <div className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 focus-within:border-indigo-500 transition-colors">
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200/80 focus-within:border-indigo-500 shadow-2xs transition-colors">
                 <input
                   type="text"
-                  placeholder={`+ Quick add dish for Day ${selectedDayTab}...`}
+                  placeholder={`+ Quick add dish for Day ${activeDayMeta.day}...`}
                   value={inlineDishName}
                   onChange={(e) => setInlineDishName(e.target.value)}
-                  className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent border-0 focus:outline-hidden py-0.5"
+                  className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent border-0 focus:outline-hidden py-1"
                 />
                 <button
                   type="submit"
                   disabled={!inlineDishName.trim() || isAddingInline}
-                  className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-semibold rounded-lg shrink-0 transition-all cursor-pointer"
+                  className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-semibold rounded-lg shrink-0 transition-all cursor-pointer shadow-xs"
                 >
                   {isAddingInline ? '...' : 'Add'}
                 </button>
@@ -663,40 +971,54 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
         </div>
       )}
 
-      {/* 3. ALL DAYS OVERVIEW */}
+      {/* 3. ALL DAYS OVERVIEW TAB */}
       {selectedDayTab === null && (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {daysList.map((d) => {
             const dayItems = foodItems.filter(
-              (item) => item.day_number === d.day || (!item.day_number && (item.name + ' ' + (item.description || '')).toLowerCase().includes(`day ${d.day}`))
+              (item) =>
+                item.day_number === d.day ||
+                (!item.day_number && (item.name + ' ' + (item.description || '')).toLowerCase().includes(`day ${d.day}`))
             );
-            const photo = dayPhotos[d.day];
 
             return (
               <div
                 key={d.day}
                 onClick={() => setSelectedDayTab(d.day)}
-                className="bg-white rounded-xl border border-slate-200/80 p-3 hover:border-slate-300 transition-colors cursor-pointer"
+                className="bg-white rounded-2xl border border-slate-200/80 p-3 hover:border-indigo-300 hover:shadow-xs transition-all cursor-pointer group shadow-2xs"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {photo ? (
-                      <img src={photo} alt={d.title} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                <div className="flex items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {d.photo ? (
+                      <img src={d.photo} alt={d.title} className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs" />
                     ) : (
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 font-extrabold text-xs flex items-center justify-center shrink-0 border border-slate-200/60">
                         {d.day}
                       </div>
                     )}
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-xs text-slate-800 truncate">
-                        {d.title} <span className="font-normal text-slate-400">• {d.subtitle}</span>
+                    <div className="min-w-0 space-y-0.5">
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
+                        Day {d.day} {d.subtitle && <span className="font-normal text-slate-400">• {d.subtitle}</span>}
                       </h4>
-                      <span className="text-[10.5px] text-slate-400">
-                        {dayItems.length} {dayItems.length === 1 ? 'dish' : 'dishes'}
-                      </span>
+                      <div className="flex items-center flex-wrap gap-1.5 text-[10.5px]">
+                        {d.date && (
+                          <span className="text-slate-500 font-medium flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            {formatDateDisplay(d.date)}
+                          </span>
+                        )}
+                        {d.price !== undefined && d.price !== null && (
+                          <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                            ₹{d.price} ({d.priceUnit || 'per plate'})
+                          </span>
+                        )}
+                        <span className="text-slate-400">
+                          {dayItems.length} {dayItems.length === 1 ? 'dish' : 'dishes'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 shrink-0 transition-colors" />
                 </div>
               </div>
             );
@@ -704,7 +1026,115 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
         </div>
       )}
 
-      {/* BATCH ADD MODAL */}
+      {/* ADD / EDIT DAY MODAL */}
+      <Modal
+        isOpen={dayModalOpen}
+        onClose={() => setDayModalOpen(false)}
+        title={isEditingDay ? `Edit Day ${dayForm.dayNumber}` : `Add New Day`}
+        description="Configure date, theme, and full menu pricing for this day."
+        size="md"
+      >
+        <form onSubmit={handleSaveDayForm} className="space-y-3.5">
+          <div className="grid grid-cols-2 gap-2.5">
+            <Input
+              label="Day Number"
+              type="number"
+              min={1}
+              value={dayForm.dayNumber}
+              onChange={(e) => setDayForm({ ...dayForm, dayNumber: parseInt(e.target.value, 10) || 1 })}
+              requiredIndicator
+              disabled={isEditingDay}
+            />
+            <Input
+              label="Menu Date"
+              type="date"
+              value={dayForm.menuDate}
+              onChange={(e) => setDayForm({ ...dayForm, menuDate: e.target.value })}
+              requiredIndicator
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <Input
+              label="Day Title"
+              placeholder="e.g. Day 5"
+              value={dayForm.dayTitle}
+              onChange={(e) => setDayForm({ ...dayForm, dayTitle: e.target.value })}
+              requiredIndicator
+            />
+            <Input
+              label="Theme / Subtitle"
+              placeholder="e.g. Fafda & Jalebi"
+              value={dayForm.daySubtitle}
+              onChange={(e) => setDayForm({ ...dayForm, daySubtitle: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <Input
+              label="Whole Menu Price (₹)"
+              type="number"
+              min={0}
+              placeholder="e.g. 250"
+              value={dayForm.dayPrice}
+              onChange={(e) => setDayForm({ ...dayForm, dayPrice: e.target.value })}
+            />
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Price Unit / Type</label>
+              <select
+                value={dayForm.priceUnit}
+                onChange={(e) => setDayForm({ ...dayForm, priceUnit: e.target.value })}
+                className="w-full text-xs h-9 px-2.5 bg-white rounded-xl border border-slate-200 focus:outline-hidden focus:border-indigo-500"
+              >
+                <option value="per plate">per plate</option>
+                <option value="per person">per person</option>
+                <option value="per flat">per flat</option>
+                <option value="total menu">total package / budget</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setDayModalOpen(false)}
+              disabled={isSavingDay}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              isLoading={isSavingDay}
+              className="rounded-xl shadow-xs"
+            >
+              {isEditingDay ? 'Save Changes' : 'Create Day'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* DELETE DAY CONFIRM DIALOG */}
+      <ConfirmDialog
+        isOpen={deleteDayTarget !== null}
+        onClose={() => setDeleteDayTarget(null)}
+        onConfirm={handleDeleteDay}
+        title="Delete Day"
+        message={
+          <span>
+            Are you sure you want to delete <strong>Day {deleteDayTarget}</strong> and all of its dishes? This action cannot be undone.
+          </span>
+        }
+        confirmLabel="Delete Day"
+        variant="danger"
+        isLoading={isDeletingDay}
+      />
+
+      {/* BATCH ADD DISHES MODAL */}
       <Modal
         isOpen={batchModalOpen}
         onClose={() => setBatchModalOpen(false)}
@@ -726,7 +1156,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {d.title}
+                Day {d.day}
               </button>
             ))}
           </div>
@@ -867,7 +1297,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
         </form>
       </Modal>
 
-      {/* DELETE CONFIRMATION DIALOG */}
+      {/* SINGLE DISH DELETE CONFIRMATION DIALOG */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -880,7 +1310,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
         }
         confirmLabel="Remove"
         variant="danger"
-        isLoading={isDeleting}
+        isLoading={isDeletingDish}
       />
     </div>
   );
