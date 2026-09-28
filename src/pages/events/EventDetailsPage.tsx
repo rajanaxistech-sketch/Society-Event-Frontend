@@ -166,30 +166,32 @@ export const EventDetailsPage: React.FC = () => {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
-      {/* Sub-Screen Header Bar */}
-      <div className="bg-white px-3 py-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
-        <button
-          onClick={() => {
-            navigate(AppRoutes.DASHBOARD);
-          }}
-          className="w-9 h-9 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition-all active:scale-95"
-          aria-label="Back to Dashboard"
-          title="Back to Dashboard"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </button>
+      {/* Sub-Screen Header Bar (Only on overview/details) */}
+      {activeTab === 'overview' && (
+        <div className="bg-white px-3 py-2.5 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+          <button
+            onClick={() => {
+              navigate(AppRoutes.DASHBOARD);
+            }}
+            className="w-9 h-9 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition-all active:scale-95"
+            aria-label="Back to Dashboard"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
 
-        <div className="text-center flex flex-col items-center">
-          <h2 className="text-[15px] font-bold text-slate-900 tracking-tight leading-tight">
-            {activeTab === 'overview' ? currentEvent.name : activeTab === 'circulars' ? 'Circulars & Notices' : activeTab === 'collections' ? 'Flat Collections' : 'Food Menu'}
-          </h2>
-          <span className="text-[11px] font-semibold text-slate-500">
-            {activeTab === 'overview' ? (currentEvent.venue || 'Event Management') : currentEvent.name}
-          </span>
+          <div className="text-center flex flex-col items-center">
+            <h2 className="text-[15px] font-bold text-slate-900 tracking-tight leading-tight">
+              {currentEvent.name}
+            </h2>
+            <span className="text-[11px] font-semibold text-slate-500">
+              {currentEvent.venue || 'Event Management'}
+            </span>
+          </div>
+
+          <div className="w-9"></div>
         </div>
-
-        <div className="w-9"></div>
-      </div>
+      )}
 
       {/* TAB 1: OVERVIEW (DISPLAYING EXACT 3 REQUESTED MENUS) */}
       {activeTab === 'overview' && (

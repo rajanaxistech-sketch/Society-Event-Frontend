@@ -21,8 +21,7 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import Spinner from '../../components/ui/Spinner';
 import { extractErrorMessage } from '../../utils/errorExtractor';
-import sampleQrCodeImg from '../../assets/Sample-Qr-Code.png';
-import { SAMPLE_QR_CODE_DATA_URL } from '../../assets/sampleQrCodeData';
+import DynamicUpiQrModal from '../../components/payments/DynamicUpiQrModal';
 import { UpiProofCapture } from '../../components/common/UpiProofCapture';
 import {
   ArrowLeft,
@@ -1164,88 +1163,17 @@ export const AdvertisementsPage: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Society UPI QR Code Modal Popup */}
-      <Modal
+      {/* Society Dynamic UPI QR Code Modal Popup */}
+      <DynamicUpiQrModal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}
-        size="sm"
-        title={
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
-              <QrCode className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-slate-900 text-sm sm:text-base block leading-tight">UPI Payment QR</span>
-              <span className="text-[10px] text-slate-500 block font-normal">Scan with GPay, PhonePe, Paytm, or BHIM</span>
-            </div>
-          </div>
-        }
-      >
-        <div className="flex flex-col items-center text-center space-y-3 py-1">
-          {/* Target Element & Category Details */}
-          <div className="w-full bg-slate-50 rounded-xl p-2.5 border border-slate-200/80 flex items-center justify-between text-xs">
-            <div className="text-left">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Spot / Element</span>
-              <span className="font-bold text-slate-800 truncate max-w-[150px] block">
-                {adFormData.element || 'Advertisement Spot'}
-              </span>
-            </div>
-            <div className="text-right">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Amount to Pay</span>
-              <span className="font-extrabold text-indigo-600 text-sm">
-                {formatCurrency(Number(adFormData.amountPaid) || 0)}
-              </span>
-            </div>
-          </div>
-
-          {/* QR Code Container Box */}
-          <div className="relative p-3.5 bg-white rounded-2xl border-2 border-indigo-100 shadow-md flex flex-col items-center w-full max-w-[280px]">
-            <div className="w-52 h-52 sm:w-56 sm:h-56 rounded-xl overflow-hidden bg-white p-1 flex items-center justify-center">
-              <img
-                src={SAMPLE_QR_CODE_DATA_URL || sampleQrCodeImg}
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src !== SAMPLE_QR_CODE_DATA_URL) {
-                    target.src = SAMPLE_QR_CODE_DATA_URL;
-                  }
-                }}
-                alt="Society Payment UPI QR Code"
-                className="w-full h-full object-contain"
-              />
-            </div>
-
-            {/* Red Warning Line under the QR code with * */}
-            <div className="w-full mt-2.5 pt-2 border-t border-rose-200">
-              <p className="text-xs font-bold text-rose-600 flex items-center justify-center gap-1">
-                <span className="text-rose-600 font-extrabold text-sm leading-none">*</span>
-                <span>This is the sample QR code</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Supported UPI apps */}
-          <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 font-medium">
-            <span>Accepted via:</span>
-            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">GPay</span>
-            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">PhonePe</span>
-            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">Paytm</span>
-            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-semibold text-slate-700">BHIM UPI</span>
-          </div>
-
-          {/* Action Button */}
-          <div className="w-full pt-1">
-            <Button
-              type="button"
-              variant="primary"
-              onClick={() => setIsQrModalOpen(false)}
-              className="w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 shadow-xs"
-            >
-              <CheckCircle2 className="w-4 h-4 mr-1.5" />
-              Done / Capture Payment Receipt
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        amount={Number(adFormData.amountPaid) || 0}
+        unitOrAdvertiserName={adFormData.element || 'Advertisement Spot'}
+        categoryOrEventName="Advertisement / Sponsorship"
+        transactionNote={`Ad Payment: ${adFormData.element || 'Sponsor'}`}
+        eventId={selectedEventId}
+        onDone={() => setIsQrModalOpen(false)}
+      />
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog

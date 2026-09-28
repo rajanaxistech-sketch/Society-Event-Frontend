@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { settingsService } from '../../api/settingsService';
+import { paymentQrService } from '../../api/paymentQrService';
 import { SystemSettingItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
@@ -12,7 +13,7 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorState from '../../components/common/ErrorState';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { extractErrorMessage } from '../../utils/errorExtractor';
-import { Settings as SettingsIcon, Save, RefreshCw, Shield, Globe, Bell } from 'lucide-react';
+import { Settings as SettingsIcon, Save, RefreshCw, Shield, Globe, Bell, QrCode } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const toast = useToast();
@@ -27,6 +28,13 @@ export const SettingsPage: React.FC = () => {
     enable_email_notifications: true,
     enable_sms_notifications: false,
     session_timeout_minutes: 60,
+    society_upi_id: 'rosewoodestate@icici',
+    society_upi_payee_name: 'Rosewood Estate Society',
+    society_payment_upi_config: {
+      upi_id: 'rosewoodestate@icici',
+      upi_payee_name: 'Rosewood Estate Society',
+      qr_mode: 'dynamic_upi',
+    },
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +75,12 @@ export const SettingsPage: React.FC = () => {
       setIsSaving(true);
       const res = await settingsService.updateBulk(settings);
       if (res.success) {
+        if (settings.society_payment_upi_config || settings.society_upi_id) {
+          paymentQrService.saveUpiQrConfig({
+            upi_id: settings.society_payment_upi_config?.upi_id || settings.society_upi_id,
+            upi_payee_name: settings.society_payment_upi_config?.upi_payee_name || settings.society_upi_payee_name,
+          });
+        }
         toast.success('System settings saved successfully.');
       } else {
         toast.error(res.message || 'Failed to update settings');
@@ -181,6 +195,52 @@ export const SettingsPage: React.FC = () => {
               <Switch
                 checked={!!settings.auto_generate_receipts}
                 onChange={(val) => setSettings({ ...settings, auto_generate_receipts: val })}
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Society Default UPI QR Code Configuration */}
+        <Card
+          title={
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-900">
+              <QrCode className="w-4 h-4 text-indigo-600" />
+              <span>Default UPI Payment QR Configuration</span>
+            </div>
+          }
+        >
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Society Payee UPI ID (VPA)"
+                value={settings.society_payment_upi_config?.upi_id || settings.society_upi_id || ''}
+                placeholder="e.g. rosewood@icici, society@okhdfcbank"
+                helperText="Generates dynamic UPI QR codes across Flat Collections & Advertising"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const currentCfg = settings.society_payment_upi_config || {};
+                  setSettings({
+                    ...settings,
+                    society_upi_id: val,
+                    society_payment_upi_config: { ...currentCfg, upi_id: val },
+                  });
+                }}
+              />
+
+              <Input
+                label="Payee Merchant / Society Name"
+                value={settings.society_payment_upi_config?.upi_payee_name || settings.society_upi_payee_name || ''}
+                placeholder="e.g. Rosewood Estate Cultural Committee"
+                helperText="Verified payee name displayed when residents scan the QR code"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const currentCfg = settings.society_payment_upi_config || {};
+                  setSettings({
+                    ...settings,
+                    society_upi_payee_name: val,
+                    society_payment_upi_config: { ...currentCfg, upi_payee_name: val },
+                  });
+                }}
               />
             </div>
           </div>

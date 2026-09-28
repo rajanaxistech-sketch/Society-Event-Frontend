@@ -28,6 +28,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import Spinner from '../../components/ui/Spinner';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import DynamicUpiQrModal from '../../components/payments/DynamicUpiQrModal';
 import {
   Megaphone,
   Plus,
@@ -47,6 +48,7 @@ import {
   Sparkles,
   Building2,
   HelpCircle,
+  QrCode,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -156,6 +158,7 @@ export const AdvertisingHubPage: React.FC = () => {
 
   // Advertisement Form Modal State
   const [isAdModalOpen, setIsAdModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [isEditingAd, setIsEditingAd] = useState(false);
   const [currentAdId, setCurrentAdId] = useState<string | null>(null);
   const [adFormData, setAdFormData] = useState({
@@ -1073,6 +1076,31 @@ export const AdvertisingHubPage: React.FC = () => {
             </select>
           </div>
 
+          {/* UPI QR Code Quick View Card */}
+          {(adFormData.modeOfPayment === 'UPI' || adFormData.modeOfPayment === 'QR') && (
+            <div className="flex items-center justify-between p-3 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-slate-50 shadow-xs animate-in fade-in duration-150">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <QrCode className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-indigo-950 block truncate">Society Payment QR Code</span>
+                  <span className="text-[10px] text-slate-500 block truncate">Scan using any UPI app (GPay, PhonePe, Paytm, BHIM)</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsQrModalOpen(true)}
+                className="border-indigo-300 text-indigo-700 bg-white hover:bg-indigo-50 h-8 text-xs font-semibold px-2.5 shadow-xs shrink-0 ml-2"
+              >
+                <QrCode className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                View QR Code
+              </Button>
+            </div>
+          )}
+
           {/* Remarks */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -1104,6 +1132,25 @@ export const AdvertisingHubPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Dynamic UPI QR Code Modal for Advertisements */}
+      {(() => {
+        const selectedCat = allCategories.find((c) => c.id === adFormData.advertisementCategoryId);
+        const catAmount = selectedCat ? (selectedCat.categoryAmount ?? (selectedCat as any).category_amount ?? 0) : 0;
+        const catName = selectedCat ? (selectedCat.categoryName || (selectedCat as any).category_name || 'Advertisement') : 'Advertisement';
+        return (
+          <DynamicUpiQrModal
+            isOpen={isQrModalOpen}
+            onClose={() => setIsQrModalOpen(false)}
+            amount={catAmount}
+            unitOrAdvertiserName={adFormData.element || 'Advertisement Sponsor'}
+            categoryOrEventName={catName}
+            transactionNote={`Ad Payment: ${adFormData.element || 'Sponsor'} (${catName})`}
+            onDone={() => setIsQrModalOpen(false)}
+          />
+        );
+      })()}
+
 
       {/* ========================================================================= */}
       {/* MODAL: ADD / EDIT ADVERTISEMENT CATEGORY */}

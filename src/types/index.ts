@@ -908,13 +908,19 @@ export interface SystemSettingItem {
 export interface AuditLogItem {
   id: string;
   user_id?: string | null;
+  user_name?: string | null;
+  user_email?: string | null;
   entity_type: string;
   entity_id?: string | null;
   action: string;
   old_values?: any;
   new_values?: any;
+  changed_fields?: Record<string, { old: any; new: any }> | null;
   ip_address?: string | null;
   user_agent?: string | null;
+  request_method?: string | null;
+  request_url?: string | null;
+  status?: string;
   created_at: string;
   user?: UserItem;
 }
