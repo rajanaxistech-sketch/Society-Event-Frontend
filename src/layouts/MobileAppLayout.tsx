@@ -10,6 +10,7 @@ import { encodeId } from '../utils/idObfuscator';
 import MobileBottomSheet from '../components/mobile/MobileBottomSheet';
 import AdminFooter from './AdminFooter';
 import SocialMediaLinks from '../components/common/SocialMediaLinks';
+import societyLogo from '../assets/society-logo.png';
 import {
   Home,
   ScrollText,
@@ -141,8 +142,8 @@ export const MobileAppLayout: React.FC = () => {
         <header className="h-[58px] bg-white border-b border-slate-200/80 px-3.5 flex items-center justify-between shrink-0 sticky top-0 z-30 shadow-xs">
           {/* Society Branding */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200/60">
-              <Building2 className="w-3.5 h-3.5 text-slate-600" />
+            <div className="w-9 h-9 rounded-xl bg-amber-50/70 flex items-center justify-center shrink-0 border border-amber-200/70 overflow-hidden shadow-xs p-0.5">
+              <img src={societyLogo} alt="Society Logo" className="w-full h-full object-contain transform scale-110" />
             </div>
             <div
               className="min-w-0 cursor-pointer flex-1"

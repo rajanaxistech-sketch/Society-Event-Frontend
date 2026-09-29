@@ -87,6 +87,19 @@ export const CollectionSummaryPage: React.FC = () => {
     return num.toLocaleString('en-IN');
   };
 
+  const formatTowerDisplayName = (name?: string, index?: number): string => {
+    if (!name || !name.trim()) {
+      return index !== undefined ? `Tower ${String.fromCharCode(65 + index)}` : 'Tower';
+    }
+    const trimmed = name.trim();
+    const match = trimmed.match(/^(?:tower|block|wing|building)[-_\s]*(.*)$/i);
+    if (match) {
+      const suffix = match[1]?.trim();
+      return suffix ? `Tower ${suffix}` : trimmed;
+    }
+    return `Tower ${trimmed}`;
+  };
+
   const handleEventChange = (newEventId: string) => {
     setSelectedEventId(newEventId);
     navigate(`/events/${encodeId(newEventId)}/collection-summary`, { replace: true });
@@ -176,19 +189,16 @@ export const CollectionSummaryPage: React.FC = () => {
             </div>
           ) : (
             blocks.map((block, idx) => {
-              const cleanBlockCode = block.blockCode?.trim() || block.blockName.replace(/^(block|tower)\s*/i, '').trim().slice(0, 2).toUpperCase() || String.fromCharCode(65 + idx);
+              const towerDisplayName = formatTowerDisplayName(block.blockName, idx);
               return (
                 <div
                   key={block.blockId || idx}
                   className="px-3.5 py-2.5 grid grid-cols-12 items-center hover:bg-slate-50/50 transition-colors"
                 >
-                  {/* Block Name */}
-                  <div className="col-span-4 flex items-center gap-2 min-w-0">
-                    <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10.5px] flex items-center justify-center shrink-0 border border-slate-200/70">
-                      {cleanBlockCode}
-                    </span>
+                  {/* Tower Name */}
+                  <div className="col-span-4 flex items-center min-w-0">
                     <span className="font-bold text-slate-800 truncate text-[12px]">
-                      {block.blockName}
+                      {towerDisplayName}
                     </span>
                   </div>
 

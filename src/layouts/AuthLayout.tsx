@@ -1,8 +1,8 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import ToastContainer from '../components/feedback/ToastContainer';
-import { Sparkles } from 'lucide-react';
 import anaxistechLogo from '../assets/anaxistech-logo.png';
+import societyLogo from '../assets/society-logo.png';
 
 export const AuthLayout: React.FC = () => {
   return (
@@ -13,8 +13,8 @@ export const AuthLayout: React.FC = () => {
 
       {/* Brand Header */}
       <div className="w-full sm:mx-auto sm:max-w-[460px] text-center z-10">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#6366F1] to-[#8B5CF6] text-white shadow-md shadow-indigo-200 mb-3">
-          <Sparkles className="w-6 h-6" />
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white shadow-lg shadow-amber-100 border border-amber-200/60 p-1.5 mb-3">
+          <img src={societyLogo} alt="Society Logo" className="w-full h-full object-contain" />
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight px-2">
           Society & Community Hub
