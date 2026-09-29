@@ -1,10 +1,11 @@
 import envConfig from '../config/env.config';
 
+const LIVE_HOST = 'https://api-societymgmtlive.anaxistech.com';
 const STAGE_HOST = 'https://api-societymgmt.anaxistech.com';
 const LOCAL_HOST = 'http://localhost:6090';
 
 /**
- * Resolves any file URL (whether relative /uploads, local localhost:3000/6090, or stage)
+ * Resolves any file URL (whether relative /uploads, local localhost:3000/6090, stage, or live)
  * into a valid, reachable URL for the current active environment.
  */
 export const getFileUrl = (url?: string | null): string => {
@@ -15,7 +16,7 @@ export const getFileUrl = (url?: string | null): string => {
     return url;
   }
 
-  // 2. If the URL contains an `/uploads/` path (from local, stage, frontend port 3000, etc.)
+  // 2. If the URL contains an `/uploads/` path (from local, stage, live, frontend port 3000, etc.)
   const uploadsIndex = url.indexOf('/uploads/');
   if (uploadsIndex !== -1) {
     const relativePath = url.substring(uploadsIndex); // e.g. '/uploads/circulars/xyz.pdf'
@@ -35,11 +36,11 @@ export const getFileUrl = (url?: string | null): string => {
 };
 
 /**
- * Returns alternate URLs (local and stage) for a given uploads path
+ * Returns alternate URLs (local, stage, live) for a given uploads path
  * so users can switch sources if a document was uploaded to a different server.
  */
 export const getAlternateFileUrls = (url?: string | null) => {
-  if (!url) return { current: '', local: '', stage: '' };
+  if (!url) return { current: '', local: '', stage: '', live: '' };
 
   const uploadsIndex = url.indexOf('/uploads/');
   const relativePath = uploadsIndex !== -1 ? url.substring(uploadsIndex) : (url.startsWith('/') ? url : `/${url}`);
@@ -48,6 +49,7 @@ export const getAlternateFileUrls = (url?: string | null) => {
     current: getFileUrl(url),
     local: `${LOCAL_HOST}${relativePath}`,
     stage: `${STAGE_HOST}${relativePath}`,
+    live: `${LIVE_HOST}${relativePath}`,
   };
 };
 
