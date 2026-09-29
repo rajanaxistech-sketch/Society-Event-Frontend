@@ -3,6 +3,7 @@ import {
   ApiResponse,
   EventCollectionItem,
   EventCollectionsDashboardData,
+  EventCollectionOverallSummary,
   PaginatedResponse,
   PaymentItem,
   QueryParams,
@@ -204,6 +205,13 @@ export const collectionsService = {
   getDashboardByEvent: async (eventId: string): Promise<ApiResponse<EventCollectionsDashboardData>> => {
     const response = await axiosClient.get<ApiResponse<EventCollectionsDashboardData>>(
       `/events/${eventId}/collections/dashboard`
+    );
+    return response.data;
+  },
+
+  getSummaryByEvent: async (eventId: string): Promise<ApiResponse<EventCollectionOverallSummary>> => {
+    const response = await axiosClient.get<ApiResponse<EventCollectionOverallSummary>>(
+      `/events/${eventId}/collections/summary`
     );
     return response.data;
   },

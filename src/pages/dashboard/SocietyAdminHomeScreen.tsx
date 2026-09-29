@@ -14,6 +14,8 @@ import {
   Utensils,
   Megaphone,
   Shirt,
+  Coins,
+  TrendingUp,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -103,6 +105,19 @@ export const SocietyAdminHomeScreen: React.FC = () => {
           navigate(`/events/${encodeId(primaryEvent.id)}?tab=collections`);
         } else {
           navigate(AppRoutes.FLAT_COLLECTIONS);
+        }
+      },
+    },
+    {
+      title: 'Collection Summary',
+      icon: TrendingUp,
+      iconStyle: 'bg-teal-50 text-teal-600 border border-teal-100 shadow-teal-100/50',
+      badge: undefined,
+      onClick: () => {
+        if (primaryEvent) {
+          navigate(`/events/${encodeId(primaryEvent.id)}/collection-summary`);
+        } else {
+          navigate(AppRoutes.COLLECTION_SUMMARY);
         }
       },
     },

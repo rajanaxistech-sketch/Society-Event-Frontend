@@ -1586,4 +1586,67 @@ export interface UpdateAdvertisementInput {
   societyId?: string | null;
   status?: 'active' | 'inactive';
 }
+
+export interface BlockCollectionSummary {
+  blockId: string;
+  blockName: string;
+  blockCode?: string | null;
+  totalFlats: number;
+  paidFlats: number;
+  partiallyPaidFlats: number;
+  pendingFlats: number;
+  totalExpectedAmount: number;
+  totalCollectedAmount: number;
+  pendingAmount: number;
+  flatRatioText: string;
+  amountRatioText: string;
+  collectionPercentage: number;
+}
+
+export interface AdCategorySummary {
+  categoryId: string;
+  categoryName: string;
+  adCount: number;
+  expectedAmount: number;
+  collectedAmount: number;
+}
+
+export interface AdvertisementCollectionSummary {
+  totalAds: number;
+  paidAds: number;
+  pendingAds: number;
+  totalExpectedAmount: number;
+  totalCollectedAmount: number;
+  totalPendingAmount: number;
+  collectionPercentage: number;
+  categories: AdCategorySummary[];
+}
+
+export interface EventCollectionOverallSummary {
+  eventId: string;
+  eventName: string;
+  societyId: string;
+  defaultAmount: number;
+  blocks: BlockCollectionSummary[];
+  flatCollectionsSubtotal: {
+    totalFlats: number;
+    paidFlats: number;
+    partiallyPaidFlats: number;
+    pendingFlats: number;
+    totalExpectedAmount: number;
+    totalCollectedAmount: number;
+    totalPendingAmount: number;
+    collectionPercentage: number;
+  };
+  advertisementCollections: AdvertisementCollectionSummary;
+  grandTotal: {
+    totalTarget: number;
+    totalCollected: number;
+    totalPending: number;
+    collectionPercentage: number;
+    flatSharePercentage: number;
+    adSharePercentage: number;
+  };
+}
+
 export * from './eventGrid';

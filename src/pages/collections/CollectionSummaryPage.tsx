@@ -1,0 +1,310 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { collectionsService } from '../../api/collectionsService';
+import { eventsService } from '../../api/eventsService';
+import { EventCollectionOverallSummary, EventItem } from '../../types';
+import { encodeId, decodeId } from '../../utils/idObfuscator';
+import Spinner from '../../components/ui/Spinner';
+import {
+  ArrowLeft,
+  RefreshCw,
+  Building2,
+  Megaphone,
+  Coins,
+} from 'lucide-react';
+
+export const CollectionSummaryPage: React.FC = () => {
+  const { id: paramEventId } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const { selectedSocietyId } = useAuth();
+  const navigate = useNavigate();
+
+  const [summary, setSummary] = useState<EventCollectionOverallSummary | null>(null);
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  // Resolve active event ID
+  useEffect(() => {
+    const rawId = paramEventId ? decodeId(paramEventId) || paramEventId : searchParams.get('eventId') || '';
+    if (rawId) {
+      setSelectedEventId(rawId);
+    }
+  }, [paramEventId, searchParams]);
+
+  // Load events list for current society
+  useEffect(() => {
+    if (!selectedSocietyId) return;
+
+    eventsService
+      .getAll({ societyId: selectedSocietyId, limit: 20, sortBy: 'start_date', sortOrder: 'desc' })
+      .then((res) => {
+        if (res?.success && res.data && res.data.length > 0) {
+          setEvents(res.data);
+          if (!selectedEventId) {
+            setSelectedEventId(res.data[0].id);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load events', err);
+      });
+  }, [selectedSocietyId]);
+
+  // Load collection summary
+  const fetchSummary = async (eventId: string, isManualRefresh = false) => {
+    if (!eventId) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      if (isManualRefresh) setIsRefreshing(true);
+      else setIsLoading(true);
+
+      const res = await collectionsService.getSummaryByEvent(eventId);
+      if (res.success && res.data) {
+        setSummary(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load collection summary', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedEventId) {
+      fetchSummary(selectedEventId);
+    }
+  }, [selectedEventId]);
+
+  const formatAmount = (val?: number) => {
+    const num = Number(val || 0);
+    return num.toLocaleString('en-IN');
+  };
+
+  const handleEventChange = (newEventId: string) => {
+    setSelectedEventId(newEventId);
+    navigate(`/events/${encodeId(newEventId)}/collection-summary`, { replace: true });
+  };
+
+  if (isLoading && !summary) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+        <Spinner size="md" label="Loading collection summary..." />
+      </div>
+    );
+  }
+
+  const grandTotal = summary?.grandTotal;
+  const flatSubtotal = summary?.flatCollectionsSubtotal;
+  const adSummary = summary?.advertisementCollections;
+  const blocks = summary?.blocks || [];
+
+  const overallCollected = grandTotal?.totalCollected || 0;
+  const overallTarget = grandTotal?.totalTarget || 0;
+  const overallPercent = grandTotal?.collectionPercentage || 0;
+
+  return (
+    <div className="space-y-2.5 animate-in fade-in duration-150 pb-2">
+      {/* 1. Clean Top Header */}
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-7 h-7 rounded-lg bg-white border border-slate-200/90 hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors cursor-pointer shrink-0 shadow-2xs"
+            title="Go back"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </button>
+          <div className="min-w-0">
+            <h1 className="text-[15px] font-bold text-slate-900 leading-tight tracking-tight truncate">
+              Collection Summary
+            </h1>
+            <p className="text-[10.5px] text-slate-400 font-medium truncate">
+              {summary?.eventName || 'Event Financial Overview'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {events.length > 1 && (
+            <select
+              value={selectedEventId}
+              onChange={(e) => handleEventChange(e.target.value)}
+              className="text-[11px] font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg py-1 px-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer max-w-[130px] truncate shadow-2xs"
+            >
+              {events.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            type="button"
+            onClick={() => fetchSummary(selectedEventId, true)}
+            disabled={isRefreshing}
+            className="w-7 h-7 rounded-lg bg-white border border-slate-200/90 hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-600' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* 2. CARD 1: Flat Collections (Block / Tower-Wise) */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        {/* Table Header */}
+        <div className="bg-slate-50/90 px-3.5 py-2 border-b border-slate-200/70 grid grid-cols-12 text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
+          <div className="col-span-4">Block / Tower</div>
+          <div className="col-span-3 text-center">Flats (Tot/Paid)</div>
+          <div className="col-span-5 text-right">Amount (Tot/Paid)</div>
+        </div>
+
+        {/* Block Rows */}
+        <div className="divide-y divide-slate-100 text-xs">
+          {blocks.length === 0 ? (
+            <div className="p-4 text-center text-slate-400 text-xs font-medium">
+              No blocks found.
+            </div>
+          ) : (
+            blocks.map((block, idx) => {
+              const cleanBlockCode = block.blockCode?.trim() || block.blockName.replace(/^(block|tower)\s*/i, '').trim().slice(0, 2).toUpperCase() || String.fromCharCode(65 + idx);
+              return (
+                <div
+                  key={block.blockId || idx}
+                  className="px-3.5 py-2.5 grid grid-cols-12 items-center hover:bg-slate-50/50 transition-colors"
+                >
+                  {/* Block Name */}
+                  <div className="col-span-4 flex items-center gap-2 min-w-0">
+                    <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10.5px] flex items-center justify-center shrink-0 border border-slate-200/70">
+                      {cleanBlockCode}
+                    </span>
+                    <span className="font-bold text-slate-800 truncate text-[12px]">
+                      {block.blockName}
+                    </span>
+                  </div>
+
+                  {/* Flats Ratio (e.g. 40/17) */}
+                  <div className="col-span-3 text-center">
+                    <span className="font-bold text-slate-800 text-[12px]">
+                      {block.totalFlats}/{block.paidFlats}
+                    </span>
+                  </div>
+
+                  {/* Amount Ratio (e.g. 40000/2000) */}
+                  <div className="col-span-5 text-right font-mono">
+                    <span className="font-bold text-slate-500 text-[11px]">
+                      {formatAmount(block.totalExpectedAmount)}
+                    </span>
+                    <span className="text-slate-300 font-light text-[10px] mx-1">/</span>
+                    <span className={`font-black text-[12px] ${block.totalCollectedAmount > 0 ? 'text-emerald-600' : 'text-slate-800'}`}>
+                      {formatAmount(block.totalCollectedAmount)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {/* Flat Collections Subtotal Row */}
+          {flatSubtotal && (
+            <div className="px-3.5 py-2.5 bg-slate-50/70 grid grid-cols-12 items-center border-t border-slate-200/80">
+              <div className="col-span-4 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="font-bold text-slate-800 text-[11.5px]">
+                  Flats Subtotal
+                </span>
+              </div>
+              <div className="col-span-3 text-center">
+                <span className="font-extrabold text-slate-900 text-[12px]">
+                  {flatSubtotal.totalFlats}/{flatSubtotal.paidFlats}
+                </span>
+              </div>
+              <div className="col-span-5 text-right font-mono">
+                <span className="font-bold text-slate-500 text-[11px]">
+                  {formatAmount(flatSubtotal.totalExpectedAmount)}
+                </span>
+                <span className="text-slate-300 font-light text-[10px] mx-1">/</span>
+                <span className={`font-black text-[12px] ${flatSubtotal.totalCollectedAmount > 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
+                  {formatAmount(flatSubtotal.totalCollectedAmount)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. CARD 2: Advertisement Collection (Separated White Card) */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-3">
+        <div className="grid grid-cols-12 items-center">
+          <div className="col-span-4 flex items-center gap-2 min-w-0">
+            <span className="w-5 h-5 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+              <Megaphone className="w-3 h-3" />
+            </span>
+            <span className="font-bold text-slate-800 text-[12px] truncate">
+              Advertising
+            </span>
+          </div>
+
+          <div className="col-span-3 text-center">
+            <span className="font-bold text-slate-800 text-[12px]">
+              {adSummary?.totalAds ?? 0}/{adSummary?.paidAds ?? 0}
+            </span>
+          </div>
+
+          <div className="col-span-5 text-right font-mono">
+            <span className="font-bold text-slate-500 text-[11px]">
+              {formatAmount(adSummary?.totalExpectedAmount)}
+            </span>
+            <span className="text-slate-300 font-light text-[10px] mx-1">/</span>
+            <span className={`font-black text-[12px] ${(adSummary?.totalCollectedAmount || 0) > 0 ? 'text-indigo-600' : 'text-slate-800'}`}>
+              {formatAmount(adSummary?.totalCollectedAmount)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. CARD 3: Overall Total Collection of Both (Flats + Ads) */}
+      <div className="bg-white rounded-2xl border border-emerald-200/90 shadow-2xs p-3.5 bg-gradient-to-r from-emerald-50/40 via-white to-indigo-50/30">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <Coins className="w-3 h-3" />
+            </div>
+            <span className="font-black text-[13px] text-slate-900 tracking-tight">
+              Overall Total Collection
+            </span>
+          </div>
+          <span className="text-[10.5px] font-black text-emerald-700 bg-emerald-100/70 border border-emerald-200 px-2 py-0.5 rounded-full">
+            {overallPercent}% Recovered
+          </span>
+        </div>
+
+        <div className="flex items-baseline justify-between pt-1">
+          <span className="text-[11px] font-medium text-slate-500">
+            Flats + Advertising Total
+          </span>
+          <div className="flex items-baseline gap-1 font-mono text-right">
+            <span className="font-bold text-slate-500 text-xs">
+              ₹{formatAmount(overallTarget)}
+            </span>
+            <span className="text-slate-300 font-light text-xs mx-0.5">/</span>
+            <span className="font-black text-emerald-600 text-base">
+              ₹{formatAmount(overallCollected)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CollectionSummaryPage;
