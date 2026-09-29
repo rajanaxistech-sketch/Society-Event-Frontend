@@ -7,6 +7,11 @@ export const dressCodesService = {
     return response.data;
   },
 
+  getById: async (id: string): Promise<ApiResponse<DressCodeItem>> => {
+    const response = await axiosClient.get<ApiResponse<DressCodeItem>>(`/dress-codes/${id}`);
+    return response.data;
+  },
+
   createForEvent: async (eventId: string, data: Partial<DressCodeItem>): Promise<ApiResponse<DressCodeItem>> => {
     const response = await axiosClient.post<ApiResponse<DressCodeItem>>(`/events/${eventId}/dress-codes`, data);
     return response.data;

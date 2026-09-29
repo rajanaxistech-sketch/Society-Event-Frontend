@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { eventsService } from '../../api/eventsService';
 import { societiesService } from '../../api/societiesService';
-import { EventItem, SocietyItem } from '../../types';
+import { dressCodesService } from '../../api/dressCodesService';
+import { EventItem, SocietyItem, DressCodeItem } from '../../types';
 import { encodeId } from '../../utils/idObfuscator';
 import { AppRoutes } from '../../constants/routes';
 import Spinner from '../../components/ui/Spinner';
@@ -12,6 +13,7 @@ import {
   DollarSign,
   Utensils,
   Megaphone,
+  Shirt,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -20,6 +22,7 @@ export const SocietyAdminHomeScreen: React.FC = () => {
 
   const [society, setSociety] = useState<SocietyItem | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
+  const [dressCodes, setDressCodes] = useState<DressCodeItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async () => {
@@ -40,6 +43,15 @@ export const SocietyAdminHomeScreen: React.FC = () => {
       }
       if (eventsRes?.success && eventsRes.data) {
         setUpcomingEvents(eventsRes.data);
+
+        // Fetch dress codes for primary event
+        const primary = eventsRes.data.length > 0 ? eventsRes.data[0] : null;
+        if (primary?.id) {
+          const dcRes = await dressCodesService.listByEvent(primary.id).catch(() => null);
+          if (dcRes?.success && dcRes.data) {
+            setDressCodes(dcRes.data);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to load society admin dashboard data', err);
@@ -64,8 +76,9 @@ export const SocietyAdminHomeScreen: React.FC = () => {
   const primaryCounts = primaryEvent?._count || {};
   const circularsCount = primaryCounts.circulars ?? 0;
   const foodItemsCount = primaryCounts.food_items ?? 0;
+  const dressCodesCount = dressCodes.length > 0 ? dressCodes.length : (primaryCounts.dress_codes ?? 0);
 
-  // 3 Mobile App Launcher Menu Items
+  // Mobile App Launcher Menu Items
   const menuItems = [
     {
       title: 'Circulars',
@@ -107,6 +120,19 @@ export const SocietyAdminHomeScreen: React.FC = () => {
       },
     },
     {
+      title: 'Dress Code',
+      icon: Shirt,
+      iconStyle: 'bg-amber-50 text-amber-600 border border-amber-100 shadow-amber-100/50',
+      badge: dressCodesCount > 0 ? dressCodesCount : undefined,
+      onClick: () => {
+        if (primaryEvent) {
+          navigate(`/events/${encodeId(primaryEvent.id)}?tab=dress-codes`);
+        } else {
+          navigate(AppRoutes.EVENTS);
+        }
+      },
+    },
+    {
       title: 'Advertising',
       icon: Megaphone,
       iconStyle: 'bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-indigo-100/50',
@@ -132,7 +158,7 @@ export const SocietyAdminHomeScreen: React.FC = () => {
         )}
       </div>
 
-      {/* 2-Column Mobile App Tiles Grid */}
+      {/* 2-Column / Mobile App Tiles Grid */}
       <div className="grid grid-cols-2 gap-3.5">
         {menuItems.map((item, idx) => {
           const Icon = item.icon;

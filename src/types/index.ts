@@ -834,13 +834,31 @@ export interface FoodDayMetaInput {
 export interface DressCodeItem {
   id: string;
   event_id: string;
+  day?: number | null;
+  date?: string | null;
+  color?: string | null;
+  color_code?: string | null;
   category: string;
-  description: string;
+  description?: string | null;
   instructions?: string | null;
   status: string;
+  created_by?: string | null;
+  updated_by?: string | null;
   created_at: string;
+  updated_at?: string;
+  creator?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
+  updater?: {
+    id: string;
+    full_name: string;
+    email: string;
+  } | null;
   event?: EventItem;
 }
+
 
 export interface EventActivityItem {
   id: string;
@@ -1568,5 +1586,4 @@ export interface UpdateAdvertisementInput {
   societyId?: string | null;
   status?: 'active' | 'inactive';
 }
-
-
+export * from './eventGrid';

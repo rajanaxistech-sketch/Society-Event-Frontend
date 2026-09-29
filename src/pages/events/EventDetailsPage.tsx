@@ -284,7 +284,7 @@ export const EventDetailsPage: React.FC = () => {
 
               {/* 3. Food Menu (Food Menu) */}
               <div
-                onClick={() => setActiveTab('food')}
+                onClick={() => handleTabChange('food')}
                 className="p-3 flex items-center gap-3 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer group"
               >
                 <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 group-hover:bg-rose-600 group-hover:text-white transition-colors">
@@ -305,6 +305,30 @@ export const EventDetailsPage: React.FC = () => {
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 transition-colors shrink-0" />
               </div>
+
+              {/* 4. Dress Code (3x3 Color Schedule) */}
+              <div
+                onClick={() => handleTabChange('dress-codes')}
+                className="p-3 flex items-center gap-3 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                  <Shirt className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <h4 className="font-bold text-slate-800 text-[13px] group-hover:text-amber-700 transition-colors truncate">
+                      Dress Code Schedule
+                    </h4>
+                    <span className="bg-amber-50 text-amber-700 text-[9.5px] font-bold px-1.5 py-0.5 rounded-full border border-amber-200 shrink-0">
+                      9 Days
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate">
+                    3×3 daily festival theme & attire guidelines
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 transition-colors shrink-0" />
+              </div>
             </div>
           </div>
         </div>
@@ -320,6 +344,10 @@ export const EventDetailsPage: React.FC = () => {
 
       {/* SUB-SCREEN 3: FOOD MENU */}
       {activeTab === 'food' && <EventFoodPage eventId={id!} />}
+
+      {/* SUB-SCREEN 4: DRESS CODES */}
+      {activeTab === 'dress-codes' && <EventDressCodesPage eventId={id!} />}
+
 
       {/* Publish Event Confirmation Dialog */}
       <ConfirmDialog

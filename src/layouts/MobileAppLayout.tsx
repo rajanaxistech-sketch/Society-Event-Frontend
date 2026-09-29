@@ -9,6 +9,7 @@ import { CircularItem, EventItem } from '../types';
 import { encodeId } from '../utils/idObfuscator';
 import MobileBottomSheet from '../components/mobile/MobileBottomSheet';
 import AdminFooter from './AdminFooter';
+import SocialMediaLinks from '../components/common/SocialMediaLinks';
 import {
   Home,
   ScrollText,
@@ -359,6 +360,16 @@ export const MobileAppLayout: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Social Media Links Section */}
+          <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/60 space-y-2">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Follow Us
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <SocialMediaLinks variant="expanded" iconSize={14} />
+            </div>
+          </div>
 
           {/* Logout Button */}
           <button
