@@ -74,7 +74,73 @@ import {
   ChevronDown,
   Check,
   XCircle,
+  HelpCircle,
 } from 'lucide-react';
+
+export const normalizeInterestStatus = (status?: string | null): string => {
+  if (!status) return 'INTERESTED';
+  const s = String(status).toUpperCase();
+  if (s === 'OPTED_OUT' || s === 'OPTED OUT') return 'HOUSE_CLOSED';
+  return s;
+};
+
+export const isZeroRequiredStatus = (status?: string | null): boolean => {
+  const s = normalizeInterestStatus(status);
+  return s === 'NOT_INTERESTED' || s === 'HOUSE_CLOSED';
+};
+
+export const isUncertainStatus = (status?: string | null): boolean => {
+  const s = normalizeInterestStatus(status);
+  return s === 'SECOND_HOME';
+};
+
+export const CONTRIBUTION_INTEREST_OPTIONS = [
+  {
+    value: 'INTERESTED',
+    label: 'Interested',
+    subtitle: 'Participating in event',
+    icon: CheckCircle2,
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+    iconBg: 'bg-emerald-100 text-emerald-700',
+    activeClass: 'bg-emerald-50 text-emerald-950 border-emerald-300',
+  },
+  {
+    value: 'TO_BE_CONFIRMED',
+    label: 'To Be Confirmed',
+    subtitle: 'Awaiting resident confirmation',
+    icon: Clock,
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/80',
+    iconBg: 'bg-amber-100 text-amber-700',
+    activeClass: 'bg-amber-50 text-amber-950 border-amber-300',
+  },
+  {
+    value: 'NOT_INTERESTED',
+    label: 'Not Interested',
+    subtitle: 'Not attending this event',
+    icon: XCircle,
+    badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
+    iconBg: 'bg-slate-200 text-slate-700',
+    activeClass: 'bg-slate-100 text-slate-900 border-slate-300',
+  },
+  {
+    value: 'HOUSE_CLOSED',
+    label: 'House Closed',
+    subtitle: 'Premises locked / resident away',
+    icon: Home,
+    badgeClass: 'bg-zinc-100 text-zinc-700 border-zinc-300',
+    iconBg: 'bg-zinc-200 text-zinc-700',
+    activeClass: 'bg-zinc-100 text-zinc-900 border-zinc-300',
+  },
+  {
+    value: 'SECOND_HOME',
+    label: 'Second Home',
+    subtitle: 'May Come / May Not Come',
+    icon: HelpCircle,
+    badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+    iconBg: 'bg-sky-100 text-sky-700',
+    activeClass: 'bg-sky-50 text-sky-950 border-sky-300',
+  },
+];
 
 const isUuid = (val: any): boolean => {
   if (typeof val !== 'string') return false;
@@ -177,8 +243,8 @@ const generateMockMatrix = () => {
           amountPaid: 0,
           pendingAmount: 4000,
           passes: 0,
-          interestStatus: 'interested',
-          interest_status: 'interested',
+          interestStatus: 'INTERESTED',
+          interest_status: 'INTERESTED',
           residentName: `Resident ${flatNum}`,
           phone: '+91 98765 43210',
           paymentMethod: undefined,
@@ -455,11 +521,28 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const handleSeatMapFlatClick = (flat: any) => {
     setPayingCollection(null);
     setSelectedFlatForPayment(flat);
-    const expAmt = Number(flat.amount ?? 4000);
-    const paidAmt = Number(flat.amountPaid ?? 0);
-    const pendingAmt = Math.max(0, expAmt - paidAmt);
-    // If flat already has a payment, populate with the paid amount so admin can edit it; otherwise pending/expected amount
-    setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : expAmt)));
+    const curInterest = normalizeInterestStatus(flat.interestStatus || flat.interest_status);
+    const isZeroReq = isZeroRequiredStatus(curInterest);
+    const isUncertain = isUncertainStatus(curInterest);
+    const defaultFee = Number(event?.default_collection_amount || 2500);
+    const rawAmt = Number(flat.amount ?? defaultFee);
+    const expAmt = isZeroReq ? 0 : (rawAmt > 0 ? rawAmt : defaultFee);
+    const paidAmt = isZeroReq ? 0 : Number(flat.amountPaid ?? 0);
+    const pendingAmt = isZeroReq ? 0 : Math.max(0, expAmt - paidAmt);
+
+    // If flat is NOT_INTERESTED or HOUSE_CLOSED, payAmount is 0. If SECOND_HOME, payAmount is 0 unless paidAmt > 0
+    let defaultPayAmt = '0';
+    if (!isZeroReq) {
+      if (paidAmt > 0) {
+        defaultPayAmt = String(paidAmt);
+      } else if (isUncertain) {
+        defaultPayAmt = '0';
+      } else {
+        defaultPayAmt = String(pendingAmt > 0 ? pendingAmt : expAmt);
+      }
+    }
+
+    setPayAmount(defaultPayAmt);
     setCustomExpectedFee(String(expAmt));
     setIsEditingExpectedFee(false);
     const initialMethod = 'CASH';
@@ -471,8 +554,16 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setChequeNumber('');
     setBankName('');
     setChequeDate('');
-    setPasses(flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : (flat.numberOfPasses ? Number(flat.numberOfPasses) : 0));
-    setInterestStatus(flat.interestStatus || flat.interest_status || 'interested');
+
+    let defaultPasses = 0;
+    if (!isZeroReq && !isUncertain) {
+      defaultPasses = flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : (flat.numberOfPasses ? Number(flat.numberOfPasses) : 0);
+    } else if (isUncertain) {
+      defaultPasses = flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0;
+    }
+
+    setPasses(defaultPasses);
+    setInterestStatus(curInterest);
     setIsQrModalOpen(false);
     setPayModalOpen(true);
   };
@@ -549,17 +640,22 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     e.preventDefault();
     if (!selectedFlatForPayment || !eventId) return;
 
-    const enteredAmount = Number(payAmount);
-    const expectedAmount = Number(selectedFlatForPayment.amount ?? 2500);
-    const newPending = Math.max(0, expectedAmount - enteredAmount);
-    const newStatus = newPending <= 0 && expectedAmount > 0 ? 'paid' : enteredAmount > 0 ? 'partially_paid' : 'pending';
+    const normInterest = normalizeInterestStatus(interestStatus);
+    const isZeroReq = isZeroRequiredStatus(normInterest);
+    const enteredAmount = isZeroReq ? 0 : Number(payAmount);
+    const finalPasses = isZeroReq ? 0 : Number(passes);
+    const defaultFee = Number(event?.default_collection_amount || 2500);
+    const rawExpected = Number(customExpectedFee || selectedFlatForPayment.amount || defaultFee);
+    const expectedAmount = isZeroReq ? 0 : (rawExpected > 0 ? rawExpected : defaultFee);
+    const newPending = isZeroReq ? 0 : Math.max(0, expectedAmount - enteredAmount);
+    const newStatus = isZeroReq ? 'pending' : (newPending <= 0 && expectedAmount > 0 ? 'paid' : enteredAmount > 0 ? 'partially_paid' : 'pending');
 
     try {
       setIsProcessingPayment(true);
 
       // Upload proof file if user snapped/selected a receipt image
       let uploadedProofUrl: string | undefined = undefined;
-      if (proofFile) {
+      if (proofFile && !isZeroReq) {
         try {
           const uploadRes = await collectionsService.uploadProof(proofFile);
           if (uploadRes.success && uploadRes.data?.proof_url) {
@@ -570,56 +666,29 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         }
       }
 
-      if (!isUuid(eventId) || !isUuid(selectedFlatForPayment.id)) {
-        // Instant In-memory state update for demo or fallback mock flats
-        if (matrixData) {
-          const updated = JSON.parse(JSON.stringify(matrixData));
-          for (const tower of updated.towers || []) {
-            for (const floor of tower.floors || []) {
-              for (const flat of floor.flats || []) {
-                if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
-                  flat.status = newStatus;
-                  flat.amountPaid = enteredAmount;
-                  flat.pendingAmount = newPending;
-                  flat.paymentMethod = payMethod;
-                  flat.passes = Number(passes);
-                  flat.interestStatus = interestStatus;
-                  flat.interest_status = interestStatus;
-                }
-              }
-            }
-          }
-          setMatrixData(updated);
-        }
-        selectedFlatForPayment.passes = Number(passes);
-        selectedFlatForPayment.interestStatus = interestStatus;
-        selectedFlatForPayment.interest_status = interestStatus;
-        toast.success(
-          `🎉 Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount} (Balance: ₹${newPending})`
-        );
-        setPayModalOpen(false);
-        setSelectedFlatForPayment(null);
-        return;
-      }
-
       const res = await collectionsService.payFlat(eventId, selectedFlatForPayment.id, {
         amount: enteredAmount,
-        payment_method: payMethod,
+        payment_method: payMethod || 'CASH',
         transaction_reference: transactionReference || undefined,
         proof_url: uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || undefined),
         notes: payNotes || undefined,
         cheque_number: chequeNumber || undefined,
         bank_name: bankName || undefined,
         cheque_date: chequeDate || undefined,
-        passes: Number(passes),
-        interest_status: interestStatus,
-        interestStatus: interestStatus,
+        passes: finalPasses,
+        interest_status: normInterest,
+        interestStatus: normInterest,
       });
 
       if (res.success) {
-        selectedFlatForPayment.passes = Number(passes);
-        selectedFlatForPayment.interestStatus = interestStatus;
-        selectedFlatForPayment.interest_status = interestStatus;
+        selectedFlatForPayment.passes = finalPasses;
+        selectedFlatForPayment.interestStatus = normInterest;
+        selectedFlatForPayment.interest_status = normInterest;
+        selectedFlatForPayment.amount = expectedAmount;
+        selectedFlatForPayment.amountPaid = enteredAmount;
+        selectedFlatForPayment.pendingAmount = newPending;
+        selectedFlatForPayment.status = newStatus;
+
         if (matrixData) {
           const updated = JSON.parse(JSON.stringify(matrixData));
           for (const tower of updated.towers || []) {
@@ -627,53 +696,42 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
               for (const flat of floor.flats || []) {
                 if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
                   flat.status = newStatus;
+                  flat.amount = expectedAmount;
                   flat.amountPaid = enteredAmount;
                   flat.pendingAmount = newPending;
-                  flat.paymentMethod = payMethod;
-                  flat.passes = Number(passes);
-                  flat.interestStatus = interestStatus;
-                  flat.interest_status = interestStatus;
+                  flat.paymentMethod = isZeroReq ? null : payMethod;
+                  flat.passes = finalPasses;
+                  flat.interestStatus = normInterest;
+                  flat.interest_status = normInterest;
                 }
               }
             }
           }
           setMatrixData(updated);
         }
-        toast.success(res.data?.message || `🎉 Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
+
+        let toastMsg = res.data?.message;
+        if (!toastMsg) {
+          if (normInterest === 'HOUSE_CLOSED') {
+            toastMsg = `Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} marked as House Closed`;
+          } else if (normInterest === 'NOT_INTERESTED') {
+            toastMsg = `Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} marked as Not Interested`;
+          } else if (normInterest === 'SECOND_HOME') {
+            toastMsg = `Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} marked as Second Home`;
+          } else {
+            toastMsg = `🎉 Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`;
+          }
+        }
+        toast.success(toastMsg);
         setPayModalOpen(false);
         setSelectedFlatForPayment(null);
         fetchMatrix();
         fetchCollections();
       } else {
-        toast.error(res.message || 'Failed to record payment');
+        toast.error(res.message || 'Failed to update flat payment');
       }
     } catch (err: any) {
-      // In-memory fallback
-      if (matrixData) {
-        const updated = JSON.parse(JSON.stringify(matrixData));
-        for (const tower of updated.towers || []) {
-          for (const floor of tower.floors || []) {
-            for (const flat of floor.flats || []) {
-              if (flat.id === selectedFlatForPayment.id || flat.flatNumber === selectedFlatForPayment.flatNumber) {
-                flat.status = newStatus;
-                flat.amountPaid = enteredAmount;
-                flat.pendingAmount = newPending;
-                flat.paymentMethod = payMethod;
-                flat.passes = Number(passes);
-                flat.interestStatus = interestStatus;
-                flat.interest_status = interestStatus;
-              }
-            }
-          }
-        }
-        setMatrixData(updated);
-      }
-      selectedFlatForPayment.passes = Number(passes);
-      selectedFlatForPayment.interestStatus = interestStatus;
-      selectedFlatForPayment.interest_status = interestStatus;
-      toast.success(`🎉 Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber} payment updated to ₹${enteredAmount}`);
-      setPayModalOpen(false);
-      setSelectedFlatForPayment(null);
+      toast.error(extractErrorMessage(err, 'Failed to update flat payment'));
     } finally {
       setIsProcessingPayment(false);
     }
@@ -725,11 +783,27 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const openPayModal = (col: EventCollectionItem) => {
     setSelectedFlatForPayment(null);
     setPayingCollection(col);
-    const expAmt = Number(col.expected_amount ?? 2500);
-    const paidAmt = Number(col.amount_paid ?? 0);
-    const pendingAmt = Math.max(0, expAmt - paidAmt);
-    // Populate with current paid amount so admin can edit it, otherwise pending amount
-    setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : expAmt)));
+    const curInterest = normalizeInterestStatus((col as any).interest_status || (col as any).interestStatus);
+    const isZeroReq = isZeroRequiredStatus(curInterest);
+    const isUncertain = isUncertainStatus(curInterest);
+    const defaultFee = Number(event?.default_collection_amount || 2500);
+    const rawAmt = Number(col.expected_amount ?? defaultFee);
+    const expAmt = isZeroReq ? 0 : (rawAmt > 0 ? rawAmt : defaultFee);
+    const paidAmt = isZeroReq ? 0 : Number(col.amount_paid ?? 0);
+    const pendingAmt = isZeroReq ? 0 : Math.max(0, expAmt - paidAmt);
+
+    let defaultPayAmt = '0';
+    if (!isZeroReq) {
+      if (paidAmt > 0) {
+        defaultPayAmt = String(paidAmt);
+      } else if (isUncertain) {
+        defaultPayAmt = '0';
+      } else {
+        defaultPayAmt = String(pendingAmt > 0 ? pendingAmt : expAmt);
+      }
+    }
+
+    setPayAmount(defaultPayAmt);
     setCustomExpectedFee(String(expAmt));
     setIsEditingExpectedFee(false);
     const initialMethod = 'CASH';
@@ -740,8 +814,16 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setChequeDate(col.payments?.[0]?.cheque_date ? col.payments[0].cheque_date.split('T')[0] : '');
     setTransactionReference(col.payments?.[0]?.transaction_reference || '');
     setPayNotes(col.payments?.[0]?.notes || '');
-    setPasses(col.passes !== undefined && col.passes !== null ? Number(col.passes) : 0);
-    setInterestStatus((col as any).interest_status || (col as any).interestStatus || 'interested');
+
+    let defaultPasses = 0;
+    if (!isZeroReq && !isUncertain) {
+      defaultPasses = col.passes !== undefined && col.passes !== null ? Number(col.passes) : 0;
+    } else if (isUncertain) {
+      defaultPasses = col.passes !== undefined && col.passes !== null ? Number(col.passes) : 0;
+    }
+
+    setPasses(defaultPasses);
+    setInterestStatus(curInterest);
     setProofFile(null);
     setProofPreviewUrl(col.payments?.[0]?.proof_url || null);
     setIsQrModalOpen(false);
@@ -753,19 +835,19 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     e.preventDefault();
     if (!payingCollection) return;
 
-    if (!payMethod) {
-      toast.warning('Please select an active payment method');
-      return;
-    }
-
-    const amt = Number(payAmount);
-    const expected = Number(payingCollection.expected_amount || 0);
+    const normInterest = normalizeInterestStatus(interestStatus);
+    const isZeroReq = isZeroRequiredStatus(normInterest);
+    const amt = isZeroReq ? 0 : Number(payAmount);
+    const finalPasses = isZeroReq ? 0 : Number(passes);
+    const defaultFee = Number(event?.default_collection_amount || 2500);
+    const rawExpected = Number(customExpectedFee || payingCollection.expected_amount || defaultFee);
+    const expected = isZeroReq ? 0 : (rawExpected > 0 ? rawExpected : defaultFee);
 
     if (amt < 0) {
       toast.warning('Payment amount cannot be negative');
       return;
     }
-    if (amt > expected) {
+    if (amt > expected && !isZeroReq) {
       toast.error(`Payment cannot exceed expected fee of ${formatCurrency(expected)}`);
       return;
     }
@@ -775,7 +857,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
       // Upload proof file if user snapped/selected a receipt image
       let uploadedProofUrl: string | undefined = undefined;
-      if (proofFile) {
+      if (proofFile && !isZeroReq) {
         try {
           const uploadRes = await collectionsService.uploadProof(proofFile);
           if (uploadRes.success && uploadRes.data?.proof_url) {
@@ -788,7 +870,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
       const res = await collectionsService.recordPayment(payingCollection.id, {
         amount: amt,
-        payment_method: payMethod,
+        payment_method: payMethod || 'CASH',
         payment_date: payDate,
         cheque_number: payMethod === 'CHEQUE' ? chequeNumber : null,
         bank_name: payMethod === 'CHEQUE' ? bankName : null,
@@ -796,16 +878,23 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         transaction_reference: transactionReference || null,
         proof_url: uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || null),
         notes: payNotes || null,
-        passes: Number(passes),
-        interest_status: interestStatus,
-        interestStatus: interestStatus,
+        passes: finalPasses,
+        interest_status: normInterest,
+        interestStatus: normInterest,
       });
 
       if (res.success) {
-        payingCollection.passes = Number(passes);
-        payingCollection.interest_status = interestStatus;
-        payingCollection.interestStatus = interestStatus;
-        toast.success(`Payment updated to ${formatCurrency(amt)} successfully.`);
+        payingCollection.expected_amount = expected;
+        payingCollection.amount_paid = amt;
+        payingCollection.pending_amount = isZeroReq ? 0 : Math.max(0, expected - amt);
+        payingCollection.passes = finalPasses;
+        payingCollection.interest_status = normInterest;
+        payingCollection.interestStatus = normInterest;
+        let successMsg = `Payment updated to ${formatCurrency(amt)} successfully.`;
+        if (normInterest === 'HOUSE_CLOSED') successMsg = 'Marked as House Closed successfully.';
+        else if (normInterest === 'NOT_INTERESTED') successMsg = 'Marked as Not Interested successfully.';
+        else if (normInterest === 'SECOND_HOME') successMsg = 'Marked as Second Home successfully.';
+        toast.success(successMsg);
         setPayModalOpen(false);
         fetchCollections();
         fetchMatrix();
@@ -1105,11 +1194,32 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       header: 'Status',
       align: 'center',
       render: (row) => {
-        const isNotInt = row.interest_status === 'not_interested' || (row as any).interestStatus === 'not_interested';
-        if (isNotInt) {
+        const norm = normalizeInterestStatus(row.interest_status || (row as any).interestStatus);
+        if (norm === 'HOUSE_CLOSED') {
+          return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-100 text-zinc-700 border border-zinc-300">
+              House Closed
+            </span>
+          );
+        }
+        if (norm === 'NOT_INTERESTED') {
           return (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-300">
               Not Interested
+            </span>
+          );
+        }
+        if (norm === 'SECOND_HOME') {
+          return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+              Second Home
+            </span>
+          );
+        }
+        if (norm === 'TO_BE_CONFIRMED') {
+          return (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80">
+              To Confirm
             </span>
           );
         }
@@ -1227,6 +1337,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           ? formatFlatDisplayNumber(rawFlatNumber, prefix)
           : `Bungalow ${rawFlatNumber}`;
 
+        const normInterest = normalizeInterestStatus((c as any).interest_status || (c as any).interestStatus);
+        const isZeroReq = isZeroRequiredStatus(normInterest);
+        const defaultFee = Number(event?.default_collection_amount || 2500);
+        const rawExpected = Number(c.expected_amount || defaultFee);
+        const expectedAmt = isZeroReq ? 0 : (rawExpected > 0 ? rawExpected : defaultFee);
+        const paidAmt = isZeroReq ? 0 : Number(c.amount_paid || 0);
+        const pendingAmt = isZeroReq ? 0 : (c.pending_amount !== undefined ? Number(c.pending_amount) : Math.max(0, expectedAmt - paidAmt));
+
         return {
           id: c.flat_id || c.id,
           collectionId: c.id,
@@ -1234,14 +1352,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           displayFlatNumber,
           blockPrefix: prefix,
           towerName: block?.name || currentTower?.name,
-          status: c.status,
-          amount: Number(c.expected_amount || 4000),
-          amountPaid: Number(c.amount_paid || 0),
-          pendingAmount: Number(c.pending_amount || (Number(c.amount_paid || 0) > 0 ? Math.max(0, Number(c.expected_amount || 4000) - Number(c.amount_paid)) : Number(c.expected_amount || 4000))),
+          status: isZeroReq ? 'pending' : c.status,
+          amount: expectedAmt,
+          amountPaid: paidAmt,
+          pendingAmount: pendingAmt,
           residentName: owner?.full_name || 'Resident',
-          passes: c.passes !== undefined && c.passes !== null ? Number(c.passes) : 0,
-          interestStatus: (c as any).interest_status || (c as any).interestStatus || 'interested',
-          interest_status: (c as any).interest_status || (c as any).interestStatus || 'interested',
+          passes: isZeroReq ? 0 : (c.passes !== undefined && c.passes !== null ? Number(c.passes) : 0),
+          interestStatus: normInterest,
+          interest_status: normInterest,
           rawCollection: c,
         };
       });
@@ -1311,11 +1429,12 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       {/* 2. Minimal Collection Summary */}
       {(() => {
         const defaultAmt = Number(event?.default_collection_amount || 2500);
-        const totalUnits = matrixData?.summary?.totalUnits ?? matrixData?.summary?.totalFlats ?? 120;
-        const paidUnits = matrixData?.summary?.paidUnits ?? matrixData?.summary?.paidFlats ?? 0;
-        const pendingUnits = Math.max(0, totalUnits - paidUnits);
-        const totalCollected = matrixData?.summary?.totalCollected ?? (paidUnits * defaultAmt);
-        const totalTarget = matrixData?.summary?.totalTarget ?? (totalUnits * defaultAmt);
+        const summary = matrixData?.summary;
+        const totalUnits = summary?.totalUnits ?? summary?.totalFlats ?? (flatList.length > 0 ? flatList.length : 120);
+        const paidUnits = summary?.paidUnits ?? summary?.paidFlats ?? flatList.filter((f: any) => f.status === 'paid' && !isZeroRequiredStatus(f.interestStatus)).length;
+        const pendingUnits = summary?.pendingUnits ?? summary?.pendingFlats ?? flatList.filter((f: any) => Number(f.pendingAmount || 0) > 0 && !isZeroRequiredStatus(f.interestStatus)).length;
+        const totalCollected = summary?.totalCollected ?? flatList.reduce((sum: number, f: any) => sum + Number(f.amountPaid || 0), 0);
+        const totalTarget = summary?.totalTarget ?? (flatList.length > 0 ? flatList.reduce((sum: number, f: any) => sum + (isZeroRequiredStatus(f.interestStatus) ? 0 : Number(f.amount || defaultAmt)), 0) : totalUnits * defaultAmt);
         const totalPending = Math.max(0, totalTarget - totalCollected);
 
         return (
@@ -1389,19 +1508,25 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       {displayedFlats.length > 0 ? (
         <div className="space-y-1.5">
           {displayedFlats.map((flat: any) => {
-            const isPaid = flat.status === 'paid';
+            const normInterest = normalizeInterestStatus(flat.interestStatus || flat.interest_status);
+            const isZeroReq = isZeroRequiredStatus(normInterest);
+            const isUncertain = isUncertainStatus(normInterest);
+            const isPaid = flat.status === 'paid' && !isZeroReq;
             const expectedAmt = Number(flat.amount ?? 4000);
             const paidAmt = Number(flat.amountPaid ?? (isPaid ? expectedAmt : 0));
             const pendingAmt = Number(flat.pendingAmount ?? (isPaid ? 0 : expectedAmt));
-            const isNotInterested = flat.interestStatus === 'not_interested' || flat.interest_status === 'not_interested';
 
             return (
               <div
                 key={flat.id || flat.flatNumber}
                 onClick={() => handleSeatMapFlatClick(flat)}
                 className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
-                  isNotInterested
+                  normInterest === 'HOUSE_CLOSED'
+                    ? 'bg-zinc-100/80 border-zinc-300/80 hover:bg-zinc-200/70 shadow-none'
+                    : normInterest === 'NOT_INTERESTED'
                     ? 'bg-slate-100 border-slate-300/80 hover:bg-slate-200/70 shadow-none'
+                    : isUncertain
+                    ? 'bg-sky-50/70 border-sky-200 hover:bg-sky-100/70'
                     : isPaid
                     ? 'bg-[#F0FDF4] border-[#DCFCE7] hover:bg-[#E2FBE8]'
                     : 'bg-[#FEFCE8] border-[#FEF08A] hover:bg-[#FEF9C3]'
@@ -1411,8 +1536,12 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div
                     className={`w-2 h-2 rounded-full shrink-0 ${
-                      isNotInterested
+                      normInterest === 'HOUSE_CLOSED'
+                        ? 'bg-zinc-400'
+                        : normInterest === 'NOT_INTERESTED'
                         ? 'bg-slate-400'
+                        : isUncertain
+                        ? 'bg-sky-500'
                         : isPaid
                         ? 'bg-emerald-500'
                         : 'bg-amber-500'
@@ -1420,7 +1549,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   />
                   <div className="min-w-0">
                     <div className="flex items-center flex-wrap gap-1.5">
-                      <span className={`font-semibold text-xs sm:text-sm ${isNotInterested ? 'text-slate-700' : 'text-slate-900'}`}>
+                      <span className={`font-semibold text-xs sm:text-sm ${isZeroReq ? 'text-slate-700' : 'text-slate-900'}`}>
                         Flat {flat.displayFlatNumber || flat.flatNumber}
                       </span>
                       {flat.isUserFlat && (
@@ -1428,17 +1557,25 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                           You
                         </span>
                       )}
-                      {!isNotInterested && (
+                      {!isZeroReq && (
                         <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-purple-50 text-purple-700 rounded border border-purple-200/50">
                           {flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0}{' '}
                           {(flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0) === 1 ? 'Pass' : 'Passes'}
                         </span>
                       )}
-                      {isNotInterested ? (
+                      {normInterest === 'HOUSE_CLOSED' ? (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded border bg-zinc-200 text-zinc-700 border-zinc-300">
+                          House Closed
+                        </span>
+                      ) : normInterest === 'NOT_INTERESTED' ? (
                         <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded border bg-slate-200 text-slate-700 border-slate-300">
                           Not Interested
                         </span>
-                      ) : flat.interestStatus === 'to_be_confirmed' || flat.interest_status === 'to_be_confirmed' ? (
+                      ) : normInterest === 'SECOND_HOME' ? (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded border bg-sky-100 text-sky-700 border-sky-300">
+                          Second Home
+                        </span>
+                      ) : normInterest === 'TO_BE_CONFIRMED' ? (
                         <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded border bg-amber-50 text-amber-700 border-amber-200/50">
                           To Confirm
                         </span>
@@ -1453,7 +1590,19 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 {/* Right Info & Actions */}
                 <div className="flex items-center gap-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <div className="text-right">
-                    {!isNotInterested ? (
+                    {normInterest === 'HOUSE_CLOSED' ? (
+                      <span className="text-[11px] font-medium text-zinc-500 block leading-tight">
+                        House Closed
+                      </span>
+                    ) : normInterest === 'NOT_INTERESTED' ? (
+                      <span className="text-[11px] font-medium text-slate-500 block leading-tight">
+                        Not Interested
+                      </span>
+                    ) : normInterest === 'SECOND_HOME' && paidAmt === 0 ? (
+                      <span className="text-[11px] font-medium text-sky-600 block leading-tight">
+                        May Come
+                      </span>
+                    ) : (
                       <>
                         <span className="text-xs sm:text-sm font-semibold text-slate-900 block leading-tight">
                           ₹{isPaid ? paidAmt.toLocaleString() : (pendingAmt > 0 ? pendingAmt.toLocaleString() : expectedAmt.toLocaleString())}
@@ -1466,14 +1615,10 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                           {isPaid ? 'Paid' : 'Due'}
                         </span>
                       </>
-                    ) : (
-                      <span className="text-[11px] font-medium text-slate-500 block leading-tight">
-                        Opted Out
-                      </span>
                     )}
                   </div>
 
-                  {!isNotInterested && can(Permissions.COLLECTION_UPDATE) && (
+                  {!isZeroReq && can(Permissions.COLLECTION_UPDATE) && (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -1496,8 +1641,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                         handleSeatMapFlatClick(flat);
                       }}
                       className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all shadow-xs ${
-                        isNotInterested
-                          ? 'text-slate-700 bg-slate-200/90 hover:bg-slate-300 border border-slate-300/80'
+                        isZeroReq
+                          ? 'text-slate-700 bg-zinc-200/90 hover:bg-zinc-300 border border-zinc-300/80'
                           : 'text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95'
                       }`}
                     >
@@ -1533,9 +1678,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         description="Record contribution receipt via UPI, Cash, or Cheque."
       >
         {(() => {
-          const currentExpectedFee = Number(selectedFlatForPayment?.amount ?? payingCollection?.expected_amount ?? 4000);
-          const currentPaidFee = Number(selectedFlatForPayment?.amountPaid ?? payingCollection?.amount_paid ?? 0);
-          const currentBalanceDue = Math.max(0, currentExpectedFee - currentPaidFee);
+          const normCurrent = normalizeInterestStatus(interestStatus);
+          const isZeroReq = isZeroRequiredStatus(normCurrent);
+          const defaultFee = Number(event?.default_collection_amount || 2500);
+          const rawExpected = Number(customExpectedFee || selectedFlatForPayment?.amount || payingCollection?.expected_amount || defaultFee);
+          const currentExpectedFee = isZeroReq ? 0 : (rawExpected > 0 ? rawExpected : defaultFee);
+          const currentPaidFee = isZeroReq ? 0 : Number(selectedFlatForPayment?.amountPaid ?? payingCollection?.amount_paid ?? 0);
+          const currentBalanceDue = isZeroReq ? 0 : Math.max(0, currentExpectedFee - currentPaidFee);
 
           return (
             <form onSubmit={selectedFlatForPayment ? handleSeatMapPaySubmit : handleRecordPayment} className="space-y-3.5">
@@ -1547,7 +1696,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                       <span className="text-slate-500 uppercase text-[10px] sm:text-xs font-bold tracking-wider">
                         Expected
                       </span>
-                      {can(Permissions.COLLECTION_UPDATE) && !isEditingExpectedFee && (
+                      {can(Permissions.COLLECTION_UPDATE) && !isEditingExpectedFee && !isZeroReq && (
                         <button
                           type="button"
                           onClick={() => {
@@ -1719,7 +1868,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 <Input
                   label="Payment Amount (₹)"
                   type="number"
-                  requiredIndicator
+                  requiredIndicator={!isZeroRequiredStatus(interestStatus)}
+                  disabled={isZeroRequiredStatus(interestStatus)}
                   placeholder="e.g. 2500"
                   value={payAmount}
                   onChange={(e) => setPayAmount(e.target.value)}
@@ -1746,9 +1896,9 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                       setIsPassesDropdownOpen(!isPassesDropdownOpen);
                       setIsInterestDropdownOpen(false);
                     }}
-                    disabled={interestStatus === 'not_interested'}
+                    disabled={isZeroRequiredStatus(interestStatus)}
                     className={`w-full h-9 sm:h-10 px-3 bg-white border rounded-lg flex items-center justify-between transition-all text-xs sm:text-sm font-semibold ${
-                      interestStatus === 'not_interested'
+                      isZeroRequiredStatus(interestStatus)
                         ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
                         : isPassesDropdownOpen
                         ? 'border-indigo-500 ring-2 ring-indigo-500/20 text-slate-900 shadow-xs'
@@ -1760,7 +1910,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                         <Ticket className="w-3.5 h-3.5 text-purple-600" />
                       </div>
                       <span className="font-bold text-slate-800 truncate">
-                        {interestStatus === 'not_interested' ? '0 Passes' : `${passes} ${passes === 1 ? 'Pass' : 'Passes'}`}
+                        {isZeroRequiredStatus(interestStatus) ? '0 Passes' : `${passes} ${passes === 1 ? 'Pass' : 'Passes'}`}
                       </span>
                     </div>
                     <ChevronDown
@@ -1772,7 +1922,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
                   {/* Dynamic Passes Menu */}
                   {isPassesDropdownOpen && (
-                    <div className="absolute left-0 right-0 mt-1.5 p-2 bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute left-0 right-0 mt-1.5 p-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150 max-h-48 sm:max-h-52 overflow-y-auto overscroll-contain">
                       <div className="flex items-center justify-between px-1 mb-1.5">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                           Select Passes
@@ -1816,27 +1966,10 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                     Interest Status
                   </label>
                   {(() => {
+                    const normCurrent = normalizeInterestStatus(interestStatus);
                     const currentStatus =
-                      interestStatus === 'interested'
-                        ? {
-                            label: 'Interested',
-                            badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-                            icon: CheckCircle2,
-                            iconColor: 'text-emerald-600',
-                          }
-                        : interestStatus === 'not_interested'
-                        ? {
-                            label: 'Not Interested',
-                            badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
-                            icon: XCircle,
-                            iconColor: 'text-slate-500',
-                          }
-                        : {
-                            label: 'To Be Confirmed',
-                            badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/80',
-                            icon: Clock,
-                            iconColor: 'text-amber-600',
-                          };
+                      CONTRIBUTION_INTEREST_OPTIONS.find((opt) => opt.value === normCurrent) ||
+                      CONTRIBUTION_INTEREST_OPTIONS[0];
                     const StatusIcon = currentStatus.icon;
 
                     return (
@@ -1868,46 +2001,34 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
                         {/* Dynamic Interest Status Menu */}
                         {isInterestDropdownOpen && (
-                          <div className="absolute left-0 right-0 mt-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1">
-                            {[
-                              {
-                                value: 'interested',
-                                label: 'Interested',
-                                subtitle: 'Participating in event',
-                                icon: CheckCircle2,
-                                activeClass: 'bg-emerald-50 text-emerald-950 border-emerald-300',
-                                iconBg: 'bg-emerald-100 text-emerald-700',
-                                badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                              },
-                              {
-                                value: 'to_be_confirmed',
-                                label: 'To Be Confirmed',
-                                subtitle: 'Awaiting resident confirmation',
-                                icon: Clock,
-                                activeClass: 'bg-amber-50 text-amber-950 border-amber-300',
-                                iconBg: 'bg-amber-100 text-amber-700',
-                                badgeBg: 'bg-amber-50 text-amber-700 border-amber-200',
-                              },
-                              {
-                                value: 'not_interested',
-                                label: 'Not Interested',
-                                subtitle: 'Not attending this event',
-                                icon: XCircle,
-                                activeClass: 'bg-slate-100 text-slate-900 border-slate-300',
-                                iconBg: 'bg-slate-200 text-slate-700',
-                                badgeBg: 'bg-slate-100 text-slate-700 border-slate-300',
-                              },
-                            ].map((opt) => {
-                              const isSelected = interestStatus === opt.value;
+                          <div className="absolute left-0 right-0 mt-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1 max-h-48 sm:max-h-52 overflow-y-auto overscroll-contain">
+                            {CONTRIBUTION_INTEREST_OPTIONS.map((opt) => {
+                              const isSelected = normCurrent === opt.value;
                               const OptIcon = opt.icon;
                               return (
                                 <button
                                   key={opt.value}
                                   type="button"
                                   onClick={() => {
+                                    const prevNorm = normalizeInterestStatus(interestStatus);
                                     setInterestStatus(opt.value);
-                                    if (opt.value === 'not_interested') {
+                                    if (opt.value === 'NOT_INTERESTED' || opt.value === 'HOUSE_CLOSED') {
                                       setPasses(0);
+                                      setPayAmount('0');
+                                      setCustomExpectedFee('0');
+                                    } else if (opt.value === 'SECOND_HOME') {
+                                      // participation is uncertain ("May Come / May Not Come") and should not automatically assign passes or payment unless specifically confirmed
+                                      setPasses(0);
+                                      setPayAmount('0');
+                                    } else if (prevNorm === 'NOT_INTERESTED' || prevNorm === 'HOUSE_CLOSED' || prevNorm === 'SECOND_HOME') {
+                                      setPasses(1);
+                                      const defaultFee = Number(event?.default_collection_amount || 2500);
+                                      const origAmount = Number(selectedFlatForPayment?.amount ?? payingCollection?.expected_amount ?? defaultFee);
+                                      const effectiveExpected = origAmount > 0 ? origAmount : defaultFee;
+                                      setCustomExpectedFee(String(effectiveExpected));
+                                      const paidAmt = Number(selectedFlatForPayment?.amountPaid ?? payingCollection?.amount_paid ?? 0);
+                                      const pendingAmt = Math.max(0, effectiveExpected - paidAmt);
+                                      setPayAmount(String(paidAmt > 0 ? paidAmt : (pendingAmt > 0 ? pendingAmt : effectiveExpected)));
                                     }
                                     setIsInterestDropdownOpen(false);
                                   }}
@@ -2035,7 +2156,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   Cancel
                 </Button>
                 <Button type="submit" variant="primary" isLoading={isProcessingPayment}>
-                  {currentPaidFee > 0 ? 'Update Payment Amount' : 'Record Collection Payment'}
+                  {(() => {
+                    const norm = normalizeInterestStatus(interestStatus);
+                    if (norm === 'HOUSE_CLOSED') return 'Save as House Closed';
+                    if (norm === 'NOT_INTERESTED') return 'Save as Not Interested';
+                    if (norm === 'SECOND_HOME' && Number(payAmount) === 0) return 'Save as Second Home';
+                    return currentPaidFee > 0 ? 'Update Payment Amount' : 'Record Collection Payment';
+                  })()}
                 </Button>
               </div>
             </form>

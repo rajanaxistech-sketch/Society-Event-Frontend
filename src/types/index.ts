@@ -742,8 +742,8 @@ export interface EventCollectionItem {
   amount_paid: number | string;
   pending_amount: number | string;
   passes?: number | null;
-  interest_status?: 'interested' | 'not_interested' | 'to_be_confirmed' | string | null;
-  interestStatus?: 'interested' | 'not_interested' | 'to_be_confirmed' | string | null;
+  interest_status?: 'INTERESTED' | 'TO_BE_CONFIRMED' | 'NOT_INTERESTED' | 'HOUSE_CLOSED' | 'SECOND_HOME' | string | null;
+  interestStatus?: 'INTERESTED' | 'TO_BE_CONFIRMED' | 'NOT_INTERESTED' | 'HOUSE_CLOSED' | 'SECOND_HOME' | string | null;
   status: 'pending' | 'partially_paid' | 'paid' | 'overdue' | string;
   last_payment_date?: string | null;
   receipt_reference?: string | null;
