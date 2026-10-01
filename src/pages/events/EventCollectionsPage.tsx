@@ -1988,7 +1988,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
                   {/* Dynamic Passes Menu */}
                   {isPassesDropdownOpen && (
-                    <div className="absolute left-0 right-0 mt-1.5 p-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150 max-h-48 sm:max-h-52 overflow-y-auto overscroll-contain">
+                    <div className="absolute left-0 right-0 bottom-full mb-1.5 p-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 max-h-56 overflow-y-auto overscroll-contain">
                       <div className="flex items-center justify-between px-1 mb-1.5">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                           Select Passes
@@ -2067,7 +2067,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
                         {/* Dynamic Interest Status Menu */}
                         {isInterestDropdownOpen && (
-                          <div className="absolute left-0 right-0 mt-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1 max-h-48 sm:max-h-52 overflow-y-auto overscroll-contain">
+                          <div className="absolute left-0 right-0 bottom-full mb-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1 max-h-56 sm:max-h-60 overflow-y-auto overscroll-contain">
                             {CONTRIBUTION_INTEREST_OPTIONS.map((opt) => {
                               const isSelected = normCurrent === opt.value;
                               const OptIcon = opt.icon;
