@@ -545,15 +545,33 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayAmount(defaultPayAmt);
     setCustomExpectedFee(String(expAmt));
     setIsEditingExpectedFee(false);
-    const initialMethod = 'CASH';
-    setPayMethod(initialMethod);
-    setTransactionReference('');
-    setPayNotes('');
+
+    // Pre-fill Payment Method: restore previously saved method (UPI, CASH, CHEQUE, BANK_TRANSFER), fallback to CASH
+    const savedMethod = (flat.paymentMethod || flat.payment_method || (flat.payments?.[0]?.payment_method?.code) || 'CASH').toUpperCase();
+    setPayMethod(savedMethod);
+
+    // Pre-fill Remarks / Notes & Reference Details
+    const lastPayment = flat.payments?.[0];
+    const savedNotes = flat.notes !== undefined && flat.notes !== null ? flat.notes : (lastPayment?.notes || '');
+    setPayNotes(savedNotes);
+
+    const savedTxRef = flat.transactionReference || flat.transaction_reference || lastPayment?.transaction_reference || '';
+    setTransactionReference(savedTxRef);
+
+    const savedChequeNumber = flat.chequeNumber || flat.cheque_number || lastPayment?.cheque_number || '';
+    setChequeNumber(savedChequeNumber);
+
+    const savedBankName = flat.bankName || flat.bank_name || lastPayment?.bank_name || '';
+    setBankName(savedBankName);
+
+    const savedChequeDate = flat.chequeDate || flat.cheque_date || (lastPayment?.cheque_date ? lastPayment.cheque_date.split('T')[0] : '');
+    setChequeDate(savedChequeDate);
+
+    const savedPayDate = flat.paidAt || flat.paymentDate || (lastPayment?.payment_date ? lastPayment.payment_date.split('T')[0] : new Date().toISOString().split('T')[0]);
+    setPayDate(savedPayDate);
+
     setProofFile(null);
-    setProofPreviewUrl(flat.proofUrl || flat.proof_url || null);
-    setChequeNumber('');
-    setBankName('');
-    setChequeDate('');
+    setProofPreviewUrl(flat.proofUrl || flat.proof_url || lastPayment?.proof_url || null);
 
     let defaultPasses = 0;
     if (!isZeroReq && !isUncertain) {
@@ -681,6 +699,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       });
 
       if (res.success) {
+        const savedProof = uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || undefined);
         selectedFlatForPayment.passes = finalPasses;
         selectedFlatForPayment.interestStatus = normInterest;
         selectedFlatForPayment.interest_status = normInterest;
@@ -688,6 +707,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         selectedFlatForPayment.amountPaid = enteredAmount;
         selectedFlatForPayment.pendingAmount = newPending;
         selectedFlatForPayment.status = newStatus;
+        selectedFlatForPayment.paymentMethod = isZeroReq ? null : payMethod;
+        selectedFlatForPayment.notes = payNotes;
+        selectedFlatForPayment.transactionReference = transactionReference;
+        selectedFlatForPayment.chequeNumber = chequeNumber;
+        selectedFlatForPayment.bankName = bankName;
+        selectedFlatForPayment.chequeDate = chequeDate;
+        selectedFlatForPayment.paidAt = payDate;
+        selectedFlatForPayment.proofUrl = savedProof;
 
         if (matrixData) {
           const updated = JSON.parse(JSON.stringify(matrixData));
@@ -703,6 +730,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   flat.passes = finalPasses;
                   flat.interestStatus = normInterest;
                   flat.interest_status = normInterest;
+                  flat.notes = payNotes;
+                  flat.transactionReference = transactionReference;
+                  flat.chequeNumber = chequeNumber;
+                  flat.bankName = bankName;
+                  flat.chequeDate = chequeDate;
+                  flat.paidAt = payDate;
+                  flat.proofUrl = savedProof;
                 }
               }
             }
@@ -806,14 +840,17 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPayAmount(defaultPayAmt);
     setCustomExpectedFee(String(expAmt));
     setIsEditingExpectedFee(false);
-    const initialMethod = 'CASH';
-    setPayMethod(initialMethod);
-    setPayDate(col.payments?.[0]?.payment_date ? col.payments[0].payment_date.split('T')[0] : new Date().toISOString().split('T')[0]);
-    setChequeNumber(col.payments?.[0]?.cheque_number || '');
-    setBankName(col.payments?.[0]?.bank_name || '');
-    setChequeDate(col.payments?.[0]?.cheque_date ? col.payments[0].cheque_date.split('T')[0] : '');
-    setTransactionReference(col.payments?.[0]?.transaction_reference || '');
-    setPayNotes(col.payments?.[0]?.notes || '');
+
+    const lastPayment = col.payments?.[0];
+    const savedMethod = (lastPayment?.payment_method?.code || (col as any).paymentMethod || (col as any).payment_method || 'CASH').toUpperCase();
+    setPayMethod(savedMethod);
+    const savedPayDate = lastPayment?.payment_date ? lastPayment.payment_date.split('T')[0] : (col.last_payment_date ? col.last_payment_date.split('T')[0] : new Date().toISOString().split('T')[0]);
+    setPayDate(savedPayDate);
+    setChequeNumber(lastPayment?.cheque_number || (col as any).chequeNumber || '');
+    setBankName(lastPayment?.bank_name || (col as any).bankName || '');
+    setChequeDate(lastPayment?.cheque_date ? lastPayment.cheque_date.split('T')[0] : ((col as any).chequeDate ? (col as any).chequeDate.split('T')[0] : ''));
+    setTransactionReference(lastPayment?.transaction_reference || (col as any).transactionReference || '');
+    setPayNotes(lastPayment?.notes !== undefined && lastPayment?.notes !== null ? lastPayment.notes : ((col as any).notes || ''));
 
     let defaultPasses = 0;
     if (!isZeroReq && !isUncertain) {
@@ -825,7 +862,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     setPasses(defaultPasses);
     setInterestStatus(curInterest);
     setProofFile(null);
-    setProofPreviewUrl(col.payments?.[0]?.proof_url || null);
+    setProofPreviewUrl(col.payments?.[0]?.proof_url || (col as any).proofUrl || null);
     setIsQrModalOpen(false);
     setPayModalOpen(true);
     fetchPaymentMethods();
@@ -884,12 +921,22 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       });
 
       if (res.success) {
+        const savedProof = uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || null);
         payingCollection.expected_amount = expected;
         payingCollection.amount_paid = amt;
         payingCollection.pending_amount = isZeroReq ? 0 : Math.max(0, expected - amt);
         payingCollection.passes = finalPasses;
         payingCollection.interest_status = normInterest;
         payingCollection.interestStatus = normInterest;
+        (payingCollection as any).paymentMethod = isZeroReq ? null : payMethod;
+        (payingCollection as any).notes = payNotes;
+        (payingCollection as any).transactionReference = transactionReference;
+        (payingCollection as any).chequeNumber = chequeNumber;
+        (payingCollection as any).bankName = bankName;
+        (payingCollection as any).chequeDate = chequeDate;
+        (payingCollection as any).paidAt = payDate;
+        (payingCollection as any).proofUrl = savedProof;
+
         let successMsg = `Payment updated to ${formatCurrency(amt)} successfully.`;
         if (normInterest === 'HOUSE_CLOSED') successMsg = 'Marked as House Closed successfully.';
         else if (normInterest === 'NOT_INTERESTED') successMsg = 'Marked as Not Interested successfully.';
@@ -1344,6 +1391,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         const expectedAmt = isZeroReq ? 0 : (rawExpected > 0 ? rawExpected : defaultFee);
         const paidAmt = isZeroReq ? 0 : Number(c.amount_paid || 0);
         const pendingAmt = isZeroReq ? 0 : (c.pending_amount !== undefined ? Number(c.pending_amount) : Math.max(0, expectedAmt - paidAmt));
+        const lastPayment = c.payments?.[0];
 
         return {
           id: c.flat_id || c.id,
@@ -1360,6 +1408,15 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           passes: isZeroReq ? 0 : (c.passes !== undefined && c.passes !== null ? Number(c.passes) : 0),
           interestStatus: normInterest,
           interest_status: normInterest,
+          paymentMethod: lastPayment?.payment_method?.code || (c as any).paymentMethod || null,
+          paidAt: c.last_payment_date ? c.last_payment_date.split('T')[0] : (lastPayment?.payment_date ? lastPayment.payment_date.split('T')[0] : null),
+          notes: lastPayment?.notes || null,
+          transactionReference: lastPayment?.transaction_reference || null,
+          chequeNumber: lastPayment?.cheque_number || null,
+          bankName: lastPayment?.bank_name || null,
+          chequeDate: lastPayment?.cheque_date ? lastPayment.cheque_date.split('T')[0] : null,
+          proofUrl: lastPayment?.proof_url || null,
+          payments: c.payments || [],
           rawCollection: c,
         };
       });

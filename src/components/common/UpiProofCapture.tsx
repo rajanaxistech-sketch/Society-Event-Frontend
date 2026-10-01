@@ -9,6 +9,9 @@ import {
   Image as ImageIcon,
   SwitchCamera,
   Eye,
+  User,
+  Zap,
+  ZapOff,
 } from 'lucide-react';
 import Button from '../ui/Button';
 import { getFileUrl } from '../../utils/fileHelper';
@@ -30,8 +33,10 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [isFlashActive, setIsFlashActive] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isTorchSupported, setIsTorchSupported] = useState(false);
+  const [isTorchOn, setIsTorchOn] = useState(false);
 
-  // Synchronize when existingProofUrl prop changes (e.g. editing a different flat/collection)
+  // Synchronize when existingProofUrl prop changes
   useEffect(() => {
     setCapturedPreview(existingProofUrl || null);
   }, [existingProofUrl]);
@@ -40,99 +45,119 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
-  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const backCameraInputRef = useRef<HTMLInputElement | null>(null);
+  const frontCameraInputRef = useRef<HTMLInputElement | null>(null);
 
   // Stop camera helper
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch (_) {}
+      });
       streamRef.current = null;
     }
     setIsCameraActive(false);
+    setIsTorchOn(false);
+    setIsTorchSupported(false);
   }, []);
 
-  // Start camera helper
-  const startCamera = async (mode: 'user' | 'environment' = facingMode) => {
+  // Start in-browser WebRTC camera stream
+  const startCamera = async (mode: 'user' | 'environment' = 'environment') => {
     setCameraError(null);
     stopCamera();
+    setFacingMode(mode);
 
-    // If WebRTC is not supported (e.g. non-HTTPS mobile environment), fallback directly to native camera input
+    // If WebRTC is not supported (e.g. non-HTTPS mobile environment), fallback to native camera input
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      if (cameraInputRef.current) {
-        cameraInputRef.current.click();
-        return;
+      if (mode === 'user') {
+        frontCameraInputRef.current?.click();
+      } else {
+        backCameraInputRef.current?.click();
       }
+      return;
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: mode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          facingMode: mode === 'user' ? 'user' : { ideal: 'environment' },
+          width: { ideal: 1920, min: 640 },
+          height: { ideal: 1080, min: 480 },
         },
         audio: false,
-      });
+      };
 
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
       setIsCameraActive(true);
 
+      // Check for torch/flashlight capability on back camera
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        const capabilities = (videoTrack.getCapabilities && (videoTrack.getCapabilities() as any)) || {};
+        if (capabilities.torch) {
+          setIsTorchSupported(true);
+        }
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        videoRef.current.play().catch((e) => console.warn('Camera play warning:', e));
       }
     } catch (err: any) {
-      console.error('Camera access error:', err);
-      // If WebRTC fails (permission denied or no camera device), try triggering native camera input as fallback
-      if (cameraInputRef.current && (err.name === 'NotFoundError' || !navigator.mediaDevices)) {
-        cameraInputRef.current.click();
+      console.error('Camera stream error:', err);
+      // Fallback directly to native input if permission is denied or constraints not met
+      if (mode === 'user' && frontCameraInputRef.current) {
+        frontCameraInputRef.current.click();
+      } else if (backCameraInputRef.current) {
+        backCameraInputRef.current.click();
       } else {
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setCameraError('Camera permission was denied. Please allow camera access or choose a screenshot from gallery.');
+          setCameraError('Camera permission denied. Please enable camera permissions or upload a receipt.');
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-          setCameraError('No camera found on this device. Please upload a receipt screenshot instead.');
+          setCameraError('No camera found on this device. Please upload a screenshot instead.');
         } else {
-          setCameraError(err.message || 'Unable to access live camera.');
+          setCameraError(err.message || 'Unable to open camera stream.');
         }
       }
       setIsCameraActive(false);
     }
   };
 
-  // Trigger native mobile camera directly
-  const handleOpenNativeCamera = () => {
-    setCameraError(null);
-    stopCamera();
-    if (cameraInputRef.current) {
-      cameraInputRef.current.click();
-    } else {
-      startCamera();
+  // Toggle torch / flashlight
+  const toggleTorch = async () => {
+    if (!streamRef.current) return;
+    const track = streamRef.current.getVideoTracks()[0];
+    if (track && isTorchSupported) {
+      const nextTorch = !isTorchOn;
+      try {
+        await (track as any).applyConstraints({
+          advanced: [{ torch: nextTorch }],
+        });
+        setIsTorchOn(nextTorch);
+      } catch (err) {
+        console.warn('Torch constraint error:', err);
+      }
     }
   };
 
-  // Trigger gallery / file picker
-  const handleOpenGallery = () => {
-    setCameraError(null);
-    stopCamera();
-    galleryInputRef.current?.click();
-  };
-
-  // Flip camera (rear / front)
+  // Toggle facing mode (Flip Front / Back)
   const toggleFacingMode = () => {
     const nextMode = facingMode === 'environment' ? 'user' : 'environment';
-    setFacingMode(nextMode);
     startCamera(nextMode);
   };
 
-  // Take photo from video stream
+  // Capture photo from video stream
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -140,6 +165,12 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
     // Flash animation effect
     setIsFlashActive(true);
     setTimeout(() => setIsFlashActive(false), 200);
+
+    // If front camera, apply mirror flip during drawing so text/image matches standard perspective
+    if (facingMode === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -153,11 +184,11 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
         }
       },
       'image/jpeg',
-      0.9
+      0.92
     );
   };
 
-  // File upload change handler (for both camera capture and gallery upload)
+  // File upload change handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -166,21 +197,19 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
       onImageCaptured(file, previewUrl);
       stopCamera();
     }
-    // Reset file inputs so selecting the same file again triggers onChange
+    // Reset file inputs so re-selecting same photo triggers onChange
     if (galleryInputRef.current) galleryInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (backCameraInputRef.current) backCameraInputRef.current.value = '';
+    if (frontCameraInputRef.current) frontCameraInputRef.current.value = '';
   };
 
   // Clear captured proof
   const handleRemoveProof = () => {
     setCapturedPreview(null);
     onImageCaptured(null, null);
-    if (galleryInputRef.current) {
-      galleryInputRef.current.value = '';
-    }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = '';
-    }
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
+    if (backCameraInputRef.current) backCameraInputRef.current.value = '';
+    if (frontCameraInputRef.current) frontCameraInputRef.current.value = '';
     stopCamera();
   };
 
@@ -195,8 +224,9 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
 
   return (
     <div
-      className={`rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-slate-50 p-3.5 space-y-3 ${className}`}
+      className={`rounded-xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/80 via-purple-50/40 to-slate-50 p-3.5 space-y-3 shadow-xs ${className}`}
     >
+      {/* Header Info */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
@@ -205,12 +235,12 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
           <div>
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-bold text-slate-900">UPI Payment Proof / Receipt</span>
-              <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-100/80 px-1.5 py-0.5 rounded">
-                Live Capture
+              <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-100/90 px-1.5 py-0.5 rounded border border-indigo-200/60">
+                Front & Back Camera
               </span>
             </div>
             <p className="text-[10px] text-slate-500">
-              Capture or upload resident UPI transaction screenshot / QR receipt
+              Capture proof with Back / Front Camera or upload payment screenshot
             </p>
           </div>
         </div>
@@ -239,54 +269,91 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
 
       {/* Camera Live Viewfinder */}
       {isCameraActive && (
-        <div className="relative rounded-xl overflow-hidden bg-black aspect-video sm:aspect-[4/3] max-h-64 flex items-center justify-center border-2 border-indigo-500 shadow-inner animate-in fade-in zoom-in-95 duration-200">
+        <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video sm:aspect-[4/3] max-h-72 flex items-center justify-center border-2 border-indigo-500 shadow-xl animate-in fade-in zoom-in-95 duration-200">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
           />
 
           {/* Shutter flash overlay */}
-          {isFlashActive && <div className="absolute inset-0 bg-white z-20 animate-fade-out" />}
+          {isFlashActive && <div className="absolute inset-0 bg-white z-30 animate-fade-out" />}
 
-          {/* Guide Overlay for UPI receipts */}
-          <div className="absolute inset-4 border-2 border-dashed border-white/50 rounded-lg pointer-events-none flex items-center justify-center">
-            <span className="text-[11px] text-white/80 bg-black/60 px-2 py-0.5 rounded-full font-medium shadow-xs">
-              Align UPI Receipt / Screen
+          {/* Camera Mode Indicator Badge at Top */}
+          <div className="absolute top-2.5 inset-x-3 flex items-center justify-between z-20 pointer-events-none">
+            <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-white text-[11px] font-medium border border-white/20 shadow-xs">
+              {facingMode === 'environment' ? (
+                <>
+                  <Camera className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Back Camera (Rear)</span>
+                </>
+              ) : (
+                <>
+                  <User className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Front Camera (Selfie)</span>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 pointer-events-auto">
+              {isTorchSupported && facingMode === 'environment' && (
+                <button
+                  type="button"
+                  onClick={toggleTorch}
+                  className={`p-1.5 rounded-full border transition-colors shadow-xs ${
+                    isTorchOn
+                      ? 'bg-amber-500 border-amber-300 text-white'
+                      : 'bg-black/60 border-white/20 text-white hover:bg-black/80'
+                  }`}
+                  title={isTorchOn ? 'Turn Flashlight Off' : 'Turn Flashlight On'}
+                >
+                  {isTorchOn ? <Zap className="w-3.5 h-3.5" /> : <ZapOff className="w-3.5 h-3.5" />}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Guide Overlay */}
+          <div className="absolute inset-4 border-2 border-dashed border-white/40 rounded-lg pointer-events-none flex items-center justify-center">
+            <span className="text-[11px] text-white/90 bg-black/60 backdrop-blur-xs px-2.5 py-0.5 rounded-full font-medium shadow-xs">
+              {facingMode === 'environment' ? 'Align Receipt / Phone Screen' : 'Front Camera View'}
             </span>
           </div>
 
-          {/* Live Controls */}
-          <div className="absolute bottom-3 inset-x-0 flex items-center justify-center gap-3 z-10 px-4">
+          {/* Viewfinder Bottom Controls */}
+          <div className="absolute bottom-3 inset-x-0 flex items-center justify-between px-5 z-20">
+            {/* Flip / Switch Camera Button */}
             <Button
               type="button"
               size="sm"
               variant="outline"
               onClick={toggleFacingMode}
-              className="bg-black/60 text-white border-white/30 hover:bg-black/80 h-8 px-2 text-xs"
-              title="Switch Camera"
+              className="bg-black/70 hover:bg-black/90 text-white border-white/30 h-9 px-2.5 text-xs font-medium rounded-lg shadow-md backdrop-blur-xs"
+              title="Switch between Front and Back camera"
             >
-              <SwitchCamera className="w-3.5 h-3.5 mr-1" />
+              <SwitchCamera className="w-4 h-4 mr-1.5 text-indigo-300" />
               Flip
             </Button>
 
+            {/* Shutter Capture Button */}
             <button
               type="button"
               onClick={capturePhoto}
-              className="w-12 h-12 rounded-full border-4 border-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all shadow-lg flex items-center justify-center group"
-              title="Take Photo"
+              className="w-13 h-13 rounded-full border-4 border-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all shadow-2xl flex items-center justify-center group"
+              title="Capture Photo"
             >
-              <div className="w-8 h-8 rounded-full bg-white group-hover:scale-90 transition-transform" />
+              <div className="w-9 h-9 rounded-full bg-white group-hover:scale-90 transition-transform shadow-inner" />
             </button>
 
+            {/* Cancel Button */}
             <Button
               type="button"
               size="sm"
               variant="outline"
               onClick={stopCamera}
-              className="bg-black/60 text-white border-white/30 hover:bg-black/80 h-8 px-2 text-xs"
+              className="bg-black/70 hover:bg-black/90 text-white border-white/30 h-9 px-3 text-xs font-medium rounded-lg shadow-md backdrop-blur-xs"
             >
               Cancel
             </Button>
@@ -297,7 +364,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
       {/* Hidden canvas for snapshot rendering */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Captured Image Preview Display */}
+      {/* Captured Image Preview Card */}
       {!isCameraActive && capturedPreview && (
         <div className="relative rounded-xl border border-emerald-300 bg-white p-2.5 flex items-center gap-3 shadow-xs">
           <div
@@ -316,70 +383,95 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
             <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-500">
               <ImageIcon className="w-6 h-6" />
             </div>
-            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
               <Eye className="w-4 h-4" />
             </div>
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               UPI Receipt Attached
             </div>
             <p className="text-[11px] text-slate-500 truncate mt-0.5">
               Ready to be saved with payment transaction
             </p>
-            <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
               <button
                 type="button"
-                onClick={handleOpenNativeCamera}
+                onClick={() => startCamera('environment')}
                 className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 hover:underline"
               >
-                <RefreshCw className="w-3 h-3" />
-                Retake Photo
+                <Camera className="w-3 h-3" />
+                Retake (Back)
               </button>
               <span className="text-slate-300">•</span>
               <button
                 type="button"
-                onClick={handleOpenGallery}
+                onClick={() => startCamera('user')}
+                className="text-[11px] font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1 hover:underline"
+              >
+                <User className="w-3 h-3" />
+                Retake (Front)
+              </button>
+              <span className="text-slate-300">•</span>
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
                 className="text-[11px] font-bold text-slate-600 hover:text-slate-800 flex items-center gap-1 hover:underline"
               >
                 <Upload className="w-3 h-3" />
-                Choose Another
+                Upload File
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Action Buttons: Open Camera & Upload File */}
+      {/* Action Buttons: Back Camera, Front Camera, Upload Screenshot */}
       {!isCameraActive && !capturedPreview && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={handleOpenNativeCamera}
-            className="w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white h-9 shadow-xs"
-          >
-            <Camera className="w-4 h-4 mr-1.5" />
-            Open Camera to Capture
-          </Button>
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            {/* Back Camera (Rear) Button */}
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => startCamera('environment')}
+              className="w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white h-9 shadow-xs text-xs font-semibold"
+            >
+              <Camera className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+              Back Camera
+            </Button>
 
+            {/* Front Camera (Selfie) Button */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => startCamera('user')}
+              className="w-full justify-center border-indigo-300 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-900 h-9 shadow-xs text-xs font-semibold"
+            >
+              <SwitchCamera className="w-3.5 h-3.5 mr-1.5 text-indigo-600 shrink-0" />
+              Front Camera
+            </Button>
+          </div>
+
+          {/* Upload Screenshot Button */}
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleOpenGallery}
-            className="w-full justify-center border-indigo-200 bg-white hover:bg-indigo-50/50 text-indigo-900 h-9"
+            onClick={() => galleryInputRef.current?.click()}
+            className="w-full justify-center border-slate-300 bg-white hover:bg-slate-50 text-slate-700 h-8.5 text-xs font-medium"
           >
-            <Upload className="w-4 h-4 mr-1.5 text-indigo-600" />
-            Upload Screenshot
+            <Upload className="w-3.5 h-3.5 mr-1.5 text-slate-500 shrink-0" />
+            Upload Screenshot / Gallery
           </Button>
         </div>
       )}
 
-      {/* Hidden File Input for Gallery / File Browser (No capture attribute) */}
+      {/* Hidden File Input for Gallery / File Browser */}
       <input
         ref={galleryInputRef}
         type="file"
@@ -388,12 +480,22 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
         className="hidden"
       />
 
-      {/* Hidden File Input for Mobile Device Camera (With capture="environment") */}
+      {/* Hidden Fallback Input for Back / Rear Camera (capture="environment") */}
       <input
-        ref={cameraInputRef}
+        ref={backCameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Hidden Fallback Input for Front / User Camera (capture="user") */}
+      <input
+        ref={frontCameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="user"
         onChange={handleFileChange}
         className="hidden"
       />
@@ -405,7 +507,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
           <div className="flex-1">
             <p className="font-semibold">{cameraError}</p>
             <p className="text-[10px] text-amber-700 mt-0.5">
-              You can click "Upload Screenshot" to select a photo from your gallery or files.
+              You can click "Upload Screenshot / Gallery" to select a photo from your device.
             </p>
           </div>
         </div>
@@ -436,7 +538,7 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
               />
             </div>
             <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Payment verification artifact</span>
+              <span className="text-slate-500 font-medium">Payment verification proof</span>
               <Button
                 type="button"
                 size="sm"
