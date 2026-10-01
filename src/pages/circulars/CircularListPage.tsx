@@ -23,6 +23,7 @@ import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { getFileUrl } from '../../utils/fileHelper';
+import { useDebounce } from '../../hooks/useDebounce';
 import {
   Plus,
   Eye,
@@ -56,6 +57,7 @@ export const CircularListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 12, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState(isResident ? 'published_at' : 'created_at');
@@ -87,7 +89,7 @@ export const CircularListPage: React.FC = () => {
       const res = await circularsService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         societyId: societyFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
@@ -107,7 +109,7 @@ export const CircularListPage: React.FC = () => {
 
   useEffect(() => {
     fetchCirculars();
-  }, [meta.page, meta.limit, societyFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, societyFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -117,7 +119,7 @@ export const CircularListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Circular "${deleteTarget.title}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchCirculars();
+        await fetchCirculars();
       } else {
         toast.error(res.message || 'Failed to delete circular');
       }
@@ -145,7 +147,7 @@ export const CircularListPage: React.FC = () => {
             : `Circular "${item.title}" unpublished.`
         );
         setStatusTarget(null);
-        fetchCirculars();
+        await fetchCirculars();
       } else {
         toast.error(res.message || `Failed to ${action} circular`);
       }

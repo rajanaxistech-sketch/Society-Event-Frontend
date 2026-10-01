@@ -184,7 +184,7 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
       const res = await contractsService.toggleScheduleCompletion(contract.id, itemId, scheduleId, !currentStatus);
       if (res.success) {
         toast.success(`Schedule item marked as ${!currentStatus ? 'Completed' : 'Pending'}`);
-        fetchContract();
+        await fetchContract();
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to toggle schedule item'));
@@ -213,7 +213,7 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
         setUploadFile(null);
         setDocumentTitle('');
         setDocumentNotes('');
-        fetchContract();
+        await fetchContract();
       } else {
         toast.error(res.message || 'Failed to upload document');
       }
@@ -231,7 +231,7 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
       const res = await contractsService.deleteDocument(contract.id, docId);
       if (res.success) {
         toast.success('Document deleted');
-        fetchContract();
+        await fetchContract();
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete document'));
@@ -252,6 +252,7 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      isLoading={isLoading || isProcessingAction}
       title={
         contract ? (
           <div className="flex items-center gap-2 flex-wrap">

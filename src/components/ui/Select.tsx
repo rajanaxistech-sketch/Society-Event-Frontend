@@ -14,6 +14,7 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
   options?: SelectOption[];
   placeholder?: string;
   requiredIndicator?: boolean;
+  isLoading?: boolean;
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
@@ -25,6 +26,8 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       options = [],
       placeholder,
       requiredIndicator,
+      isLoading = false,
+      disabled,
       className = '',
       id,
       children,
@@ -46,6 +49,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           <select
             id={selectId}
             ref={ref}
+            disabled={disabled || isLoading}
             className={clsx(
               'w-full px-3 py-1.5 text-xs text-[#1E293B] bg-white border border-[#CBD5E1] rounded-lg transition-all appearance-none pr-8 shadow-2xs h-8 sm:h-9 cursor-pointer',
               'hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 focus:border-[#6366F1]',
@@ -57,7 +61,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           >
             {placeholder && (
               <option value="" disabled selected={!props.value}>
-                {placeholder}
+                {isLoading ? 'Loading...' : placeholder}
               </option>
             )}
             {options.map((opt) => (
@@ -68,7 +72,11 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             {children}
           </select>
           <div className="absolute right-2.5 pointer-events-none text-slate-400">
-            <ChevronDown className="w-3.5 h-3.5" />
+            {isLoading ? (
+              <ChevronDown className="w-3.5 h-3.5 animate-pulse text-[#6366F1]" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
           </div>
         </div>
         {error ? (

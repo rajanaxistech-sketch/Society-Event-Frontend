@@ -27,7 +27,7 @@ import { isValidEmail, isValidPhone } from '../../../utils/validators';
 
 interface SocietyResidentsTabProps {
   data: SocietyHierarchyData;
-  onRefresh: () => void;
+  onRefresh: () => Promise<void> | void;
 }
 
 export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
@@ -258,8 +258,7 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
       const res = await flatsService.setPrimaryOwner(flatId, personId);
       if (res.success) {
         toast.success(`Set ${personName} as primary owner.`);
-        fetchResidents();
-        onRefresh();
+        await Promise.all([fetchResidents(), onRefresh()]);
       } else {
         toast.error(res.message || 'Failed to update primary owner');
       }
@@ -346,8 +345,7 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
         toast.success(`Resident ${newFullName} added successfully.`);
         setIsAddModalOpen(false);
         resetModalForm();
-        fetchResidents();
-        onRefresh();
+        await Promise.all([fetchResidents(), onRefresh()]);
       } else {
         toast.error(res.message || 'Failed to add resident');
       }
@@ -620,6 +618,7 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
         }}
         title="Register New Resident"
         size="lg"
+        isLoading={isSubmitting}
       >
         <div className="space-y-4 py-2">
           {/* Unit Type Selection if Society has Bungalows */}
@@ -826,6 +825,7 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
                 setIsAddModalOpen(false);
                 resetModalForm();
               }}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
@@ -833,9 +833,9 @@ export const SocietyResidentsTab: React.FC<SocietyResidentsTabProps> = ({
               variant="primary"
               size="sm"
               onClick={handleAddResident}
-              disabled={isSubmitting}
+              isLoading={isSubmitting}
             >
-              {isSubmitting ? 'Registering...' : 'Register Resident'}
+              Register Resident
             </Button>
           </div>
         </div>

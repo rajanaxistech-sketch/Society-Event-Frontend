@@ -147,7 +147,7 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
         setPhone('');
         setPassword('');
         setErrors({});
-        fetchQuotaAndUsers();
+        await fetchQuotaAndUsers();
       } else {
         toast.error(res.message || 'Failed to create user');
       }
@@ -403,6 +403,7 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
         }}
         title="Add Society User / Admin"
         size="md"
+        isLoading={isSubmitting}
       >
         <div className="space-y-4 py-2">
           {!hasAnyMainAdmin && (
@@ -485,6 +486,7 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
                 setIsAddModalOpen(false);
                 setErrors({});
               }}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
@@ -492,9 +494,9 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
               variant="primary"
               size="sm"
               onClick={handleAddUserSubmit}
-              disabled={isSubmitting}
+              isLoading={isSubmitting}
             >
-              {isSubmitting ? 'Creating User...' : 'Create Society User'}
+              Create Society User
             </Button>
           </div>
         </div>
@@ -511,6 +513,7 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
         }}
         title="Designate Main Admin"
         size="md"
+        isLoading={isSettingMainAdmin}
       >
         <div className="space-y-4 py-2">
           <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 flex items-start gap-3">
@@ -556,10 +559,10 @@ export const SocietyUsersTab: React.FC<SocietyUsersTabProps> = ({ data }) => {
               size="sm"
               className="bg-amber-600 hover:bg-amber-700 text-white"
               onClick={handleSetMainAdmin}
-              disabled={isSettingMainAdmin}
+              isLoading={isSettingMainAdmin}
               leftIcon={<Crown className="w-3.5 h-3.5" />}
             >
-              {isSettingMainAdmin ? 'Updating...' : 'Confirm & Set as Main Admin'}
+              Confirm & Set as Main Admin
             </Button>
           </div>
         </div>

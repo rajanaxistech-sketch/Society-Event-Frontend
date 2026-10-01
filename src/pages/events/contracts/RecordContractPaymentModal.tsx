@@ -131,6 +131,7 @@ export const RecordContractPaymentModal: React.FC<RecordContractPaymentModalProp
       title="Record Vendor Payment"
       description={`Contract: ${contract.contract_number} • ${contract.title}`}
       size="md"
+      isLoading={isSubmitting}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Balance Overview Widget */}

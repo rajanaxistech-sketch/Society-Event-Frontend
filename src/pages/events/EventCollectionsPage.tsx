@@ -623,8 +623,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           toast.success(`Expected fee updated to ₹${newFee} for Flat ${selectedFlatForPayment.displayFlatNumber || selectedFlatForPayment.flatNumber}`);
           setIsEditingExpectedFee(false);
           selectedFlatForPayment.amount = newFee;
-          fetchMatrix(false);
-          fetchCollections();
+          await Promise.all([fetchMatrix(false), fetchCollections()]);
         } else {
           toast.error(res.message || 'Failed to update expected fee');
         }
@@ -643,8 +642,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           setIsEditingExpectedFee(false);
           payingCollection.expected_amount = newFee;
           payingCollection.pending_amount = Math.max(0, newFee - Number(payingCollection.amount_paid || 0));
-          fetchCollections();
-          fetchMatrix();
+          await Promise.all([fetchCollections(), fetchMatrix()]);
         }
       }
     } catch (err: any) {
@@ -759,8 +757,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         toast.success(toastMsg);
         setPayModalOpen(false);
         setSelectedFlatForPayment(null);
-        fetchMatrix();
-        fetchCollections();
+        await Promise.all([fetchMatrix(), fetchCollections()]);
       } else {
         toast.error(res.message || 'Failed to update flat payment');
       }
@@ -1681,10 +1678,10 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSeatMapFlatClick(flat);
-                        setIsEditingExpectedFee(true);
+                        setIsEditingExpectedFee(false);
                       }}
                       className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
-                      title="Edit Expected Fee"
+                      title="Edit Payment / Unit"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>

@@ -11,6 +11,7 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import Spinner from '../../components/ui/Spinner';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { useDebounce } from '../../hooks/useDebounce';
 import {
   ArrowLeft,
   Layers,
@@ -31,6 +32,7 @@ export const AdvertisementCategoriesPage: React.FC = () => {
   const [catMeta, setCatMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [catLoading, setCatLoading] = useState(true);
   const [catSearch, setCatSearch] = useState('');
+  const debouncedCatSearch = useDebounce(catSearch, 300);
   const [catStatusFilter, setCatStatusFilter] = useState('');
 
   // Category Modal State
@@ -57,7 +59,7 @@ export const AdvertisementCategoriesPage: React.FC = () => {
       const res = await advertisementCategoriesService.getAll({
         page: catMeta.page,
         limit: catMeta.limit,
-        search: catSearch || undefined,
+        search: debouncedCatSearch || undefined,
         status: catStatusFilter || undefined,
         societyId: selectedSocietyId || undefined,
       });
@@ -77,7 +79,7 @@ export const AdvertisementCategoriesPage: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, [catMeta.page, catSearch, catStatusFilter, selectedSocietyId]);
+  }, [catMeta.page, debouncedCatSearch, catStatusFilter, selectedSocietyId]);
 
   const handleOpenCreateCatModal = () => {
     setIsEditingCat(false);
@@ -146,7 +148,7 @@ export const AdvertisementCategoriesPage: React.FC = () => {
         toast.success('Category created successfully');
       }
       setIsCatModalOpen(false);
-      fetchCategories();
+      await fetchCategories();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to save category'));
     } finally {
@@ -161,7 +163,7 @@ export const AdvertisementCategoriesPage: React.FC = () => {
       await advertisementCategoriesService.delete(catDeleteTarget.id);
       toast.success('Category deleted successfully');
       setCatDeleteTarget(null);
-      fetchCategories();
+      await fetchCategories();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete category'));
     } finally {
@@ -342,6 +344,7 @@ export const AdvertisementCategoriesPage: React.FC = () => {
       <Modal
         isOpen={isCatModalOpen}
         onClose={() => setIsCatModalOpen(false)}
+        isLoading={isCatSubmitting}
         title={isEditingCat ? 'Edit Advertisement Category' : 'Add Advertisement Category'}
         size="md"
       >

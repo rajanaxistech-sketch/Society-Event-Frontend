@@ -445,7 +445,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       toast.success(isEditingDay ? `Day ${dayForm.dayNumber} updated` : `Day ${dayForm.dayNumber} added successfully`);
       setDayModalOpen(false);
       setSelectedDayTab(dayForm.dayNumber);
-      fetchFoodItems();
+      await fetchFoodItems();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to save day'));
     } finally {
@@ -464,7 +464,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
       const remaining = daysList.filter((d) => d.day !== deleteDayTarget);
       setSelectedDayTab(remaining.length > 0 ? remaining[0].day : null);
-      fetchFoodItems();
+      await fetchFoodItems();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete day'));
     } finally {
@@ -541,7 +541,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
       toast.success(`${finalItems.length} dishes saved for Day ${batchDayNumber}`);
       setBatchModalOpen(false);
-      fetchFoodItems();
+      await fetchFoodItems();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to save dishes'));
     } finally {
@@ -573,7 +573,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
       if (res.success) {
         setInlineDishName('');
-        fetchFoodItems();
+        await fetchFoodItems();
       } else {
         toast.error(res.message || 'Failed to add dish');
       }
@@ -605,7 +605,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       if (res.success) {
         toast.success('Dish updated');
         setEditModalOpen(false);
-        fetchFoodItems();
+        await fetchFoodItems();
       } else {
         toast.error(res.message || 'Failed to update dish');
       }
@@ -625,7 +625,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       if (res.success) {
         toast.success('Dish removed');
         setDeleteTarget(null);
-        fetchFoodItems();
+        await fetchFoodItems();
       } else {
         toast.error(res.message || 'Failed to delete dish');
       }

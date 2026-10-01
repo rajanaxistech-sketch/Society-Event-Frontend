@@ -54,7 +54,7 @@ export const RoleListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Role "${deleteTarget.name}" deleted.`);
         setDeleteTarget(null);
-        fetchRoles();
+        await fetchRoles();
       } else {
         toast.error(res.message || 'Failed to delete role');
       }

@@ -515,7 +515,7 @@ export const EventItemsTab: React.FC<EventItemsTabProps> = ({ eventId, isNavratr
         if (res.success) {
           toast.success(`Service item "${name}" updated successfully.`);
           setModalOpen(false);
-          fetchData();
+          await fetchData();
         } else {
           toast.error(res.message || 'Failed to update item');
         }
@@ -524,7 +524,7 @@ export const EventItemsTab: React.FC<EventItemsTabProps> = ({ eventId, isNavratr
         if (res.success) {
           toast.success(`Service item "${name}" added successfully.`);
           setModalOpen(false);
-          fetchData();
+          await fetchData();
         } else {
           toast.error(res.message || 'Failed to add item');
         }
@@ -545,7 +545,7 @@ export const EventItemsTab: React.FC<EventItemsTabProps> = ({ eventId, isNavratr
       if (res.success) {
         toast.success(`Item "${itemToDelete.name}" removed.`);
         setItemToDelete(null);
-        fetchData();
+        await fetchData();
       } else {
         toast.error(res.message || 'Failed to delete item');
       }

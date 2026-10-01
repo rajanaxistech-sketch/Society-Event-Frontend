@@ -19,6 +19,7 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { useDebounce } from '../../hooks/useDebounce';
 import {
   Coins,
   Plus,
@@ -45,6 +46,7 @@ export const IncomeCategoryListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [categoryTypeFilter, setCategoryTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [societyFilter, setSocietyFilter] = useState('');
@@ -94,7 +96,7 @@ export const IncomeCategoryListPage: React.FC = () => {
       const res = await incomeCategoriesService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         categoryType: categoryTypeFilter || undefined,
         status: statusFilter || undefined,
         societyId: societyFilter || undefined,
@@ -117,7 +119,7 @@ export const IncomeCategoryListPage: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, [meta.page, meta.limit, categoryTypeFilter, statusFilter, societyFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, categoryTypeFilter, statusFilter, societyFilter, sortBy, sortOrder]);
 
   const handleSearchSubmit = (query: string) => {
     setSearch(query);
@@ -199,14 +201,14 @@ export const IncomeCategoryListPage: React.FC = () => {
         if (res.success) {
           toast.success('Income category updated successfully');
           setIsModalOpen(false);
-          fetchCategories();
+          await fetchCategories();
         }
       } else {
         const res = await incomeCategoriesService.create(payload);
         if (res.success) {
           toast.success('Income category created successfully');
           setIsModalOpen(false);
-          fetchCategories();
+          await fetchCategories();
         }
       }
     } catch (err: any) {
@@ -236,7 +238,7 @@ export const IncomeCategoryListPage: React.FC = () => {
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Status toggle failed'));
-      fetchCategories();
+      await fetchCategories();
     } finally {
       setTogglingId(null);
     }
@@ -251,7 +253,7 @@ export const IncomeCategoryListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Category "${deleteTarget.name}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchCategories();
+        await fetchCategories();
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete income category'));
@@ -746,6 +748,7 @@ export const IncomeCategoryListPage: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        isLoading={isSubmitting}
         title={
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">

@@ -10,6 +10,7 @@ import Button from '../../components/ui/Button';
 import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId } from '../../utils/idObfuscator';
+import { useDebounce } from '../../hooks/useDebounce';
 import {
   Eye,
   RefreshCw,
@@ -31,21 +32,12 @@ export const AuditLogListPage: React.FC = () => {
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [actionFilter, setActionFilter] = useState('');
   const [entityFilter, setEntityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-      setMeta((prev) => ({ ...prev, page: 1 }));
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   const fetchLogs = async () => {
     try {
@@ -78,7 +70,6 @@ export const AuditLogListPage: React.FC = () => {
 
   const handleResetFilters = () => {
     setSearchTerm('');
-    setDebouncedSearch('');
     setActionFilter('');
     setEntityFilter('');
     setStatusFilter('');

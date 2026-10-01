@@ -100,11 +100,11 @@ export const PaymentMethodsPage: React.FC = () => {
         toast.success(`Payment mode "${m.name}" set to ${nextStatus.toUpperCase()}`);
       } else {
         toast.error(res.message || 'Failed to update payment mode status');
-        fetchMethods();
+        await fetchMethods();
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Error updating payment method'));
-      fetchMethods();
+      await fetchMethods();
     } finally {
       setTogglingId(null);
     }
@@ -139,7 +139,7 @@ export const PaymentMethodsPage: React.FC = () => {
       if (res.success) {
         toast.success(editingMethod ? 'Payment method updated.' : 'Payment method registered.');
         setModalOpen(false);
-        fetchMethods();
+        await fetchMethods();
       } else {
         toast.error(res.message || 'Failed to save payment method');
       }
@@ -286,6 +286,7 @@ export const PaymentMethodsPage: React.FC = () => {
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
+        isLoading={isSaving}
         title={editingMethod ? 'Edit Payment Mode' : 'Add Payment Mode'}
         description="Configure payment method attributes and clearing rules."
         size="md"

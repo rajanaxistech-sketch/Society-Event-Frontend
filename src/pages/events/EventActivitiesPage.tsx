@@ -129,7 +129,7 @@ export const EventActivitiesPage: React.FC<EventActivitiesPageProps> = ({ eventI
       if (res.success) {
         toast.success(editingItem ? 'Activity updated.' : 'Activity added.');
         setModalOpen(false);
-        fetchActivities();
+        await fetchActivities();
       } else {
         toast.error(res.message || 'Failed to save activity');
       }
@@ -148,7 +148,7 @@ export const EventActivitiesPage: React.FC<EventActivitiesPageProps> = ({ eventI
       if (res.success) {
         toast.success('Activity deleted.');
         setDeleteTarget(null);
-        fetchActivities();
+        await fetchActivities();
       } else {
         toast.error(res.message || 'Failed to delete activity');
       }
@@ -261,6 +261,7 @@ export const EventActivitiesPage: React.FC<EventActivitiesPageProps> = ({ eventI
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
+        isLoading={isSaving}
         title={editingItem ? 'Edit Event Activity' : 'Add Event Activity / Performance'}
         description="Configure performer details, schedule, and cost estimates."
       >

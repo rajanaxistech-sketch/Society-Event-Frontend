@@ -89,7 +89,7 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
       if (res.success) {
         toast.success(`Circular "${deleteTarget.title}" deleted.`);
         setDeleteTarget(null);
-        fetchCirculars();
+        await fetchCirculars();
       } else {
         toast.error(res.message || 'Failed to delete circular');
       }
@@ -117,7 +117,7 @@ export const EventCircularsPage: React.FC<EventCircularsPageProps> = ({
             : `Circular unpublished.`
         );
         setStatusTarget(null);
-        fetchCirculars();
+        await fetchCirculars();
       } else {
         toast.error(res.message || `Failed to ${action} circular`);
       }

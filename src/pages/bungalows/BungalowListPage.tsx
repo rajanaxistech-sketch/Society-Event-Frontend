@@ -5,6 +5,7 @@ import { societiesService } from '../../api/societiesService';
 import { BungalowItem, PaginationMeta, SocietyItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Permissions } from '../../constants/permissions';
 import { AppRoutes } from '../../constants/routes';
 import Table, { Column } from '../../components/ui/Table';
@@ -34,6 +35,7 @@ export const BungalowListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
@@ -61,7 +63,7 @@ export const BungalowListPage: React.FC = () => {
       const res = await bungalowsService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         societyId: societyFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
@@ -81,7 +83,7 @@ export const BungalowListPage: React.FC = () => {
 
   useEffect(() => {
     fetchBungalows();
-  }, [meta.page, meta.limit, societyFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, societyFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -91,7 +93,7 @@ export const BungalowListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Bungalow "${deleteTarget.bungalow_number}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchBungalows();
+        await fetchBungalows();
       } else {
         toast.error(res.message || 'Failed to delete bungalow');
       }

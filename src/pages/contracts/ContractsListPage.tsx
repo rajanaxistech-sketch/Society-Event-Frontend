@@ -30,6 +30,7 @@ import EmptyState from '../../components/common/EmptyState';
 import { formatDate, formatCurrency } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { decodeId } from '../../utils/idObfuscator';
+import { useDebounce } from '../../hooks/useDebounce';
 
 import { ContractFormModal } from '../events/contracts/ContractFormModal';
 import { ContractDetailsModal } from '../events/contracts/ContractDetailsModal';
@@ -82,6 +83,7 @@ export const ContractsListPage: React.FC = () => {
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [eventFilter, setEventFilter] = useState(initialEventId);
   const [vendorFilter, setVendorFilter] = useState('all');
@@ -165,7 +167,7 @@ export const ContractsListPage: React.FC = () => {
       const params: any = {
         page: meta.page,
         limit: meta.limit,
-        search: searchQuery || undefined,
+        search: debouncedSearch || undefined,
         society_id: societyFilter || undefined,
         event_id: eventFilter || undefined,
         vendor_id: vendorFilter !== 'all' ? vendorFilter : undefined,
@@ -203,7 +205,7 @@ export const ContractsListPage: React.FC = () => {
   }, [
     meta.page,
     meta.limit,
-    searchQuery,
+    debouncedSearch,
     societyFilter,
     eventFilter,
     vendorFilter,
@@ -226,7 +228,7 @@ export const ContractsListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Contract ${deleteConfirm.contract.contract_number} deleted successfully`);
         setDeleteConfirm({ isOpen: false, contract: null });
-        fetchContracts();
+        await fetchContracts();
       } else {
         toast.error(res.message || 'Failed to delete contract');
       }
@@ -642,6 +644,7 @@ export const ContractsListPage: React.FC = () => {
           <div>
             <Select
               value={eventFilter}
+              isLoading={isLoadingEvents}
               onChange={(e) => setEventFilter(e.target.value)}
               options={[
                 {

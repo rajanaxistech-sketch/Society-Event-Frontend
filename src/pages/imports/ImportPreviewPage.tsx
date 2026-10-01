@@ -88,7 +88,7 @@ export const ImportPreviewPage: React.FC = () => {
       if (res.success) {
         toast.success('Import job committed successfully to database.');
         setCommitConfirmOpen(false);
-        fetchJobDetails();
+        await fetchJobDetails();
       } else {
         toast.error(res.message || 'Failed to commit import job');
       }

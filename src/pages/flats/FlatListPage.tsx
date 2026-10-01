@@ -5,6 +5,7 @@ import { floorsService } from '../../api/floorsService';
 import { FlatItem, PaginationMeta, FloorItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Permissions } from '../../constants/permissions';
 import { AppRoutes } from '../../constants/routes';
 import Table, { Column } from '../../components/ui/Table';
@@ -33,6 +34,7 @@ export const FlatListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [floorFilter, setFloorFilter] = useState(initialFloorId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
@@ -60,7 +62,7 @@ export const FlatListPage: React.FC = () => {
       const res = await flatsService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         floorId: floorFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
@@ -80,7 +82,7 @@ export const FlatListPage: React.FC = () => {
 
   useEffect(() => {
     fetchFlats();
-  }, [meta.page, meta.limit, floorFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, floorFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -90,7 +92,7 @@ export const FlatListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Flat "${deleteTarget.flat_number}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchFlats();
+        await fetchFlats();
       } else {
         toast.error(res.message || 'Failed to delete flat');
       }

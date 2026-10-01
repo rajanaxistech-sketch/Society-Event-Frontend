@@ -241,7 +241,7 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
         if (res.success) {
           toast.success(`Contract for "${vendorName}" updated.`);
           setContractModalOpen(false);
-          fetchContracts();
+          await fetchContracts();
         } else {
           toast.error(res.message || 'Failed to update contract');
         }
@@ -250,7 +250,7 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
         if (res.success) {
           toast.success(`Vendor contract "${vendorName}" created.`);
           setContractModalOpen(false);
-          fetchContracts();
+          await fetchContracts();
         } else {
           toast.error(res.message || 'Failed to create contract');
         }
@@ -317,7 +317,7 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
       if (res.success) {
         toast.success(`Payment of ${formatCurrency(amt)} recorded for ${selectedContractForPay.vendor_name}.`);
         setPaymentModalOpen(false);
-        fetchContracts();
+        await fetchContracts();
       } else {
         toast.error(res.message || 'Failed to record payment');
       }
@@ -352,7 +352,7 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
       if (res.success) {
         toast.success(`Contract for "${contractToDelete.vendor_name}" deleted.`);
         setContractToDelete(null);
-        fetchContracts();
+        await fetchContracts();
       } else {
         toast.error(res.message || 'Failed to delete contract');
       }
@@ -645,6 +645,7 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
       <Modal
         isOpen={contractModalOpen}
         onClose={() => setContractModalOpen(false)}
+        isLoading={isSaving}
         title={editingContract ? 'Edit Vendor Contract' : 'Create Vendor Contract'}
         description="Configure event vendor, agreed commercials, scope, and contact person."
         size="lg"
@@ -784,6 +785,7 @@ export const EventVendorsTab: React.FC<EventVendorsTabProps> = ({ eventId }) => 
       <Modal
         isOpen={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
+        isLoading={isRecordingPayment}
         title={`Record Payment: ${selectedContractForPay?.vendor_name}`}
         description={`Record cash, cheque, or bank payment against ${selectedContractForPay?.contract_type}.`}
       >

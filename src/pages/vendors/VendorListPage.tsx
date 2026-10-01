@@ -4,6 +4,7 @@ import { vendorsService } from '../../api/vendorsService';
 import { VendorItem, PaginationMeta } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Permissions } from '../../constants/permissions';
 import { AppRoutes } from '../../constants/routes';
 import Card from '../../components/ui/Card';
@@ -39,6 +40,7 @@ export const VendorListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -53,7 +55,7 @@ export const VendorListPage: React.FC = () => {
       const res = await vendorsService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         sortBy,
         sortOrder,
@@ -74,7 +76,7 @@ export const VendorListPage: React.FC = () => {
 
   useEffect(() => {
     fetchVendors();
-  }, [meta.page, meta.limit, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, statusFilter, sortBy, sortOrder]);
 
   // Debounced or direct search trigger
   const handleSearchSubmit = (query: string) => {
@@ -112,11 +114,11 @@ export const VendorListPage: React.FC = () => {
         toast.success(`Vendor "${v.vendorName || v.vendor_name}" ${nextStatus ? 'activated' : 'deactivated'}.`);
       } else {
         toast.error(res.message || 'Failed to update vendor status');
-        fetchVendors();
+        await fetchVendors();
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Error updating vendor status'));
-      fetchVendors();
+      await fetchVendors();
     } finally {
       setTogglingId(null);
     }
@@ -130,7 +132,7 @@ export const VendorListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Vendor "${deleteTarget.vendorName || deleteTarget.vendor_name}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchVendors();
+        await fetchVendors();
       } else {
         toast.error(res.message || 'Failed to delete vendor');
       }

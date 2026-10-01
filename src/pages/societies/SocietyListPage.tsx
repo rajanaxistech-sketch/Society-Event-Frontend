@@ -32,6 +32,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import BulkUploadSocietyModal from './BulkUploadSocietyModal';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const SocietyListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ export const SocietyListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -59,7 +61,7 @@ export const SocietyListPage: React.FC = () => {
       const res = await societiesService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         sortBy,
         sortOrder,
@@ -78,7 +80,7 @@ export const SocietyListPage: React.FC = () => {
 
   useEffect(() => {
     fetchSocieties();
-  }, [meta.page, meta.limit, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, statusFilter, sortBy, sortOrder]);
 
   const handleSearchSubmit = () => {
     setMeta((prev) => ({ ...prev, page: 1 }));
@@ -93,7 +95,7 @@ export const SocietyListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Society "${deleteTarget.name}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchSocieties();
+        await fetchSocieties();
       } else {
         toast.error(res.message || 'Failed to delete society');
       }

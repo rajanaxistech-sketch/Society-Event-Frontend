@@ -5,6 +5,7 @@ import { societiesService } from '../../api/societiesService';
 import { EventItem, PaginationMeta, SocietyItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Permissions } from '../../constants/permissions';
 import { AppRoutes } from '../../constants/routes';
 import Table, { Column } from '../../components/ui/Table';
@@ -35,6 +36,7 @@ export const EventListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('start_date');
@@ -63,7 +65,7 @@ export const EventListPage: React.FC = () => {
       const res = await eventsService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         societyId: societyFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
@@ -83,7 +85,7 @@ export const EventListPage: React.FC = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [meta.page, meta.limit, societyFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, societyFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -93,7 +95,7 @@ export const EventListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Event "${deleteTarget.name}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchEvents();
+        await fetchEvents();
       } else {
         toast.error(res.message || 'Failed to delete event');
       }
@@ -240,7 +242,8 @@ export const EventListPage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={fetchEvents}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            disabled={isLoading}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
           >
             Refresh
           </Button>
@@ -262,10 +265,7 @@ export const EventListPage: React.FC = () => {
         search={search}
         onSearchChange={(val) => {
           setSearch(val);
-          if (!val) {
-            setMeta((prev) => ({ ...prev, page: 1 }));
-            setTimeout(fetchEvents, 50);
-          }
+          setMeta((prev) => ({ ...prev, page: 1 }));
         }}
         searchPlaceholder="Search event name, venue, or society..."
         filters={

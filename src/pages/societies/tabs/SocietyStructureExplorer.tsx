@@ -28,7 +28,7 @@ import { extractErrorMessage } from '../../../utils/errorExtractor';
 
 interface SocietyStructureExplorerProps {
   data: SocietyHierarchyData;
-  onRefresh: () => void;
+  onRefresh: () => Promise<void> | void;
 }
 
 export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> = ({
@@ -95,7 +95,7 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
       if (res.success) {
         toast.success(`Floor ${newFloorNumber} added to ${activeBlock.name}`);
         setIsAddFloorOpen(false);
-        onRefresh();
+        await onRefresh();
       } else {
         toast.error(res.message || 'Failed to add floor');
       }
@@ -123,7 +123,7 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
         toast.success(`Unit ${newFlatNumber} created successfully`);
         setIsAddFlatOpen(false);
         setNewFlatNumber('');
-        onRefresh();
+        await onRefresh();
       } else {
         toast.error(res.message || 'Failed to create unit');
       }
@@ -153,7 +153,7 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
         setNewBlockName('');
         setNewBlockCode('');
         setSelectedBlockId(res.data.id);
-        onRefresh();
+        await onRefresh();
       } else {
         toast.error(res.message || 'Failed to add block');
       }
@@ -543,6 +543,7 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
         onClose={() => setIsAddFloorOpen(false)}
         title={`Add Floor to ${activeBlock?.name || 'Block'}`}
         size="sm"
+        isLoading={isAddingFloor}
       >
         <div className="space-y-4 py-2">
           <Input
@@ -553,16 +554,16 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
             helperText="Enter floor number (e.g. 1, 2, 3...)"
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setIsAddFloorOpen(false)}>
+            <Button variant="outline" size="sm" onClick={() => setIsAddFloorOpen(false)} disabled={isAddingFloor}>
               Cancel
             </Button>
             <Button
               variant="primary"
               size="sm"
               onClick={handleAddFloorSubmit}
-              disabled={isAddingFloor}
+              isLoading={isAddingFloor}
             >
-              {isAddingFloor ? 'Adding...' : 'Add Floor'}
+              Add Floor
             </Button>
           </div>
         </div>
@@ -574,6 +575,7 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
         onClose={() => setIsAddFlatOpen(false)}
         title={`Add Unit to ${activeBlock?.name || 'Block'}`}
         size="md"
+        isLoading={isAddingFlat}
       >
         <div className="space-y-4 py-2">
           <Select
@@ -605,16 +607,16 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
             ]}
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setIsAddFlatOpen(false)}>
+            <Button variant="outline" size="sm" onClick={() => setIsAddFlatOpen(false)} disabled={isAddingFlat}>
               Cancel
             </Button>
             <Button
               variant="primary"
               size="sm"
               onClick={handleAddFlatSubmit}
-              disabled={isAddingFlat}
+              isLoading={isAddingFlat}
             >
-              {isAddingFlat ? 'Creating...' : 'Create Unit'}
+              Create Unit
             </Button>
           </div>
         </div>
@@ -626,6 +628,7 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
         onClose={() => setIsAddBlockOpen(false)}
         title="Add New Apartment Block"
         size="md"
+        isLoading={isAddingBlock}
       >
         <div className="space-y-4 py-2">
           <Input
@@ -642,16 +645,16 @@ export const SocietyStructureExplorer: React.FC<SocietyStructureExplorerProps> =
             onChange={(e) => setNewBlockCode(e.target.value.toUpperCase())}
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setIsAddBlockOpen(false)}>
+            <Button variant="outline" size="sm" onClick={() => setIsAddBlockOpen(false)} disabled={isAddingBlock}>
               Cancel
             </Button>
             <Button
               variant="primary"
               size="sm"
               onClick={handleAddBlockSubmit}
-              disabled={isAddingBlock}
+              isLoading={isAddingBlock}
             >
-              {isAddingBlock ? 'Adding Block...' : 'Add Block'}
+              Add Block
             </Button>
           </div>
         </div>

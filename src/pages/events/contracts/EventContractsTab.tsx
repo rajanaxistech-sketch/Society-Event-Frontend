@@ -156,7 +156,7 @@ export const EventContractsTab: React.FC<EventContractsTabProps> = ({
       if (res.success) {
         toast.success(`Contract ${deleteConfirm.contract.contract_number} deleted successfully`);
         setDeleteConfirm({ isOpen: false, contract: null });
-        fetchData();
+        await fetchData();
       } else {
         toast.error(res.message || 'Failed to delete contract');
       }

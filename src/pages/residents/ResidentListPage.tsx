@@ -4,6 +4,7 @@ import { personsService } from '../../api/personsService';
 import { PersonItem, PaginationMeta } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Permissions } from '../../constants/permissions';
 import { AppRoutes } from '../../constants/routes';
 import Table, { Column } from '../../components/ui/Table';
@@ -28,6 +29,7 @@ export const ResidentListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -41,7 +43,7 @@ export const ResidentListPage: React.FC = () => {
       const res = await personsService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         sortBy,
         sortOrder,
@@ -60,7 +62,7 @@ export const ResidentListPage: React.FC = () => {
 
   useEffect(() => {
     fetchResidents();
-  }, [meta.page, meta.limit, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -70,7 +72,7 @@ export const ResidentListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Resident "${deleteTarget.full_name}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchResidents();
+        await fetchResidents();
       } else {
         toast.error(res.message || 'Failed to delete resident');
       }

@@ -157,7 +157,7 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
       if (res.success) {
         toast.success(editingSponsor ? 'Sponsor updated successfully.' : 'Sponsor registered successfully.');
         setSponsorModalOpen(false);
-        fetchSponsors();
+        await fetchSponsors();
       } else {
         toast.error(res.message || 'Failed to save sponsor');
       }
@@ -176,7 +176,7 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
       if (res.success) {
         toast.success('Sponsor deleted successfully.');
         setDeleteTarget(null);
-        fetchSponsors();
+        await fetchSponsors();
       } else {
         toast.error(res.message || 'Failed to delete sponsor');
       }
@@ -311,6 +311,7 @@ export const EventSponsorsPage: React.FC<EventSponsorsPageProps> = ({ eventId: p
       <Modal
         isOpen={sponsorModalOpen}
         onClose={() => setSponsorModalOpen(false)}
+        isLoading={isSaving}
         title={editingSponsor ? 'Edit Sponsor Details' : 'Register New Sponsor'}
         description="Provide sponsor company details and committed sponsorship funding."
         size="lg"

@@ -5,6 +5,7 @@ import { rolesService } from '../../api/rolesService';
 import { UserItem, RoleItem, PaginationMeta } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Permissions } from '../../constants/permissions';
 import { AppRoutes } from '../../constants/routes';
 import Table, { Column } from '../../components/ui/Table';
@@ -29,6 +30,7 @@ export const UserListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
@@ -49,7 +51,7 @@ export const UserListPage: React.FC = () => {
       const res = await usersService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         roleId: roleFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
@@ -69,7 +71,7 @@ export const UserListPage: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [meta.page, meta.limit, roleFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, roleFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -79,7 +81,7 @@ export const UserListPage: React.FC = () => {
       if (res.success) {
         toast.success(`User "${deleteTarget.full_name}" deactivated successfully.`);
         setDeleteTarget(null);
-        fetchUsers();
+        await fetchUsers();
       } else {
         toast.error(res.message || 'Failed to delete user');
       }

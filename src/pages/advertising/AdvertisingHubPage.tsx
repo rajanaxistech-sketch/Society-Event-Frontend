@@ -28,6 +28,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import Spinner from '../../components/ui/Spinner';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { useDebounce } from '../../hooks/useDebounce';
 import DynamicUpiQrModal from '../../components/payments/DynamicUpiQrModal';
 import {
   Megaphone,
@@ -153,6 +154,7 @@ export const AdvertisingHubPage: React.FC = () => {
   const [adsMeta, setAdsMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [adsLoading, setAdsLoading] = useState(true);
   const [adsSearch, setAdsSearch] = useState('');
+  const debouncedAdsSearch = useDebounce(adsSearch, 300);
   const [adsStatusFilter, setAdsStatusFilter] = useState('');
   const [adsCategoryFilter, setAdsCategoryFilter] = useState('');
 
@@ -182,7 +184,7 @@ export const AdvertisingHubPage: React.FC = () => {
       const res = await advertisementsService.getAll({
         page: adsMeta.page,
         limit: adsMeta.limit,
-        search: adsSearch || undefined,
+        search: debouncedAdsSearch || undefined,
         paymentStatus: adsStatusFilter || undefined,
         advertisementCategoryId: adsCategoryFilter || undefined,
         societyId: selectedSocietyId || undefined,
@@ -205,7 +207,7 @@ export const AdvertisingHubPage: React.FC = () => {
     if (activeTab === 'ads') {
       fetchAds();
     }
-  }, [activeTab, adsMeta.page, adsSearch, adsStatusFilter, adsCategoryFilter, selectedSocietyId]);
+  }, [activeTab, adsMeta.page, debouncedAdsSearch, adsStatusFilter, adsCategoryFilter, selectedSocietyId]);
 
   const handleOpenCreateAdModal = () => {
     setIsEditingAd(false);
@@ -289,8 +291,7 @@ export const AdvertisingHubPage: React.FC = () => {
         toast.success('Advertisement created successfully');
       }
       setIsAdModalOpen(false);
-      fetchAds();
-      loadMasterData();
+      await Promise.all([fetchAds(), loadMasterData()]);
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to save advertisement'));
     } finally {
@@ -305,8 +306,7 @@ export const AdvertisingHubPage: React.FC = () => {
       await advertisementsService.delete(adDeleteTarget.id);
       toast.success('Advertisement deleted successfully');
       setAdDeleteTarget(null);
-      fetchAds();
-      loadMasterData();
+      await Promise.all([fetchAds(), loadMasterData()]);
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete advertisement'));
     } finally {
@@ -321,6 +321,7 @@ export const AdvertisingHubPage: React.FC = () => {
   const [catMeta, setCatMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [catLoading, setCatLoading] = useState(true);
   const [catSearch, setCatSearch] = useState('');
+  const debouncedCatSearch = useDebounce(catSearch, 300);
   const [catStatusFilter, setCatStatusFilter] = useState('');
 
   // Category Modal State
@@ -347,7 +348,7 @@ export const AdvertisingHubPage: React.FC = () => {
       const res = await advertisementCategoriesService.getAll({
         page: catMeta.page,
         limit: catMeta.limit,
-        search: catSearch || undefined,
+        search: debouncedCatSearch || undefined,
         status: catStatusFilter || undefined,
         societyId: selectedSocietyId || undefined,
       });
@@ -369,7 +370,7 @@ export const AdvertisingHubPage: React.FC = () => {
     if (activeTab === 'categories') {
       fetchCategories();
     }
-  }, [activeTab, catMeta.page, catSearch, catStatusFilter, selectedSocietyId]);
+  }, [activeTab, catMeta.page, debouncedCatSearch, catStatusFilter, selectedSocietyId]);
 
   const handleOpenCreateCatModal = () => {
     setIsEditingCat(false);
@@ -438,8 +439,7 @@ export const AdvertisingHubPage: React.FC = () => {
         toast.success('Category created successfully');
       }
       setIsCatModalOpen(false);
-      fetchCategories();
-      loadMasterData();
+      await Promise.all([fetchCategories(), loadMasterData()]);
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to save category'));
     } finally {
@@ -454,8 +454,7 @@ export const AdvertisingHubPage: React.FC = () => {
       await advertisementCategoriesService.delete(catDeleteTarget.id);
       toast.success('Category deleted successfully');
       setCatDeleteTarget(null);
-      fetchCategories();
-      loadMasterData();
+      await Promise.all([fetchCategories(), loadMasterData()]);
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete category'));
     } finally {
@@ -982,6 +981,7 @@ export const AdvertisingHubPage: React.FC = () => {
       <Modal
         isOpen={isAdModalOpen}
         onClose={() => setIsAdModalOpen(false)}
+        isLoading={isAdSubmitting}
         title={isEditingAd ? 'Edit Advertisement' : 'Add Advertisement'}
         size="md"
       >
@@ -1158,6 +1158,7 @@ export const AdvertisingHubPage: React.FC = () => {
       <Modal
         isOpen={isCatModalOpen}
         onClose={() => setIsCatModalOpen(false)}
+        isLoading={isCatSubmitting}
         title={isEditingCat ? 'Edit Advertisement Category' : 'Add Advertisement Category'}
         size="md"
       >

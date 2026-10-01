@@ -51,6 +51,76 @@ const PRESET_COLORS = [
   { name: 'Gold', hex: '#D97706', goddess: 'Grand Finale ✨' },
 ];
 
+const COLOR_NAME_TO_HEX: Record<string, string> = {
+  orange: '#EA580C',
+  white: '#FFFFFF',
+  red: '#DC2626',
+  'royal blue': '#1D4ED8',
+  blue: '#2563EB',
+  yellow: '#EAB308',
+  green: '#16A34A',
+  grey: '#64748B',
+  gray: '#64748B',
+  purple: '#9333EA',
+  'peacock green': '#0F766E',
+  pink: '#EC4899',
+  maroon: '#881337',
+  gold: '#D97706',
+  golden: '#D97706',
+  black: '#000000',
+  cyan: '#06B6D4',
+  teal: '#0D9488',
+  indigo: '#6366F1',
+  violet: '#8B5CF6',
+  rose: '#F43F5E',
+  amber: '#F59E0B',
+  lime: '#84CC16',
+  emerald: '#10B981',
+  'sky blue': '#0EA5E9',
+  sky: '#0EA5E9',
+  silver: '#94A3B8',
+  brown: '#78350F',
+  magenta: '#D946EF',
+  lavender: '#A855F7',
+  turquoise: '#14B8A6',
+  navy: '#1E3A8A',
+  'navy blue': '#1E3A8A',
+  coral: '#F97316',
+  beige: '#F5F5DC',
+  cream: '#FFFDD0',
+  peach: '#FFDAB9',
+  mint: '#98FF98',
+  olive: '#808000',
+  rust: '#B7410E',
+  mustard: '#FFDB58',
+  burgundy: '#800020',
+};
+
+const findHexForColorName = (name: string): string | null => {
+  if (!name) return null;
+  const normalized = name.trim().toLowerCase();
+  const preset = PRESET_COLORS.find((p) => p.name.toLowerCase() === normalized);
+  if (preset) return preset.hex;
+  if (COLOR_NAME_TO_HEX[normalized]) return COLOR_NAME_TO_HEX[normalized];
+  return null;
+};
+
+const findColorNameForHex = (hex: string): string | null => {
+  if (!hex) return null;
+  const normalized = hex.trim().toLowerCase();
+  const preset = PRESET_COLORS.find((p) => p.hex.toLowerCase() === normalized);
+  if (preset) return preset.name;
+  for (const [name, colorHex] of Object.entries(COLOR_NAME_TO_HEX)) {
+    if (colorHex.toLowerCase() === normalized) {
+      return name
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+  }
+  return null;
+};
+
 const toDateInputValue = (val: string | Date | null | undefined): string => {
   if (!val) return '';
   const parsed = dayjs(val);
@@ -149,14 +219,60 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
     });
   }, [dressCodes]);
 
+  const handleDayChange = (newDay: string | number) => {
+    setDay(newDay);
+    const num = Number(newDay);
+    if (!isNaN(num) && num >= 1) {
+      const presetIndex = (num - 1) % PRESET_COLORS.length;
+      const defaultPreset = PRESET_COLORS[presetIndex];
+      if (!editingItem && defaultPreset && (!color || PRESET_COLORS.some((p) => p.name.toLowerCase() === color.toLowerCase()))) {
+        setColor(defaultPreset.name);
+        setColorCode(defaultPreset.hex);
+        setCategory(`Day ${num}: ${defaultPreset.name} Day${defaultPreset.goddess ? ` — ${defaultPreset.goddess}` : ''}`);
+      } else if (category.startsWith('Day ')) {
+        setCategory(category.replace(/^Day\s*\d+/, `Day ${num}`));
+      }
+    }
+  };
+
+  const handleColorNameChange = (val: string) => {
+    setColor(val);
+    const matchedHex = findHexForColorName(val);
+    if (matchedHex) {
+      setColorCode(matchedHex);
+    }
+    if (!category || category.startsWith('Day ') || category.toLowerCase().includes('day') || category.toLowerCase().includes('theme')) {
+      const dayPrefix = day ? `Day ${day}: ` : '';
+      const preset = PRESET_COLORS.find((p) => p.name.toLowerCase() === val.trim().toLowerCase());
+      setCategory(`${dayPrefix}${val.trim() || 'Theme'} Day${preset?.goddess ? ` — ${preset.goddess}` : ''}`);
+    }
+  };
+
+  const handleColorCodeChange = (hex: string) => {
+    setColorCode(hex);
+    const matchedName = findColorNameForHex(hex);
+    if (matchedName && (!color || PRESET_COLORS.some((p) => p.name.toLowerCase() === color.toLowerCase()) || Object.keys(COLOR_NAME_TO_HEX).includes(color.toLowerCase()))) {
+      setColor(matchedName);
+      if (!category || category.startsWith('Day ') || category.toLowerCase().includes('day') || category.toLowerCase().includes('theme')) {
+        const dayPrefix = day ? `Day ${day}: ` : '';
+        const preset = PRESET_COLORS.find((p) => p.hex.toLowerCase() === hex.toLowerCase());
+        setCategory(`${dayPrefix}${matchedName} Day${preset?.goddess ? ` — ${preset.goddess}` : ''}`);
+      }
+    }
+  };
+
   const handleOpenCreateModal = () => {
     setEditingItem(null);
     setAuditOpen(false);
-    setDay('');
+    const nextDay = (dressCodes.length || 0) + 1;
+    const presetIndex = (nextDay - 1) % PRESET_COLORS.length;
+    const defaultPreset = PRESET_COLORS[presetIndex] || PRESET_COLORS[0];
+
+    setDay(nextDay);
     setDate('');
-    setColor('');
-    setColorCode('#EA580C');
-    setCategory('');
+    setColor(defaultPreset.name);
+    setColorCode(defaultPreset.hex);
+    setCategory(`Day ${nextDay}: ${defaultPreset.name} Day${defaultPreset.goddess ? ` — ${defaultPreset.goddess}` : ''}`);
     setModalOpen(true);
   };
 
@@ -172,10 +288,21 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
       detectedColor = item.category
         .replace(/^Day\s*\d+:\s*/i, '')
         .replace(/\s*Day.*$/i, '')
+        .replace(/—.*$/, '')
         .trim();
     }
+
+    // Determine color code, syncing with detectedColor if code is missing/default or mismatched
+    let detectedCode = item.color_code;
+    const lookupHex = detectedColor ? findHexForColorName(detectedColor) : null;
+    if (!detectedCode || (detectedCode.toUpperCase() === '#EA580C' && detectedColor.toLowerCase() !== 'orange' && lookupHex)) {
+      detectedCode = lookupHex || '#EA580C';
+    } else if (!detectedColor && detectedCode) {
+      detectedColor = findColorNameForHex(detectedCode) || '';
+    }
+
     setColor(detectedColor || 'Orange');
-    setColorCode(item.color_code || '#EA580C');
+    setColorCode(detectedCode || '#EA580C');
     setCategory(item.category || (item.day ? `Day ${item.day}: ${detectedColor || 'Festive'} Day` : ''));
     setModalOpen(true);
 
@@ -193,10 +320,18 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
             freshColor = d.category
               .replace(/^Day\s*\d+:\s*/i, '')
               .replace(/\s*Day.*$/i, '')
+              .replace(/—.*$/, '')
               .trim();
           }
+          let freshCode = d.color_code;
+          const freshLookupHex = freshColor ? findHexForColorName(freshColor) : null;
+          if (!freshCode || (freshCode.toUpperCase() === '#EA580C' && freshColor.toLowerCase() !== 'orange' && freshLookupHex)) {
+            freshCode = freshLookupHex || '#EA580C';
+          } else if (!freshColor && freshCode) {
+            freshColor = findColorNameForHex(freshCode) || '';
+          }
           setColor(freshColor || detectedColor || 'Orange');
-          setColorCode(d.color_code || '#EA580C');
+          setColorCode(freshCode || detectedCode || '#EA580C');
           setCategory(d.category || '');
         }
       } catch {
@@ -208,10 +343,8 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
   const handleSelectPresetColor = (preset: { name: string; hex: string; goddess?: string }) => {
     setColor(preset.name);
     setColorCode(preset.hex);
-    if (!category || category.startsWith('Day ') || category.toLowerCase().includes('theme') || category.toLowerCase().includes('day')) {
-      const dayPrefix = day ? `Day ${day}: ` : '';
-      setCategory(`${dayPrefix}${preset.name} Day${preset.goddess ? ` — ${preset.goddess}` : ''}`);
-    }
+    const dayPrefix = day ? `Day ${day}: ` : '';
+    setCategory(`${dayPrefix}${preset.name} Day${preset.goddess ? ` — ${preset.goddess}` : ''}`);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -242,7 +375,7 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
       if (res.success) {
         toast.success(editingItem ? 'Dress code day updated successfully.' : 'New dress code day added successfully.');
         setModalOpen(false);
-        fetchDressCodes();
+        await fetchDressCodes();
       } else {
         toast.error(res.message || 'Failed to save dress code');
       }
@@ -261,7 +394,7 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
       if (res.success) {
         toast.success('Dress code day deleted.');
         setDeleteTarget(null);
-        fetchDressCodes();
+        await fetchDressCodes();
       } else {
         toast.error(res.message || 'Failed to delete dress code');
       }
@@ -595,6 +728,7 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
+        isLoading={isSaving}
         title={
           <span className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
             {editingItem ? `Edit Day ${day || ''} Dress Code` : 'Add Day Dress Code'}
@@ -621,7 +755,7 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
                   min={1}
                   max={365}
                   value={day}
-                  onChange={(e) => setDay(e.target.value)}
+                  onChange={(e) => handleDayChange(e.target.value)}
                   placeholder="e.g. 1"
                   requiredIndicator
                   inputSize="sm"
@@ -654,24 +788,28 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
               <div className="flex items-center gap-1.5">
                 <input
                   type="color"
-                  value={colorCode}
-                  onChange={(e) => setColorCode(e.target.value)}
-                  className="w-7 h-7 rounded-md border border-slate-300 cursor-pointer p-0.5 shrink-0 bg-transparent shadow-2xs"
+                  value={
+                    colorCode.startsWith('#') && (colorCode.length === 7 || colorCode.length === 4)
+                      ? colorCode
+                      : '#EA580C'
+                  }
+                  onChange={(e) => handleColorCodeChange(e.target.value)}
+                  className="w-8 h-8 rounded-lg border border-slate-300 cursor-pointer p-0.5 shrink-0 bg-transparent shadow-2xs"
                   title="Choose custom color hex"
                 />
                 <Input
-                  placeholder="e.g. Orange"
+                  placeholder="e.g. White"
                   value={color}
-                  onChange={(e) => setColor(e.target.value)}
+                  onChange={(e) => handleColorNameChange(e.target.value)}
                   className="flex-1"
                   requiredIndicator={false}
                   inputSize="sm"
                 />
                 <Input
                   value={colorCode}
-                  onChange={(e) => setColorCode(e.target.value)}
-                  placeholder="#EA580C"
-                  className="w-22 font-mono text-[11px]"
+                  onChange={(e) => handleColorCodeChange(e.target.value)}
+                  placeholder="#FFFFFF"
+                  className="w-24 font-mono text-[11px]"
                   inputSize="sm"
                 />
               </div>
@@ -685,9 +823,10 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
               <div className="flex flex-wrap gap-1">
                 {PRESET_COLORS.map((preset) => {
                   const isSelected =
-                    Boolean(color.trim()) &&
-                    (colorCode.toLowerCase() === preset.hex.toLowerCase() ||
-                      color.trim().toLowerCase() === preset.name.toLowerCase());
+                    (color.trim().toLowerCase() === preset.name.toLowerCase() &&
+                      colorCode.trim().toLowerCase() === preset.hex.toLowerCase()) ||
+                    (!color.trim() && colorCode.trim().toLowerCase() === preset.hex.toLowerCase()) ||
+                    (color.trim().toLowerCase() === preset.name.toLowerCase() && !colorCode.trim());
 
                   return (
                     <button

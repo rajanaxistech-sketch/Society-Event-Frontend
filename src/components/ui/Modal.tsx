@@ -10,6 +10,7 @@ export interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  isLoading?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -20,10 +21,11 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   footer,
   size = 'md',
+  isLoading = false,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && !isLoading) {
         onClose();
       }
     };
@@ -35,7 +37,7 @@ export const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isLoading]);
 
   if (!isOpen) return null;
 
@@ -52,7 +54,9 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
-        onClick={onClose}
+        onClick={() => {
+          if (!isLoading) onClose();
+        }}
         aria-hidden="true"
       />
 
@@ -63,6 +67,13 @@ export const Modal: React.FC<ModalProps> = ({
           sizeClasses[size]
         )}
       >
+        {/* Top Loading Progress Line */}
+        {isLoading && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-100 overflow-hidden z-20">
+            <div className="h-full bg-indigo-600 animate-pulse w-full" />
+          </div>
+        )}
+
         {/* Header */}
         {(title || description) && (
           <div className="px-4 py-3.5 sm:px-5 sm:py-4 bg-slate-50/80 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
@@ -79,7 +90,8 @@ export const Modal: React.FC<ModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-200/60 transition-colors shrink-0"
+              disabled={isLoading}
+              className="text-slate-400 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed p-1 rounded-lg hover:bg-slate-200/60 transition-colors shrink-0"
               aria-label="Close dialog"
             >
               <X className="w-4 h-4" />

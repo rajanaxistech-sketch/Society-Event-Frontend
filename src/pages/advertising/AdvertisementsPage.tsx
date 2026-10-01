@@ -21,6 +21,7 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import Spinner from '../../components/ui/Spinner';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { useDebounce } from '../../hooks/useDebounce';
 import DynamicUpiQrModal from '../../components/payments/DynamicUpiQrModal';
 import { UpiProofCapture } from '../../components/common/UpiProofCapture';
 import {
@@ -102,6 +103,7 @@ export const AdvertisementsPage: React.FC = () => {
   const [adsMeta, setAdsMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [adsLoading, setAdsLoading] = useState(true);
   const [adsSearch, setAdsSearch] = useState('');
+  const debouncedAdsSearch = useDebounce(adsSearch, 300);
   const [adsStatusFilter, setAdsStatusFilter] = useState('');
   const [adsCategoryFilter, setAdsCategoryFilter] = useState('');
 
@@ -185,7 +187,7 @@ export const AdvertisementsPage: React.FC = () => {
       const res = await advertisementsService.getAll({
         page: adsMeta.page,
         limit: adsMeta.limit,
-        search: adsSearch || undefined,
+        search: debouncedAdsSearch || undefined,
         paymentStatus: adsStatusFilter || undefined,
         advertisementCategoryId: adsCategoryFilter || undefined,
         eventId: selectedEventId || undefined,
@@ -211,7 +213,7 @@ export const AdvertisementsPage: React.FC = () => {
 
   useEffect(() => {
     fetchAds();
-  }, [adsMeta.page, adsSearch, adsStatusFilter, adsCategoryFilter, selectedEventId, selectedSocietyId]);
+  }, [adsMeta.page, debouncedAdsSearch, adsStatusFilter, adsCategoryFilter, selectedEventId, selectedSocietyId]);
 
   const dynamicElementSuggestions = useMemo(() => {
     const existingAdElements = ads.map((a) => a.element).filter(Boolean);
@@ -383,7 +385,7 @@ export const AdvertisementsPage: React.FC = () => {
         toast.success('Advertisement created successfully');
       }
       setIsAdModalOpen(false);
-      fetchAds();
+      await fetchAds();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to save advertisement'));
     } finally {
@@ -398,7 +400,7 @@ export const AdvertisementsPage: React.FC = () => {
       await advertisementsService.delete(adDeleteTarget.id);
       toast.success('Advertisement deleted successfully');
       setAdDeleteTarget(null);
-      fetchAds();
+      await fetchAds();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete advertisement'));
     } finally {
@@ -760,6 +762,7 @@ export const AdvertisementsPage: React.FC = () => {
       <Modal
         isOpen={isAdModalOpen}
         onClose={() => setIsAdModalOpen(false)}
+        isLoading={isAdSubmitting}
         title={isEditingAd ? 'Edit Advertisement' : 'Add Advertisement'}
         size="md"
       >

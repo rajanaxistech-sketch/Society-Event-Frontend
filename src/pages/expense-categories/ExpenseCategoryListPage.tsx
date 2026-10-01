@@ -19,6 +19,7 @@ import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
 import { extractErrorMessage } from '../../utils/errorExtractor';
+import { useDebounce } from '../../hooks/useDebounce';
 import {
   Tag,
   Plus,
@@ -58,6 +59,7 @@ export const ExpenseCategoryListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState('');
   const [societyFilter, setSocietyFilter] = useState('');
   const [societies, setSocieties] = useState<Array<{ id: string; name: string }>>([]);
@@ -104,7 +106,7 @@ export const ExpenseCategoryListPage: React.FC = () => {
       const res = await expenseCategoriesService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         status: statusFilter || undefined,
         societyId: societyFilter || undefined,
         sortBy,
@@ -126,7 +128,7 @@ export const ExpenseCategoryListPage: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, [meta.page, meta.limit, statusFilter, societyFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, statusFilter, societyFilter, sortBy, sortOrder]);
 
   const handleSearchSubmit = (query: string) => {
     setSearch(query);
@@ -195,14 +197,14 @@ export const ExpenseCategoryListPage: React.FC = () => {
         if (res.success) {
           toast.success('Expense category updated successfully');
           setIsModalOpen(false);
-          fetchCategories();
+          await fetchCategories();
         }
       } else {
         const res = await expenseCategoriesService.create(payload);
         if (res.success) {
           toast.success('Expense category created successfully');
           setIsModalOpen(false);
-          fetchCategories();
+          await fetchCategories();
         }
       }
     } catch (err: any) {
@@ -232,7 +234,7 @@ export const ExpenseCategoryListPage: React.FC = () => {
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Status toggle failed'));
-      fetchCategories();
+      await fetchCategories();
     } finally {
       setTogglingId(null);
     }
@@ -247,7 +249,7 @@ export const ExpenseCategoryListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Category "${deleteTarget.name}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchCategories();
+        await fetchCategories();
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete expense category'));
@@ -662,6 +664,7 @@ export const ExpenseCategoryListPage: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        isLoading={isSubmitting}
         title={
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">

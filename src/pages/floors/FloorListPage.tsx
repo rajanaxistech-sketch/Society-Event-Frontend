@@ -6,6 +6,7 @@ import { societiesService } from '../../api/societiesService';
 import { FloorItem, PaginationMeta, BlockItem, SocietyItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
+import { useDebounce } from '../../hooks/useDebounce';
 import { Permissions } from '../../constants/permissions';
 import { AppRoutes } from '../../constants/routes';
 import Table, { Column } from '../../components/ui/Table';
@@ -33,9 +34,11 @@ export const FloorListPage: React.FC = () => {
   const [floors, setFloors] = useState<FloorItem[]>([]);
   const [societies, setSocieties] = useState<SocietyItem[]>([]);
   const [blocks, setBlocks] = useState<BlockItem[]>([]);
+  const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [blockFilter, setBlockFilter] = useState(initialBlockId);
   const [statusFilter, setStatusFilter] = useState('');
@@ -63,9 +66,13 @@ export const FloorListPage: React.FC = () => {
 
   // Load blocks (filtered by society if selected)
   useEffect(() => {
-    blocksService.getAll({ limit: 100, societyId: societyFilter || undefined }).then((res) => {
-      if (res.success && res.data) setBlocks(res.data);
-    });
+    setIsLoadingBlocks(true);
+    blocksService
+      .getAll({ limit: 100, societyId: societyFilter || undefined })
+      .then((res) => {
+        if (res.success && res.data) setBlocks(res.data);
+      })
+      .finally(() => setIsLoadingBlocks(false));
   }, [societyFilter]);
 
   const fetchFloors = async () => {
@@ -74,7 +81,7 @@ export const FloorListPage: React.FC = () => {
       const res = await floorsService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         societyId: societyFilter || undefined,
         blockId: blockFilter || undefined,
         status: statusFilter || undefined,
@@ -95,7 +102,7 @@ export const FloorListPage: React.FC = () => {
 
   useEffect(() => {
     fetchFloors();
-  }, [meta.page, meta.limit, societyFilter, blockFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, societyFilter, blockFilter, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -105,7 +112,7 @@ export const FloorListPage: React.FC = () => {
       if (res.success) {
         toast.success(`Floor "${deleteTarget.floor_number}" deleted successfully.`);
         setDeleteTarget(null);
-        fetchFloors();
+        await fetchFloors();
       } else {
         toast.error(res.message || 'Failed to delete floor');
       }

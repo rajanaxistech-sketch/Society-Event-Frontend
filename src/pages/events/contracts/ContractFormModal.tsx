@@ -446,6 +446,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
       title={isEdit ? `Edit Contract — ${contract.contract_number}` : 'Create Event Contract / Work Order'}
       description="Comprehensive contract with automated deliverables, schedules, commercials, and terms"
       size="xl"
+      isLoading={isSubmitting}
     >
       <div className="space-y-5">
         {/* Step Indicator */}
@@ -484,6 +485,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
                   required
                   disabled={isEdit || (!isSuperAdmin && userSocieties.length <= 1)}
                   value={selectedSocietyId}
+                  isLoading={isLoadingMasters}
                   onChange={(e) => {
                     setSelectedSocietyId(e.target.value);
                     setSelectedEventId('');
@@ -510,6 +512,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
                   required
                   disabled={isEdit || (!!eventId && !isEdit)}
                   value={selectedEventId}
+                  isLoading={isLoadingEvents}
                   onChange={(e) => {
                     const evId = e.target.value;
                     setSelectedEventId(evId);
@@ -546,6 +549,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
                   label="Vendor / Contractor"
                   required
                   value={vendorId}
+                  isLoading={isLoadingMasters}
                   onChange={(e) => {
                     setVendorId(e.target.value);
                     const selected = vendors.find((v) => v.id === e.target.value);
