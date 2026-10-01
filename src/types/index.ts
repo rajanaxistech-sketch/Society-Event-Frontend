@@ -1587,6 +1587,28 @@ export interface UpdateAdvertisementInput {
   status?: 'active' | 'inactive';
 }
 
+export interface BlockPaymentCounts {
+  upi: number;
+  cash: number;
+  cheque: number;
+  transfer: number;
+}
+
+export interface BlockPaymentAmounts {
+  upi: number;
+  cash: number;
+  cheque: number;
+  transfer: number;
+}
+
+export interface BlockPaymentModeItem {
+  code: string;
+  name: string;
+  flatCount: number;
+  amount: number;
+  transactionCount: number;
+}
+
 export interface BlockCollectionSummary {
   blockId: string;
   blockName: string;
@@ -1601,6 +1623,9 @@ export interface BlockCollectionSummary {
   flatRatioText: string;
   amountRatioText: string;
   collectionPercentage: number;
+  paymentCounts?: BlockPaymentCounts;
+  paymentAmounts?: BlockPaymentAmounts;
+  paymentModes?: BlockPaymentModeItem[];
 }
 
 export interface AdCategorySummary {
@@ -1622,6 +1647,18 @@ export interface AdvertisementCollectionSummary {
   categories: AdCategorySummary[];
 }
 
+export interface PaymentModeSummaryItem {
+  code: string;
+  name: string;
+  totalAmount: number;
+  flatAmount: number;
+  adAmount: number;
+  transactionCount: number;
+  flatCount: number;
+  adCount: number;
+  percentage: number;
+}
+
 export interface EventCollectionOverallSummary {
   eventId: string;
   eventName: string;
@@ -1637,8 +1674,12 @@ export interface EventCollectionOverallSummary {
     totalCollectedAmount: number;
     totalPendingAmount: number;
     collectionPercentage: number;
+    paymentCounts?: BlockPaymentCounts;
+    paymentAmounts?: BlockPaymentAmounts;
+    paymentModes?: BlockPaymentModeItem[];
   };
   advertisementCollections: AdvertisementCollectionSummary;
+  paymentModes?: PaymentModeSummaryItem[];
   grandTotal: {
     totalTarget: number;
     totalCollected: number;
@@ -1650,3 +1691,4 @@ export interface EventCollectionOverallSummary {
 }
 
 export * from './eventGrid';
+
