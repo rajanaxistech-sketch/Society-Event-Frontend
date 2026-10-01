@@ -459,6 +459,18 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const [selectedTowerIndex, setSelectedTowerIndex] = useState(0);
   const [selectedFlatForPayment, setSelectedFlatForPayment] = useState<any>(null);
 
+  // Bottom 2-Second Quick Feedback State
+  const [paymentFeedback, setPaymentFeedback] = useState<string | null>(null);
+  const feedbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerBottomFeedback = (msg: string) => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    setPaymentFeedback(msg);
+    feedbackTimerRef.current = setTimeout(() => {
+      setPaymentFeedback(null);
+    }, 2000);
+  };
+
   const fetchMatrix = async (showSpinner = false) => {
     if (!eventId) {
       setIsLoadingMatrix(false);
@@ -934,11 +946,11 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         (payingCollection as any).paidAt = payDate;
         (payingCollection as any).proofUrl = savedProof;
 
-        let successMsg = `Payment updated to ${formatCurrency(amt)} successfully.`;
-        if (normInterest === 'HOUSE_CLOSED') successMsg = 'Marked as House Closed successfully.';
-        else if (normInterest === 'NOT_INTERESTED') successMsg = 'Marked as Not Interested successfully.';
-        else if (normInterest === 'SECOND_HOME') successMsg = 'Marked as Second Home successfully.';
-        toast.success(successMsg);
+        let successMsg = `✓ Payment updated to ${formatCurrency(amt)} successfully`;
+        if (normInterest === 'HOUSE_CLOSED') successMsg = '✓ Marked as House Closed';
+        else if (normInterest === 'NOT_INTERESTED') successMsg = '✓ Marked as Not Interested';
+        else if (normInterest === 'SECOND_HOME') successMsg = '✓ Marked as Second Home';
+        triggerBottomFeedback(successMsg);
         setPayModalOpen(false);
         fetchCollections();
         fetchMatrix();
@@ -2485,6 +2497,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
               </Button>
             </div>
           </div>
+        </div>
+      )}
+      {/* 2-Second Small Downside Payment Confirmation Pill */}
+      {paymentFeedback && (
+        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/95 text-white shadow-xl border border-slate-800/80 text-xs font-medium backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-150 pointer-events-none whitespace-nowrap">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>{paymentFeedback}</span>
         </div>
       )}
     </div>

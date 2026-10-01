@@ -57,13 +57,21 @@ const COLOR_NAME_TO_HEX: Record<string, string> = {
   red: '#DC2626',
   'royal blue': '#1D4ED8',
   blue: '#2563EB',
+  'dark blue': '#1E3A8A',
+  'light blue': '#38BDF8',
   yellow: '#EAB308',
   green: '#16A34A',
+  'dark green': '#14532D',
+  'light green': '#4ADE80',
   grey: '#64748B',
   gray: '#64748B',
+  'dark grey': '#334155',
+  'light grey': '#CBD5E1',
   purple: '#9333EA',
   'peacock green': '#0F766E',
   pink: '#EC4899',
+  'dark pink': '#BE185D',
+  'light pink': '#F472B6',
   maroon: '#881337',
   gold: '#D97706',
   golden: '#D97706',
@@ -94,6 +102,26 @@ const COLOR_NAME_TO_HEX: Record<string, string> = {
   rust: '#B7410E',
   mustard: '#FFDB58',
   burgundy: '#800020',
+  crimson: '#991B1B',
+  plum: '#701A75',
+  ruby: '#9F1239',
+  sapphire: '#1E40AF',
+  charcoal: '#1F2937',
+  bronze: '#92400E',
+};
+
+const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  if (!hex) return null;
+  let cleanHex = hex.replace('#', '').trim();
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.split('').map((c) => c + c).join('');
+  }
+  if (cleanHex.length !== 6) return null;
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+  return { r, g, b };
 };
 
 const findHexForColorName = (name: string): string | null => {
@@ -102,14 +130,27 @@ const findHexForColorName = (name: string): string | null => {
   const preset = PRESET_COLORS.find((p) => p.name.toLowerCase() === normalized);
   if (preset) return preset.hex;
   if (COLOR_NAME_TO_HEX[normalized]) return COLOR_NAME_TO_HEX[normalized];
+  
+  // Partial match support
+  const matchedKey = Object.keys(COLOR_NAME_TO_HEX).find((k) =>
+    k === normalized || k.startsWith(normalized) || normalized.startsWith(k)
+  );
+  if (matchedKey) return COLOR_NAME_TO_HEX[matchedKey];
   return null;
 };
 
-const findColorNameForHex = (hex: string): string | null => {
-  if (!hex) return null;
+const findColorNameForHex = (hex: string): string => {
+  if (!hex) return 'Festive';
+  const targetRgb = hexToRgb(hex);
+  if (!targetRgb) return 'Custom';
+
   const normalized = hex.trim().toLowerCase();
+
+  // 1. Exact preset match
   const preset = PRESET_COLORS.find((p) => p.hex.toLowerCase() === normalized);
   if (preset) return preset.name;
+
+  // 2. Exact dictionary match
   for (const [name, colorHex] of Object.entries(COLOR_NAME_TO_HEX)) {
     if (colorHex.toLowerCase() === normalized) {
       return name
@@ -118,7 +159,39 @@ const findColorNameForHex = (hex: string): string | null => {
         .join(' ');
     }
   }
-  return null;
+
+  // 3. Nearest match via redmean Euclidean color distance
+  const allEntries: { name: string; hex: string }[] = [
+    ...PRESET_COLORS.map((p) => ({ name: p.name, hex: p.hex })),
+    ...Object.entries(COLOR_NAME_TO_HEX).map(([name, h]) => ({
+      name: name.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+      hex: h,
+    })),
+  ];
+
+  let closestName = 'Festive Color';
+  let minDistance = Infinity;
+
+  for (const entry of allEntries) {
+    const rgb = hexToRgb(entry.hex);
+    if (!rgb) continue;
+    const rmean = (targetRgb.r + rgb.r) / 2;
+    const dr = targetRgb.r - rgb.r;
+    const dg = targetRgb.g - rgb.g;
+    const db = targetRgb.b - rgb.b;
+    const distance = Math.sqrt(
+      (((512 + rmean) * dr * dr) >> 8) +
+        4 * dg * dg +
+        (((767 - rmean) * db * db) >> 8)
+    );
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestName = entry.name;
+    }
+  }
+
+  return closestName;
 };
 
 const toDateInputValue = (val: string | Date | null | undefined): string => {
@@ -251,11 +324,13 @@ export const EventDressCodesPage: React.FC<EventDressCodesPageProps> = ({ eventI
   const handleColorCodeChange = (hex: string) => {
     setColorCode(hex);
     const matchedName = findColorNameForHex(hex);
-    if (matchedName && (!color || PRESET_COLORS.some((p) => p.name.toLowerCase() === color.toLowerCase()) || Object.keys(COLOR_NAME_TO_HEX).includes(color.toLowerCase()))) {
+    if (matchedName) {
       setColor(matchedName);
       if (!category || category.startsWith('Day ') || category.toLowerCase().includes('day') || category.toLowerCase().includes('theme')) {
         const dayPrefix = day ? `Day ${day}: ` : '';
-        const preset = PRESET_COLORS.find((p) => p.hex.toLowerCase() === hex.toLowerCase());
+        const preset = PRESET_COLORS.find(
+          (p) => p.name.toLowerCase() === matchedName.toLowerCase() || p.hex.toLowerCase() === hex.toLowerCase()
+        );
         setCategory(`${dayPrefix}${matchedName} Day${preset?.goddess ? ` — ${preset.goddess}` : ''}`);
       }
     }

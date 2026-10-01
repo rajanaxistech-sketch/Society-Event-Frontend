@@ -50,6 +50,7 @@ import {
   Building2,
   HelpCircle,
   QrCode,
+  Check,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -1074,6 +1075,80 @@ export const AdvertisingHubPage: React.FC = () => {
                 </>
               )}
             </select>
+          </div>
+
+          {/* Manual Payment Status Selection */}
+          <div>
+            <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">
+              Payment Status <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                {
+                  value: 'completed' as const,
+                  label: 'Completed',
+                  subtitle: 'Full received',
+                  icon: CheckCircle2,
+                  activeClass: 'border-emerald-600 bg-emerald-50 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs',
+                  iconColor: 'text-emerald-600 bg-emerald-100',
+                  checkColor: 'bg-emerald-600 text-white',
+                },
+                {
+                  value: 'partial' as const,
+                  label: 'Partial',
+                  subtitle: 'Partially paid',
+                  icon: Clock,
+                  activeClass: 'border-blue-600 bg-blue-50 text-blue-950 ring-2 ring-blue-500/20 shadow-xs',
+                  iconColor: 'text-blue-600 bg-blue-100',
+                  checkColor: 'bg-blue-600 text-white',
+                },
+                {
+                  value: 'pending' as const,
+                  label: 'Pending',
+                  subtitle: 'Awaiting payment',
+                  icon: AlertCircle,
+                  activeClass: 'border-amber-600 bg-amber-50 text-amber-950 ring-2 ring-amber-500/20 shadow-xs',
+                  iconColor: 'text-amber-600 bg-amber-100',
+                  checkColor: 'bg-amber-600 text-white',
+                },
+              ].map((item) => {
+                const isSelected = adFormData.paymentStatus === item.value;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setAdFormData({ ...adFormData, paymentStatus: item.value })}
+                    className={`relative flex flex-col items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? item.activeClass
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <div
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                          isSelected ? item.iconColor : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      {isSelected && (
+                        <span className={`flex items-center justify-center w-4 h-4 rounded-full ${item.checkColor}`}>
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs sm:text-sm font-bold leading-tight block truncate w-full">
+                      {item.label}
+                    </span>
+                    <span className="text-[10px] sm:text-xs text-slate-500 block truncate w-full mt-0.5">
+                      {item.subtitle}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* UPI QR Code Quick View Card */}

@@ -63,7 +63,26 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
     setIsTorchSupported(false);
   }, []);
 
-  // Start in-browser WebRTC camera stream
+  // Attach stream to videoRef when active
+  useEffect(() => {
+    if (isCameraActive && videoRef.current && streamRef.current) {
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.muted = true;
+      video.onloadedmetadata = async () => {
+        try {
+          await video.play();
+        } catch (err) {
+          console.warn('Video play warning:', err);
+        }
+      };
+      video.play().catch((err) => console.warn('Video immediate play warning:', err));
+    }
+  }, [isCameraActive, facingMode]);
+
+  // Start in-browser WebRTC camera stream or native fallback
   const startCamera = async (mode: 'user' | 'environment' = 'environment') => {
     setCameraError(null);
     stopCamera();
@@ -101,14 +120,9 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
           setIsTorchSupported(true);
         }
       }
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play().catch((e) => console.warn('Camera play warning:', e));
-      }
     } catch (err: any) {
       console.error('Camera stream error:', err);
-      // Fallback directly to native input if permission is denied or constraints not met
+      // Fallback directly to native mobile camera app if permission is denied or device constraints failed
       if (mode === 'user' && frontCameraInputRef.current) {
         frontCameraInputRef.current.click();
       } else if (backCameraInputRef.current) {
@@ -123,6 +137,16 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
         }
       }
       setIsCameraActive(false);
+    }
+  };
+
+  // Trigger native mobile camera directly
+  const openNativeCamera = (mode: 'user' | 'environment') => {
+    stopCamera();
+    if (mode === 'user') {
+      frontCameraInputRef.current?.click();
+    } else {
+      backCameraInputRef.current?.click();
     }
   };
 
@@ -298,6 +322,15 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
             </div>
 
             <div className="flex items-center gap-1.5 pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => openNativeCamera(facingMode)}
+                className="p-1 px-2 rounded-full border border-white/25 bg-black/70 hover:bg-black text-white text-[10.5px] font-semibold flex items-center gap-1 shadow-xs backdrop-blur-xs cursor-pointer"
+                title="Open native mobile camera application"
+              >
+                <Camera className="w-3 h-3 text-indigo-400" />
+                <span>Native App</span>
+              </button>
               {isTorchSupported && facingMode === 'environment' && (
                 <button
                   type="button"

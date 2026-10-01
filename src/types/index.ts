@@ -1537,6 +1537,8 @@ export interface AdvertisementItem {
   payment_date?: string | null;
   proofUrl?: string | null;
   proof_url?: string | null;
+  totalAmount?: number | null;
+  total_amount?: number | null;
   amountPaid?: number | null;
   amount_paid?: number | null;
   status: 'active' | 'inactive' | string;
@@ -1563,6 +1565,8 @@ export interface CreateAdvertisementInput {
   chequeDate?: string | null;
   paymentDate?: string | null;
   proofUrl?: string | null;
+  totalAmount?: number | null;
+  total_amount?: number | null;
   amountPaid?: number | null;
   societyId?: string | null;
   status?: 'active' | 'inactive';
@@ -1582,6 +1586,8 @@ export interface UpdateAdvertisementInput {
   chequeDate?: string | null;
   paymentDate?: string | null;
   proofUrl?: string | null;
+  totalAmount?: number | null;
+  total_amount?: number | null;
   amountPaid?: number | null;
   societyId?: string | null;
   status?: 'active' | 'inactive';
