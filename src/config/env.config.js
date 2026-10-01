@@ -2,9 +2,9 @@
  * Environment-Based API & App Configuration System
  * 
  * Supports three primary deployment targets:
- * - 'local'  -> Local development server (http://localhost:6090/api/v1)
- * - 'stage'  -> Staging / QA pre-release environment (https://api-societymgmt.anaxistech.com/api/v1)
- * - 'live'   -> Production client-facing environment (https://api-societymgmtlive.anaxistech.com/api/v1)
+ * - 'local'  -> Local development server (http://localhost:8090/api/v1)
+ * - 'stage'  -> Staging / QA pre-release environment (https://api-societymgmtlive.anaxistech.com/api/v1)
+ * - 'live'   -> Production client-facing environment (https://api-societymgmt.anaxistech.com/api/v1)
  * 
  * Complies with Create React App (REACT_APP_*) while safely falling back to standard variables.
  */
@@ -18,9 +18,9 @@ export const ENVIRONMENTS = Object.freeze({
 
 // Default API Base URLs per environment
 const DEFAULT_API_URLS = Object.freeze({
-  [ENVIRONMENTS.LOCAL]: "http://localhost:6090/api/v1",
-  [ENVIRONMENTS.STAGE]: "https://api-societymgmt.anaxistech.com/api/v1",
-  [ENVIRONMENTS.LIVE]: "https://api-societymgmtlive.anaxistech.com/api/v1",
+  [ENVIRONMENTS.LOCAL]: "http://localhost:8090/api/v1",
+  [ENVIRONMENTS.STAGE]: "https://api-societymgmtlive.anaxistech.com/api/v1",
+  [ENVIRONMENTS.LIVE]: "https://api-societymgmt.anaxistech.com/api/v1",
 });
 
 /**

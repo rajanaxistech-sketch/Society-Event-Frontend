@@ -1,11 +1,11 @@
 import envConfig from '../config/env.config';
 
-const LIVE_HOST = 'https://api-societymgmtlive.anaxistech.com';
-const STAGE_HOST = 'https://api-societymgmt.anaxistech.com';
-const LOCAL_HOST = 'http://localhost:6090';
+const LIVE_HOST = 'https://api-societymgmt.anaxistech.com';
+const STAGE_HOST = 'https://api-societymgmtlive.anaxistech.com';
+const LOCAL_HOST = 'http://localhost:8090';
 
 /**
- * Resolves any file URL (whether relative /uploads, local localhost:3000/6090, stage, or live)
+ * Resolves any file URL (whether relative /uploads, local localhost:3000/8090, stage, or live)
  * into a valid, reachable URL for the current active environment.
  */
 export const getFileUrl = (url?: string | null): string => {
