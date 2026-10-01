@@ -600,8 +600,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
   const handleSaveExpectedFee = async () => {
     const newFee = Number(customExpectedFee);
-    if (isNaN(newFee) || newFee < 0) {
-      toast.warning('Expected fee must be 0 or positive');
+    if (isNaN(newFee) || newFee <= 0) {
+      toast.warning('Expected fee must be greater than 0');
       return;
     }
 
@@ -976,8 +976,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     if (!adjustTarget) return;
 
     const amt = Number(adjustAmount);
-    if (amt < 0) {
-      toast.warning('Amount must be 0 or positive');
+    if (isNaN(amt) || amt <= 0) {
+      toast.warning('Collection amount must be greater than 0');
       return;
     }
 
@@ -2237,24 +2237,42 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       </Modal>
 
       {/* 1b. Society Dynamic UPI QR Code Modal Popup */}
-      <DynamicUpiQrModal
-        isOpen={isQrModalOpen}
-        onClose={() => setIsQrModalOpen(false)}
-        amount={Number(payAmount) || 0}
-        unitOrAdvertiserName={
-          selectedFlatForPayment
-            ? `Flat ${selectedFlatForPayment.displayFlatNumber || formatFlatDisplayNumber(selectedFlatForPayment.flatNumber, selectedFlatForPayment.blockPrefix || getBlockPrefix(currentTower, selectedTowerIndex))}`
-            : payingCollection?.flat
-              ? `Flat ${formatFlatDisplayNumber(payingCollection.flat.flat_number, getBlockPrefix(payingCollection.flat.floor?.block))}`
-              : payingCollection?.bungalow
-                ? `Bungalow ${payingCollection.bungalow.bungalow_number}`
-                : 'Event Contribution'
-        }
-        categoryOrEventName={event?.name || 'Navratri Festival'}
-        transactionNote={`${event?.name || 'Event'} Flat Payment`}
-        eventId={event?.id || eventId}
-        onDone={() => setIsQrModalOpen(false)}
-      />
+      {(() => {
+        const normCurrent = normalizeInterestStatus(interestStatus);
+        const isZeroReq = isZeroRequiredStatus(normCurrent);
+        const defaultFee = Number(event?.default_collection_amount || 2500);
+        const rawExpected = Number(customExpectedFee || selectedFlatForPayment?.amount || payingCollection?.expected_amount || defaultFee);
+        const currentExpectedFee = isZeroReq ? 0 : (rawExpected > 0 ? rawExpected : defaultFee);
+        const currentPaidFee = isZeroReq ? 0 : Number(selectedFlatForPayment?.amountPaid ?? payingCollection?.amount_paid ?? 0);
+        const currentBalanceDue = isZeroReq ? 0 : Math.max(0, currentExpectedFee - currentPaidFee);
+        const upiPayAmount = currentBalanceDue > 0 ? currentBalanceDue : (Number(payAmount) > 0 ? Number(payAmount) : currentExpectedFee);
+
+        return (
+          <DynamicUpiQrModal
+            isOpen={isQrModalOpen}
+            onClose={() => setIsQrModalOpen(false)}
+            amount={upiPayAmount}
+            unitOrAdvertiserName={
+              selectedFlatForPayment
+                ? `Flat ${selectedFlatForPayment.displayFlatNumber || formatFlatDisplayNumber(selectedFlatForPayment.flatNumber, selectedFlatForPayment.blockPrefix || getBlockPrefix(currentTower, selectedTowerIndex))}`
+                : payingCollection?.flat
+                  ? `Flat ${formatFlatDisplayNumber(payingCollection.flat.flat_number, getBlockPrefix(payingCollection.flat.floor?.block))}`
+                  : payingCollection?.bungalow
+                    ? `Bungalow ${payingCollection.bungalow.bungalow_number}`
+                    : 'Event Contribution'
+            }
+            categoryOrEventName={event?.name || 'Navratri Festival'}
+            transactionNote={`${event?.name || 'Event'} Flat Payment`}
+            eventId={event?.id || eventId}
+            onDone={() => {
+              if (currentExpectedFee > 0 && currentPaidFee < currentExpectedFee) {
+                setPayAmount(String(currentExpectedFee));
+              }
+              setIsQrModalOpen(false);
+            }}
+          />
+        );
+      })()}
 
       {/* 2. Adjust Collection Amount Modal */}
       <Modal
