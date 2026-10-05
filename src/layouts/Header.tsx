@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useUIStore } from '../store/uiStore';
-import { Menu, LogOut, Building2, ChevronDown } from 'lucide-react';
+import { Menu, LogOut, Building2, ChevronDown, KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppRoutes } from '../constants/routes';
+import ChangePasswordModal from '../components/auth/ChangePasswordModal';
 
 export const Header: React.FC = () => {
   const { user, clearAuth, selectedSocietyId, setSelectedSocietyId, isSuperAdmin } = useAuth();
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
 
   const handleLogout = () => {
     clearAuth();
@@ -90,7 +92,19 @@ export const Header: React.FC = () => {
                   <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
                 </div>
 
-                <div className="px-1 py-1">
+                <div className="px-1 py-1 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileOpen(false);
+                      setChangePasswordModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Change Password</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
@@ -108,6 +122,12 @@ export const Header: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={changePasswordModalOpen}
+        onClose={() => setChangePasswordModalOpen(false)}
+      />
     </header>
   );
 };

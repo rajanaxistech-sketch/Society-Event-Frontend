@@ -11,6 +11,7 @@ import MobileBottomSheet from '../components/mobile/MobileBottomSheet';
 import AdminFooter from './AdminFooter';
 import SocialMediaLinks from '../components/common/SocialMediaLinks';
 import societyLogo from '../assets/society-logo.png';
+import ChangePasswordModal from '../components/auth/ChangePasswordModal';
 import {
   Home,
   ScrollText,
@@ -22,6 +23,7 @@ import {
   ChevronDown,
   LogOut,
   CheckCircle2,
+  KeyRound,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -32,6 +34,7 @@ export const MobileAppLayout: React.FC = () => {
   const location = useLocation();
 
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [recentNotices, setRecentNotices] = useState<CircularItem[]>([]);
   const [primaryEvent, setPrimaryEvent] = useState<EventItem | null>(null);
@@ -362,6 +365,24 @@ export const MobileAppLayout: React.FC = () => {
             </div>
           )}
 
+          {/* Security / Change Password Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setProfileDrawerOpen(false);
+              setChangePasswordModalOpen(true);
+            }}
+            className="w-full p-2.5 rounded-xl border border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center justify-between transition-colors shadow-2xs group"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <KeyRound className="w-3.5 h-3.5" />
+              </div>
+              <span>Change Password</span>
+            </div>
+            <span className="text-[10px] text-slate-400 group-hover:text-indigo-600 font-medium">Update &rarr;</span>
+          </button>
+
           {/* Social Media Links Section */}
           <div className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200/60 space-y-2">
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -383,6 +404,12 @@ export const MobileAppLayout: React.FC = () => {
           </button>
         </div>
       </MobileBottomSheet>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={changePasswordModalOpen}
+        onClose={() => setChangePasswordModalOpen(false)}
+      />
     </div>
   );
 };

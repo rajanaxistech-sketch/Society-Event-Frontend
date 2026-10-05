@@ -9,7 +9,7 @@ import { useToast } from '../../hooks/useToast';
 import { AppRoutes } from '../../constants/routes';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import { Mail, Lock, LogIn } from 'lucide-react';
+import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 
 const loginSchema = z.object({
@@ -25,6 +25,7 @@ export const LoginPage: React.FC = () => {
   const toast = useToast();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -82,10 +83,21 @@ export const LoginPage: React.FC = () => {
 
         <Input
           label="Password"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           inputSize="lg"
           placeholder="••••••••"
           leftIcon={<Lock className="w-4.5 h-4.5" />}
+          rightIcon={
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer flex items-center justify-center p-1 rounded hover:bg-slate-100"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+            </button>
+          }
           error={errors.password?.message}
           requiredIndicator
           {...register('password')}

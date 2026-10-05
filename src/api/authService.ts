@@ -1,5 +1,5 @@
 import axiosClient from './axiosClient';
-import { ApiResponse, AuthUser, LoginResponseData } from '../types';
+import { ApiResponse, AuthUser, LoginResponseData, ChangePasswordPayload } from '../types';
 
 export const authService = {
   login: async (credentials: { email: string; password: string }): Promise<ApiResponse<LoginResponseData>> => {
@@ -21,4 +21,10 @@ export const authService = {
     const response = await axiosClient.get<ApiResponse<AuthUser>>('/auth/me');
     return response.data;
   },
+
+  changePassword: async (data: ChangePasswordPayload): Promise<ApiResponse<{ message: string }>> => {
+    const response = await axiosClient.post<ApiResponse<{ message: string }>>('/auth/change-password', data);
+    return response.data;
+  },
 };
+

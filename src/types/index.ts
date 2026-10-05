@@ -80,6 +80,12 @@ export interface LoginResponseData {
   user: AuthUser;
 }
 
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword?: string;
+}
+
 // Permission & Role
 export interface PermissionItem {
   id: string;

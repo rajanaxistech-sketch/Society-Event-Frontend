@@ -25,6 +25,7 @@ import {
   Calendar,
   Tag,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 
 interface EventFoodPageProps {
@@ -124,6 +125,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
   const [event, setEvent] = useState<EventItem | null>(null);
   const [foodItems, setFoodItems] = useState<FoodItemEntity[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedDayTab, setSelectedDayTab] = useState<number | null>(1);
 
   // Day metadata overrides (local cache / state)
@@ -200,12 +202,15 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   const fetchFoodItems = async () => {
     if (!eventId) return;
     try {
+      setIsLoading(true);
       const res = await foodService.listByEvent(eventId, { page: 1, limit: 300 });
       if (res.success && res.data) {
         setFoodItems(res.data.map(parseFoodItem));
       }
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to fetch food items'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -660,6 +665,48 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
           if (file) handleProcessImageFile(file, activeUploadDay);
         }}
       />
+
+      {/* Sleek Minimalist Page Header */}
+      <div className="flex items-center justify-between gap-2 px-1 py-1">
+        {/* Title & Count */}
+        <div className="flex items-center gap-2 min-w-0">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate">
+            Food Menu
+          </h2>
+          <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100/80 shrink-0">
+            {daysList.length} {daysList.length === 1 ? 'Day' : 'Days'}
+          </span>
+        </div>
+
+        {/* Action Toolbar */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Refresh Button */}
+          <button
+            type="button"
+            onClick={fetchFoodItems}
+            disabled={isLoading}
+            className="p-1.5 text-slate-500 bg-white border border-slate-200/80 rounded-lg hover:bg-slate-50 hover:text-slate-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+            title="Refresh Food Menu"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
+          </button>
+
+          {/* Add Day Button */}
+          {!isResident && (
+            <PermissionGuard permission={Permissions.FOOD_MANAGE}>
+              <button
+                type="button"
+                onClick={handleOpenAddDayModal}
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1 text-[11px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-2xs transition-all cursor-pointer"
+                title="Add Day"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Day</span>
+              </button>
+            </PermissionGuard>
+          )}
+        </div>
+      </div>
 
       {/* 1. ULTRA-MINIMALIST CLEAN DAY SELECTOR WITH "+ ADD DAY" */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">

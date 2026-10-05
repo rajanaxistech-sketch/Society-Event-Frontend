@@ -82,6 +82,17 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
     }
   }, [isCameraActive, facingMode]);
 
+  // Lock background scroll when full-screen camera is active
+  useEffect(() => {
+    if (isCameraActive) {
+      const origOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = origOverflow;
+      };
+    }
+  }, [isCameraActive]);
+
   // Start in-browser WebRTC camera stream or native fallback
   const startCamera = async (mode: 'user' | 'environment' = 'environment') => {
     setCameraError(null);
@@ -291,105 +302,132 @@ export const UpiProofCapture: React.FC<UpiProofCaptureProps> = ({
         )}
       </div>
 
-      {/* Camera Live Viewfinder */}
+      {/* FULL-SCREEN LIVE CAMERA VIEWFINDER OVERLAY */}
       {isCameraActive && (
-        <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video sm:aspect-[4/3] max-h-72 flex items-center justify-center border-2 border-indigo-500 shadow-xl animate-in fade-in zoom-in-95 duration-200">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
-          />
+        <div className="fixed inset-0 z-[99999] bg-black flex flex-col justify-between select-none overflow-hidden touch-none animate-in fade-in duration-200">
+          {/* Edge-to-Edge Live Video Feed taking 100% of viewport */}
+          <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+            />
+            {/* Shutter flash overlay */}
+            {isFlashActive && <div className="absolute inset-0 bg-white z-40 animate-fade-out" />}
+          </div>
 
-          {/* Shutter flash overlay */}
-          {isFlashActive && <div className="absolute inset-0 bg-white z-30 animate-fade-out" />}
-
-          {/* Camera Mode Indicator Badge at Top */}
-          <div className="absolute top-2.5 inset-x-3 flex items-center justify-between z-20 pointer-events-none">
-            <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-white text-[11px] font-medium border border-white/20 shadow-xs">
+          {/* Top Bar Header Overlay */}
+          <div className="relative z-30 pt-4 px-4 sm:px-6 bg-gradient-to-b from-black/85 via-black/40 to-transparent flex items-center justify-between">
+            {/* Camera Mode Badge */}
+            <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full text-white text-xs font-semibold border border-white/20 shadow-md">
               {facingMode === 'environment' ? (
                 <>
-                  <Camera className="w-3.5 h-3.5 text-indigo-400" />
+                  <Camera className="w-4 h-4 text-indigo-400" />
                   <span>Back Camera (Rear)</span>
                 </>
               ) : (
                 <>
-                  <User className="w-3.5 h-3.5 text-purple-400" />
+                  <User className="w-4 h-4 text-purple-400" />
                   <span>Front Camera (Selfie)</span>
                 </>
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 pointer-events-auto">
-              <button
-                type="button"
-                onClick={() => openNativeCamera(facingMode)}
-                className="p-1 px-2 rounded-full border border-white/25 bg-black/70 hover:bg-black text-white text-[10.5px] font-semibold flex items-center gap-1 shadow-xs backdrop-blur-xs cursor-pointer"
-                title="Open native mobile camera application"
-              >
-                <Camera className="w-3 h-3 text-indigo-400" />
-                <span>Native App</span>
-              </button>
+            {/* Quick Actions (Flashlight, Native Device Camera App, Close) */}
+            <div className="flex items-center gap-2">
               {isTorchSupported && facingMode === 'environment' && (
                 <button
                   type="button"
                   onClick={toggleTorch}
-                  className={`p-1.5 rounded-full border transition-colors shadow-xs ${
+                  className={`p-2.5 rounded-full border transition-all shadow-md backdrop-blur-md cursor-pointer ${
                     isTorchOn
                       ? 'bg-amber-500 border-amber-300 text-white'
-                      : 'bg-black/60 border-white/20 text-white hover:bg-black/80'
+                      : 'bg-black/60 border-white/25 text-white hover:bg-black/80'
                   }`}
                   title={isTorchOn ? 'Turn Flashlight Off' : 'Turn Flashlight On'}
                 >
-                  {isTorchOn ? <Zap className="w-3.5 h-3.5" /> : <ZapOff className="w-3.5 h-3.5" />}
+                  {isTorchOn ? <Zap className="w-4 h-4" /> : <ZapOff className="w-4 h-4" />}
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={() => openNativeCamera(facingMode)}
+                className="px-3 py-1.5 rounded-full border border-white/25 bg-black/60 hover:bg-black/85 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md backdrop-blur-md cursor-pointer"
+                title="Open device native camera app"
+              >
+                <Camera className="w-3.5 h-3.5 text-indigo-300" />
+                <span className="hidden sm:inline">Native App</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="p-2 rounded-full bg-black/60 hover:bg-black/85 border border-white/25 text-white transition-colors backdrop-blur-md cursor-pointer"
+                title="Close Camera"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
-          {/* Guide Overlay */}
-          <div className="absolute inset-4 border-2 border-dashed border-white/40 rounded-lg pointer-events-none flex items-center justify-center">
-            <span className="text-[11px] text-white/90 bg-black/60 backdrop-blur-xs px-2.5 py-0.5 rounded-full font-medium shadow-xs">
-              {facingMode === 'environment' ? 'Align Receipt / Phone Screen' : 'Front Camera View'}
-            </span>
+          {/* Center Document / Receipt Framing Guide Overlay */}
+          <div className="relative z-20 flex-1 flex items-center justify-center p-4 sm:p-8 pointer-events-none">
+            <div className="w-full max-w-sm aspect-[3/4] sm:aspect-[4/3] max-h-[55vh] border-2 border-white/40 rounded-2xl relative shadow-[0_0_0_9999px_rgba(0,0,0,0.4)] flex flex-col justify-between p-4">
+              {/* Corner Accents */}
+              <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-indigo-400 rounded-tl-lg" />
+              <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-indigo-400 rounded-tr-lg" />
+              <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-indigo-400 rounded-bl-lg" />
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-indigo-400 rounded-br-lg" />
+
+              <div className="w-full flex justify-center">
+                <span className="text-[11px] font-semibold text-white/90 bg-black/65 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/15 shadow-sm">
+                  {facingMode === 'environment'
+                    ? 'Align Payment Receipt / QR / Screen'
+                    : 'Position yourself or screen in view'}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Viewfinder Bottom Controls */}
-          <div className="absolute bottom-3 inset-x-0 flex items-center justify-between px-5 z-20">
-            {/* Flip / Switch Camera Button */}
-            <Button
+          {/* Bottom Bar Controls Overlay */}
+          <div className="relative z-30 pb-6 px-6 pt-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-center justify-around">
+            {/* Flip Camera (Front / Back) */}
+            <button
               type="button"
-              size="sm"
-              variant="outline"
               onClick={toggleFacingMode}
-              className="bg-black/70 hover:bg-black/90 text-white border-white/30 h-9 px-2.5 text-xs font-medium rounded-lg shadow-md backdrop-blur-xs"
-              title="Switch between Front and Back camera"
+              className="flex flex-col items-center gap-1 p-3 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-white backdrop-blur-md transition-all cursor-pointer"
+              title="Switch Front / Back Camera"
             >
-              <SwitchCamera className="w-4 h-4 mr-1.5 text-indigo-300" />
-              Flip
-            </Button>
+              <SwitchCamera className="w-6 h-6 text-indigo-300" />
+              <span className="text-[10px] font-medium tracking-wide text-slate-200">Flip</span>
+            </button>
 
             {/* Shutter Capture Button */}
             <button
               type="button"
               onClick={capturePhoto}
-              className="w-13 h-13 rounded-full border-4 border-white bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition-all shadow-2xl flex items-center justify-center group"
-              title="Capture Photo"
+              className="w-20 h-20 rounded-full border-4 border-white bg-indigo-600 hover:bg-indigo-500 active:scale-90 transition-all shadow-[0_0_30px_rgba(99,102,241,0.6)] flex items-center justify-center cursor-pointer group"
+              title="Take Photo"
             >
-              <div className="w-9 h-9 rounded-full bg-white group-hover:scale-90 transition-transform shadow-inner" />
+              <div className="w-14 h-14 rounded-full bg-white group-hover:scale-95 transition-transform shadow-inner" />
             </button>
 
-            {/* Cancel Button */}
-            <Button
+            {/* Gallery Upload Option */}
+            <button
               type="button"
-              size="sm"
-              variant="outline"
-              onClick={stopCamera}
-              className="bg-black/70 hover:bg-black/90 text-white border-white/30 h-9 px-3 text-xs font-medium rounded-lg shadow-md backdrop-blur-xs"
+              onClick={() => {
+                stopCamera();
+                galleryInputRef.current?.click();
+              }}
+              className="flex flex-col items-center gap-1 p-3 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/20 text-white backdrop-blur-md transition-all cursor-pointer"
+              title="Upload from Gallery"
             >
-              Cancel
-            </Button>
+              <Upload className="w-6 h-6 text-slate-200" />
+              <span className="text-[10px] font-medium tracking-wide text-slate-200">Gallery</span>
+            </button>
           </div>
         </div>
       )}
