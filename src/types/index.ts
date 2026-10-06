@@ -748,6 +748,8 @@ export interface EventCollectionItem {
   amount_paid: number | string;
   pending_amount: number | string;
   passes?: number | null;
+  pass_type?: 'JAIN' | 'NON_JAIN' | 'SWAMINARAYAN' | string | null;
+  passType?: 'JAIN' | 'NON_JAIN' | 'SWAMINARAYAN' | string | null;
   interest_status?: 'INTERESTED' | 'TO_BE_CONFIRMED' | 'NOT_INTERESTED' | 'HOUSE_CLOSED' | 'SECOND_HOME' | string | null;
   interestStatus?: 'INTERESTED' | 'TO_BE_CONFIRMED' | 'NOT_INTERESTED' | 'HOUSE_CLOSED' | 'SECOND_HOME' | string | null;
   status: 'pending' | 'partially_paid' | 'paid' | 'overdue' | string;

@@ -68,6 +68,8 @@ export const collectionsService = {
       proof_url?: string | null;
       notes?: string | null;
       passes?: number | null;
+      pass_type?: string | null;
+      passType?: string | null;
       interest_status?: string | null;
       interestStatus?: string | null;
     }
@@ -179,6 +181,8 @@ export const collectionsService = {
       bank_name?: string | null;
       cheque_date?: string | null;
       passes?: number | null;
+      pass_type?: string | null;
+      passType?: string | null;
       interest_status?: string | null;
       interestStatus?: string | null;
     }

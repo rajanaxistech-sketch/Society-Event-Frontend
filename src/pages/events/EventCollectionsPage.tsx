@@ -75,6 +75,7 @@ import {
   Check,
   XCircle,
   HelpCircle,
+  Utensils,
 } from 'lucide-react';
 
 export const normalizeInterestStatus = (status?: string | null): string => {
@@ -139,6 +140,41 @@ export const CONTRIBUTION_INTEREST_OPTIONS = [
     badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
     iconBg: 'bg-sky-100 text-sky-700',
     activeClass: 'bg-sky-50 text-sky-950 border-sky-300',
+  },
+];
+
+export const normalizePassPreference = (pref?: string | null): 'NON_JAIN' | 'JAIN' | 'SWAMINARAYAN' => {
+  if (!pref) return 'NON_JAIN';
+  const clean = String(pref).trim().toUpperCase().replace(/[-\s]+/g, '_');
+  if (clean === 'JAIN') return 'JAIN';
+  if (clean === 'SWAMINARAYAN') return 'SWAMINARAYAN';
+  return 'NON_JAIN';
+};
+
+export const PASS_PREFERENCE_OPTIONS = [
+  {
+    value: 'NON_JAIN',
+    label: 'Non-Jain',
+    subtitle: 'Regular event meal',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+    dotClass: 'bg-emerald-500',
+    shortLabel: 'Non-Jain',
+  },
+  {
+    value: 'JAIN',
+    label: 'Jain',
+    subtitle: 'No onion, garlic, root vegetables',
+    badgeClass: 'bg-amber-50 text-amber-700 border-amber-200/80',
+    dotClass: 'bg-amber-500',
+    shortLabel: 'Jain',
+  },
+  {
+    value: 'SWAMINARAYAN',
+    label: 'Swaminarayan',
+    subtitle: 'Sattvic preparation',
+    badgeClass: 'bg-purple-50 text-purple-700 border-purple-200/80',
+    dotClass: 'bg-purple-500',
+    shortLabel: 'Swami',
   },
 ];
 
@@ -324,16 +360,22 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
   const [transactionReference, setTransactionReference] = useState('');
   const [payNotes, setPayNotes] = useState('');
   const [passes, setPasses] = useState<number>(0);
+  const [passType, setPassType] = useState<string>('NON_JAIN');
   const [interestStatus, setInterestStatus] = useState<string>('interested');
   const [isPassesDropdownOpen, setIsPassesDropdownOpen] = useState(false);
+  const [isPassTypeDropdownOpen, setIsPassTypeDropdownOpen] = useState(false);
   const [isInterestDropdownOpen, setIsInterestDropdownOpen] = useState(false);
   const passesDropdownRef = useRef<HTMLDivElement>(null);
+  const passTypeDropdownRef = useRef<HTMLDivElement>(null);
   const interestDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       if (passesDropdownRef.current && !passesDropdownRef.current.contains(e.target as Node)) {
         setIsPassesDropdownOpen(false);
+      }
+      if (passTypeDropdownRef.current && !passTypeDropdownRef.current.contains(e.target as Node)) {
+        setIsPassTypeDropdownOpen(false);
       }
       if (interestDropdownRef.current && !interestDropdownRef.current.contains(e.target as Node)) {
         setIsInterestDropdownOpen(false);
@@ -592,8 +634,13 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       defaultPasses = flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0;
     }
 
+    const savedPassType = normalizePassPreference(flat.pass_type || flat.passType);
+    setPassType(savedPassType);
     setPasses(defaultPasses);
     setInterestStatus(curInterest);
+    setIsPassTypeDropdownOpen(false);
+    setIsPassesDropdownOpen(false);
+    setIsInterestDropdownOpen(false);
     setIsQrModalOpen(false);
     setPayModalOpen(true);
   };
@@ -694,6 +741,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         }
       }
 
+      const normPassType = finalPasses > 0 ? normalizePassPreference(passType) : null;
+
       const res = await collectionsService.payFlat(eventId, selectedFlatForPayment.id, {
         amount: enteredAmount,
         payment_method: payMethod || 'CASH',
@@ -704,6 +753,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         bank_name: bankName || undefined,
         cheque_date: chequeDate || undefined,
         passes: finalPasses,
+        pass_type: normPassType,
+        passType: normPassType,
         interest_status: normInterest,
         interestStatus: normInterest,
       });
@@ -711,6 +762,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       if (res.success) {
         const savedProof = uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || undefined);
         selectedFlatForPayment.passes = finalPasses;
+        selectedFlatForPayment.pass_type = normPassType;
+        selectedFlatForPayment.passType = normPassType;
         selectedFlatForPayment.interestStatus = normInterest;
         selectedFlatForPayment.interest_status = normInterest;
         selectedFlatForPayment.amount = expectedAmount;
@@ -738,6 +791,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   flat.pendingAmount = newPending;
                   flat.paymentMethod = isZeroReq ? null : payMethod;
                   flat.passes = finalPasses;
+                  flat.pass_type = normPassType;
+                  flat.passType = normPassType;
                   flat.interestStatus = normInterest;
                   flat.interest_status = normInterest;
                   flat.notes = payNotes;
@@ -868,10 +923,15 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
       defaultPasses = col.passes !== undefined && col.passes !== null ? Number(col.passes) : 0;
     }
 
+    const savedPassType = normalizePassPreference((col as any).pass_type || (col as any).passType);
+    setPassType(savedPassType);
     setPasses(defaultPasses);
     setInterestStatus(curInterest);
     setProofFile(null);
     setProofPreviewUrl(col.payments?.[0]?.proof_url || (col as any).proofUrl || null);
+    setIsPassTypeDropdownOpen(false);
+    setIsPassesDropdownOpen(false);
+    setIsInterestDropdownOpen(false);
     setIsQrModalOpen(false);
     setPayModalOpen(true);
     fetchPaymentMethods();
@@ -885,6 +945,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
     const isZeroReq = isZeroRequiredStatus(normInterest);
     const amt = isZeroReq ? 0 : Number(payAmount);
     const finalPasses = isZeroReq ? 0 : Number(passes);
+    const normPassType = finalPasses > 0 ? normalizePassPreference(passType) : null;
     const defaultFee = Number(event?.default_collection_amount || 2500);
     const rawExpected = Number(customExpectedFee || payingCollection.expected_amount || defaultFee);
     const expected = isZeroReq ? 0 : (rawExpected > 0 ? rawExpected : defaultFee);
@@ -925,6 +986,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         proof_url: uploadedProofUrl !== undefined ? uploadedProofUrl : (proofPreviewUrl || null),
         notes: payNotes || null,
         passes: finalPasses,
+        pass_type: normPassType,
+        passType: normPassType,
         interest_status: normInterest,
         interestStatus: normInterest,
       });
@@ -935,6 +998,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
         payingCollection.amount_paid = amt;
         payingCollection.pending_amount = isZeroReq ? 0 : Math.max(0, expected - amt);
         payingCollection.passes = finalPasses;
+        payingCollection.pass_type = normPassType;
+        payingCollection.passType = normPassType;
         payingCollection.interest_status = normInterest;
         payingCollection.interestStatus = normInterest;
         (payingCollection as any).paymentMethod = isZeroReq ? null : payMethod;
@@ -1415,6 +1480,8 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           pendingAmount: pendingAmt,
           residentName: owner?.full_name || 'Resident',
           passes: isZeroReq ? 0 : (c.passes !== undefined && c.passes !== null ? Number(c.passes) : 0),
+          pass_type: isZeroReq || (c.passes ?? 0) === 0 ? null : (c.pass_type || (c as any).passType || 'NON_JAIN'),
+          passType: isZeroReq || (c.passes ?? 0) === 0 ? null : (c.pass_type || (c as any).passType || 'NON_JAIN'),
           interestStatus: normInterest,
           interest_status: normInterest,
           paymentMethod: lastPayment?.payment_method?.code || (c as any).paymentMethod || null,
@@ -1624,9 +1691,20 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                         </span>
                       )}
                       {!isZeroReq && (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-purple-50 text-purple-700 rounded border border-purple-200/50">
-                          {flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0}{' '}
-                          {(flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0) === 1 ? 'Pass' : 'Passes'}
+                        <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-purple-50 text-purple-700 rounded border border-purple-200/50 inline-flex items-center gap-1">
+                          <span>
+                            {flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0}{' '}
+                            {(flat.passes !== undefined && flat.passes !== null ? Number(flat.passes) : 0) === 1 ? 'Pass' : 'Passes'}
+                          </span>
+                          {Number(flat.passes || 0) > 0 && (flat.pass_type || flat.passType) && (
+                            <span className="text-[8px] font-bold text-purple-900 bg-white/90 px-1 py-0 rounded border border-purple-200 uppercase tracking-tight">
+                              {flat.pass_type === 'SWAMINARAYAN' || flat.passType === 'SWAMINARAYAN'
+                                ? 'Swami'
+                                : flat.pass_type === 'JAIN' || flat.passType === 'JAIN'
+                                ? 'Jain'
+                                : 'Non-Jain'}
+                            </span>
+                          )}
                         </span>
                       )}
                       {normInterest === 'HOUSE_CLOSED' ? (
@@ -1671,14 +1749,14 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                     ) : (
                       <>
                         <span className="text-xs sm:text-sm font-semibold text-slate-900 block leading-tight">
-                          ₹{isPaid ? paidAmt.toLocaleString() : (pendingAmt > 0 ? pendingAmt.toLocaleString() : expectedAmt.toLocaleString())}
+                          ₹{paidAmt.toLocaleString()}
                         </span>
                         <span
                           className={`text-[10px] font-medium leading-tight block mt-0.5 ${
-                            isPaid ? 'text-emerald-700' : 'text-amber-700'
+                            paidAmt > 0 ? 'text-emerald-700' : 'text-slate-500'
                           }`}
                         >
-                          {isPaid ? 'Paid' : 'Due'}
+                          Paid
                         </span>
                       </>
                     )}
@@ -1734,6 +1812,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
           setSelectedFlatForPayment(null);
           setIsEditingExpectedFee(false);
           setIsPassesDropdownOpen(false);
+          setIsPassTypeDropdownOpen(false);
           setIsInterestDropdownOpen(false);
         }}
         title={
@@ -1949,12 +2028,12 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                 />
               </div>
 
-              {/* Passes & Interest Status */}
+              {/* Passes & Interest Status in a clean, spacious 2-Column Grid */}
               <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                {/* 1. Dynamic Themed Passes Dropdown */}
+                {/* 1. Passes Dropdown */}
                 <div className="relative" ref={passesDropdownRef}>
-                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">
-                    Passes <span className="text-slate-400 font-normal text-xs">(Allotted)</span>
+                  <label className="block text-[11px] sm:text-xs font-semibold text-slate-700 mb-1 truncate">
+                    Passes <span className="text-slate-400 font-normal text-[10px] hidden sm:inline">(Allotted)</span>
                   </label>
                   <button
                     type="button"
@@ -1963,7 +2042,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                       setIsInterestDropdownOpen(false);
                     }}
                     disabled={isZeroRequiredStatus(interestStatus)}
-                    className={`w-full h-9 sm:h-10 px-3 bg-white border rounded-lg flex items-center justify-between transition-all text-xs sm:text-sm font-semibold ${
+                    className={`w-full h-9 px-2.5 bg-white border rounded-xl flex items-center justify-between transition-all text-xs font-semibold ${
                       isZeroRequiredStatus(interestStatus)
                         ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
                         : isPassesDropdownOpen
@@ -1971,16 +2050,16 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                         : 'border-slate-300 hover:border-slate-400 text-slate-800 shadow-2xs'
                     }`}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-purple-50 border border-purple-200/60 flex items-center justify-center shrink-0">
-                        <Ticket className="w-3.5 h-3.5 text-purple-600" />
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="w-5 h-5 rounded-md bg-purple-50 border border-purple-200/60 flex items-center justify-center shrink-0">
+                        <Ticket className="w-3 h-3 text-purple-600" />
                       </div>
-                      <span className="font-bold text-slate-800 truncate">
+                      <span className="font-bold text-slate-800 text-xs truncate">
                         {isZeroRequiredStatus(interestStatus) ? '0 Passes' : `${passes} ${passes === 1 ? 'Pass' : 'Passes'}`}
                       </span>
                     </div>
                     <ChevronDown
-                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
+                      className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
                         isPassesDropdownOpen ? 'rotate-180 text-indigo-600' : ''
                       }`}
                     />
@@ -1988,16 +2067,16 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
                   {/* Dynamic Passes Menu */}
                   {isPassesDropdownOpen && (
-                    <div className="absolute left-0 right-0 bottom-full mb-1.5 p-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 max-h-56 overflow-y-auto overscroll-contain">
-                      <div className="flex items-center justify-between px-1 mb-1.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    <div className="absolute left-0 right-0 sm:w-56 bottom-full mb-1.5 p-2.5 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 max-h-56 overflow-y-auto overscroll-contain">
+                      <div className="flex items-center justify-between px-1 mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                           Select Passes
                         </span>
-                        <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/50">
+                        <span className="text-[11px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/60">
                           {passes} {passes === 1 ? 'Pass' : 'Passes'}
                         </span>
                       </div>
-                      <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
+                      <div className="grid grid-cols-6 gap-1">
                         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
                           const isSelected = passes === num;
                           return (
@@ -2008,7 +2087,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                                 setPasses(num);
                                 setIsPassesDropdownOpen(false);
                               }}
-                              className={`h-8 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center transition-all ${
+                              className={`h-7.5 rounded-lg text-xs font-bold flex items-center justify-center transition-all ${
                                 isSelected
                                   ? 'bg-purple-600 text-white shadow-xs font-black scale-105 ring-2 ring-purple-300'
                                   : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 border border-slate-200/60'
@@ -2019,16 +2098,16 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                           );
                         })}
                       </div>
-                      <div className="mt-2 pt-1.5 border-t border-slate-100 text-xs text-slate-400 text-center">
+                      <div className="mt-2 pt-1.5 border-t border-slate-100 text-[10px] text-slate-400 text-center">
                         Passes allotted upon receipt confirmation
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* 2. Dynamic Themed Interest Status Dropdown */}
+                {/* 2. Interest Status Dropdown */}
                 <div className="relative" ref={interestDropdownRef}>
-                  <label className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">
+                  <label className="block text-[11px] sm:text-xs font-semibold text-slate-700 mb-1 truncate">
                     Interest Status
                   </label>
                   {(() => {
@@ -2046,20 +2125,20 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                             setIsInterestDropdownOpen(!isInterestDropdownOpen);
                             setIsPassesDropdownOpen(false);
                           }}
-                          className={`w-full h-9 sm:h-10 px-3 bg-white border rounded-lg flex items-center justify-between transition-all text-xs sm:text-sm font-semibold ${
+                          className={`w-full h-9 px-2.5 bg-white border rounded-xl flex items-center justify-between transition-all text-xs font-semibold ${
                             isInterestDropdownOpen
                               ? 'border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs'
                               : 'border-slate-300 hover:border-slate-400 shadow-2xs'
                           }`}
                         >
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <span className={`px-2 py-0.5 sm:py-1 rounded-md text-xs font-bold border flex items-center gap-1.5 ${currentStatus.badgeClass}`}>
-                              <StatusIcon className="w-3.5 h-3.5 shrink-0" />
+                            <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border flex items-center gap-1 ${currentStatus.badgeClass}`}>
+                              <StatusIcon className="w-3 h-3 shrink-0" />
                               <span className="truncate">{currentStatus.label}</span>
                             </span>
                           </div>
                           <ChevronDown
-                            className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
+                            className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
                               isInterestDropdownOpen ? 'rotate-180 text-indigo-600' : ''
                             }`}
                           />
@@ -2067,7 +2146,7 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
 
                         {/* Dynamic Interest Status Menu */}
                         {isInterestDropdownOpen && (
-                          <div className="absolute left-0 right-0 bottom-full mb-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1 max-h-56 sm:max-h-60 overflow-y-auto overscroll-contain">
+                          <div className="absolute right-0 sm:left-0 sm:right-auto sm:w-64 bottom-full mb-1.5 p-1.5 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1 max-h-60 overflow-y-auto overscroll-contain">
                             {CONTRIBUTION_INTEREST_OPTIONS.map((opt) => {
                               const isSelected = normCurrent === opt.value;
                               const OptIcon = opt.icon;
@@ -2083,7 +2162,6 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                                       setPayAmount('0');
                                       setCustomExpectedFee('0');
                                     } else if (opt.value === 'SECOND_HOME') {
-                                      // participation is uncertain ("May Come / May Not Come") and should not automatically assign passes or payment unless specifically confirmed
                                       setPasses(0);
                                       setPayAmount('0');
                                     } else if (prevNorm === 'NOT_INTERESTED' || prevNorm === 'HOUSE_CLOSED' || prevNorm === 'SECOND_HOME') {
@@ -2098,23 +2176,23 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                                     }
                                     setIsInterestDropdownOpen(false);
                                   }}
-                                  className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-all border ${
+                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-all border ${
                                     isSelected
                                       ? opt.activeClass
                                       : 'border-transparent hover:bg-slate-50 text-slate-700'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0">
-                                    <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${opt.iconBg}`}>
-                                      <OptIcon className="w-4 h-4" />
+                                    <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${opt.iconBg}`}>
+                                      <OptIcon className="w-3.5 h-3.5" />
                                     </div>
                                     <div className="min-w-0">
-                                      <span className="text-xs sm:text-sm font-bold block leading-tight">{opt.label}</span>
-                                      <span className="text-xs text-slate-500 block truncate">{opt.subtitle}</span>
+                                      <span className="text-xs font-bold block leading-tight">{opt.label}</span>
+                                      <span className="text-[9.5px] text-slate-500 block truncate">{opt.subtitle}</span>
                                     </div>
                                   </div>
                                   {isSelected && (
-                                    <Check className="w-4 h-4 text-indigo-600 shrink-0 ml-1" />
+                                    <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0 ml-1" />
                                   )}
                                 </button>
                               );
@@ -2126,6 +2204,68 @@ export const EventCollectionsPage: React.FC<EventCollectionsPageProps> = ({ even
                   })()}
                 </div>
               </div>
+
+              {/* 3. Dedicated Beautiful Meal Preference Segmented Control (Active for 1-10 passes) */}
+              {!isZeroRequiredStatus(interestStatus) && passes >= 1 && passes <= 10 && (
+                <div className="p-2 sm:p-2.5 bg-gradient-to-br from-slate-50 via-indigo-50/20 to-purple-50/20 rounded-xl border border-slate-200/90 shadow-2xs animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="w-4.5 h-4.5 rounded-md bg-indigo-50 border border-indigo-200/60 flex items-center justify-center shrink-0">
+                        <Utensils className="w-3 h-3 text-indigo-600" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-800 tracking-tight">Meal Preference</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-purple-700 bg-purple-100/80 px-2 py-0.5 rounded-full border border-purple-200/70 shrink-0">
+                      {passes} {passes === 1 ? 'Pass' : 'Passes'}
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const normPref = normalizePassPreference(passType);
+                    const currentPref =
+                      PASS_PREFERENCE_OPTIONS.find((p) => p.value === normPref) ||
+                      PASS_PREFERENCE_OPTIONS[0];
+
+                    return (
+                      <>
+                        <div className="grid grid-cols-3 gap-1 p-0.5 sm:p-1 bg-white/95 rounded-xl border border-slate-200/80 shadow-2xs">
+                          {PASS_PREFERENCE_OPTIONS.map((opt) => {
+                            const isSelected = normPref === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => setPassType(opt.value)}
+                                className={`h-8 sm:h-8.5 px-1 sm:px-2 rounded-lg text-[10.5px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer select-none whitespace-nowrap ${
+                                  isSelected
+                                    ? opt.value === 'NON_JAIN'
+                                      ? 'bg-emerald-600 text-white shadow-xs font-black scale-[1.01]'
+                                      : opt.value === 'JAIN'
+                                      ? 'bg-amber-500 text-white shadow-xs font-black scale-[1.01]'
+                                      : 'bg-purple-600 text-white shadow-xs font-black scale-[1.01]'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent'
+                                }`}
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                    isSelected ? 'bg-white shadow-xs' : opt.dotClass
+                                  }`}
+                                />
+                                <span className="whitespace-nowrap">{opt.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-1 px-0.5 flex items-center justify-between text-[10px] sm:text-[10.5px]">
+                          <span className="text-slate-500 truncate">
+                            <span className="font-semibold text-slate-700">{currentPref.label}:</span> {currentPref.subtitle}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
 
               {/* UPI QR Code Quick View Card */}
               {(payMethod === 'UPI' || payMethod === 'QR') && (
