@@ -57,7 +57,7 @@ export const CircularListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 12, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
+  const debouncedSearch = useDebounce(search, 400);
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState(isResident ? 'published_at' : 'created_at');

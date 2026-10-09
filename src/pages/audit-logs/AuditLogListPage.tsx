@@ -32,7 +32,7 @@ export const AuditLogListPage: React.FC = () => {
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearch = useDebounce(searchTerm, 300);
+  const debouncedSearch = useDebounce(searchTerm, 400);
   const [actionFilter, setActionFilter] = useState('');
   const [entityFilter, setEntityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -226,7 +226,10 @@ export const AuditLogListPage: React.FC = () => {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setMeta((prev) => ({ ...prev, page: 1 }));
+                }}
                 placeholder="Search user, entity, action, IP, ID..."
                 className="w-full pl-8 pr-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-slate-400"
               />

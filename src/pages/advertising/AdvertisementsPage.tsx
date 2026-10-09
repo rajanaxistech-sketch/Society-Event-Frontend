@@ -111,7 +111,7 @@ export const AdvertisementsPage: React.FC = () => {
   });
   const [adsLoading, setAdsLoading] = useState(true);
   const [adsSearch, setAdsSearch] = useState('');
-  const debouncedAdsSearch = useDebounce(adsSearch, 300);
+  const debouncedAdsSearch = useDebounce(adsSearch, 400);
   const [adsStatusFilter, setAdsStatusFilter] = useState('');
   const [adsCategoryFilter, setAdsCategoryFilter] = useState('');
 

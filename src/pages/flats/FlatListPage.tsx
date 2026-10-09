@@ -34,7 +34,7 @@ export const FlatListPage: React.FC = () => {
   const [meta, setMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
+  const debouncedSearch = useDebounce(search, 400);
   const [floorFilter, setFloorFilter] = useState(initialFloorId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
@@ -229,10 +229,7 @@ export const FlatListPage: React.FC = () => {
         search={search}
         onSearchChange={(val) => {
           setSearch(val);
-          if (!val) {
-            setMeta((prev) => ({ ...prev, page: 1 }));
-            setTimeout(fetchFlats, 50);
-          }
+          setMeta((prev) => ({ ...prev, page: 1 }));
         }}
         searchPlaceholder="Search flat number or type..."
         filters={

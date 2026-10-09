@@ -32,7 +32,7 @@ export const AdvertisementCategoriesPage: React.FC = () => {
   const [catMeta, setCatMeta] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [catLoading, setCatLoading] = useState(true);
   const [catSearch, setCatSearch] = useState('');
-  const debouncedCatSearch = useDebounce(catSearch, 300);
+  const debouncedCatSearch = useDebounce(catSearch, 400);
   const [catStatusFilter, setCatStatusFilter] = useState('');
 
   // Category Modal State

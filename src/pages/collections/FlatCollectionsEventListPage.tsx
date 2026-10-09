@@ -20,6 +20,7 @@ import { formatDate } from '../../utils/formatters';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { encodeId, decodeId } from '../../utils/idObfuscator';
 import { getEventTheme } from '../../utils/eventTheme';
+import { useDebounce } from '../../hooks/useDebounce';
 import {
   Wallet,
   Calendar,
@@ -49,6 +50,7 @@ export const FlatCollectionsEventListPage: React.FC = () => {
 
   // Filters
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('start_date');
@@ -78,7 +80,7 @@ export const FlatCollectionsEventListPage: React.FC = () => {
       const res = await eventsService.getAll({
         page: meta.page,
         limit: meta.limit,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         societyId: societyFilter || undefined,
         status: statusFilter || undefined,
         sortBy,
@@ -102,7 +104,7 @@ export const FlatCollectionsEventListPage: React.FC = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, [meta.page, meta.limit, societyFilter, statusFilter, sortBy, sortOrder]);
+  }, [meta.page, meta.limit, debouncedSearch, societyFilter, statusFilter, sortBy, sortOrder]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {

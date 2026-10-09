@@ -83,7 +83,7 @@ export const ContractsListPage: React.FC = () => {
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSearch = useDebounce(searchQuery, 400);
   const [societyFilter, setSocietyFilter] = useState(initialSocietyId);
   const [eventFilter, setEventFilter] = useState(initialEventId);
   const [vendorFilter, setVendorFilter] = useState('all');

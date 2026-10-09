@@ -121,7 +121,7 @@ export const ExpensesPage: React.FC = () => {
 
   // Search & Filters
   const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
+  const debouncedSearch = useDebounce(search, 400);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [vendorFilter, setVendorFilter] = useState('');
   const [modeFilter, setModeFilter] = useState('');
