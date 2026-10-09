@@ -102,7 +102,18 @@ export const UserListPage: React.FC = () => {
           <span className="font-bold text-slate-900 block hover:text-indigo-600 transition-colors">
             {row.full_name}
           </span>
-          <span className="text-xs text-slate-400">{row.email}</span>
+          {row.email ? (
+            <a
+              href={`mailto:${row.email}`}
+              className="text-xs text-slate-400 hover:text-indigo-600 hover:underline transition-colors block truncate max-w-[180px]"
+              onClick={(e) => e.stopPropagation()}
+              title={`Email ${row.email}`}
+            >
+              {row.email}
+            </a>
+          ) : (
+            <span className="text-xs text-slate-400">—</span>
+          )}
         </div>
       ),
     },
@@ -122,7 +133,19 @@ export const UserListPage: React.FC = () => {
     {
       key: 'phone',
       header: 'Phone',
-      render: (row) => <span className="text-xs text-slate-600">{row.phone || '—'}</span>,
+      render: (row) =>
+        row.phone ? (
+          <a
+            href={`tel:${String(row.phone).replace(/[^\d+]/g, '')}`}
+            className="text-xs text-slate-600 hover:text-indigo-600 hover:underline transition-colors font-mono"
+            onClick={(e) => e.stopPropagation()}
+            title={`Call ${row.phone}`}
+          >
+            {row.phone}
+          </a>
+        ) : (
+          <span className="text-xs text-slate-400">—</span>
+        ),
     },
     {
       key: 'status',

@@ -347,13 +347,15 @@ export const VendorListPage: React.FC = () => {
       className: 'min-w-[140px]',
       render: (row) => {
         const phone = row.mobileNo || row.mobile_no || row.contactNumber || row.contact_number;
+        const cleanPhone = phone ? String(phone).replace(/[^\d+]/g, '') : '';
         return (
           <div className="text-xs">
             {phone ? (
               <a
-                href={`tel:${phone}`}
-                className="inline-flex items-center gap-1.5 text-slate-800 hover:text-indigo-600 font-mono text-[12px] hover:underline"
+                href={`tel:${cleanPhone}`}
+                className="inline-flex items-center gap-1.5 text-slate-800 hover:text-indigo-600 active:text-indigo-700 font-mono text-[12px] hover:underline transition-colors"
                 onClick={(e) => e.stopPropagation()}
+                title={`Call ${phone}`}
               >
                 <Phone className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                 <span>{phone}</span>
@@ -374,8 +376,9 @@ export const VendorListPage: React.FC = () => {
           {row.email ? (
             <a
               href={`mailto:${row.email}`}
-              className="inline-flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 truncate max-w-[200px] hover:underline"
+              className="inline-flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 active:text-indigo-700 truncate max-w-[200px] hover:underline transition-colors"
               onClick={(e) => e.stopPropagation()}
+              title={`Email ${row.email}`}
             >
               <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="truncate">{row.email}</span>
@@ -606,27 +609,32 @@ export const VendorListPage: React.FC = () => {
                   </div>
 
                   {/* Compact Contact Pill */}
-                  <div className="flex items-center gap-2.5 text-[11px] bg-slate-50/90 px-2 py-1.5 rounded-lg border border-slate-100 flex-wrap">
-                    {phone && (
-                      <a
-                        href={`tel:${phone}`}
-                        className="inline-flex items-center gap-1 font-mono text-slate-800 hover:text-indigo-600 shrink-0"
-                      >
-                        <Phone className="w-3 h-3 text-indigo-600 shrink-0" />
-                        <span>{phone}</span>
-                      </a>
-                    )}
-                    {v.email && (
-                      <a
-                        href={`mailto:${v.email}`}
-                        className="inline-flex items-center gap-1 text-slate-600 hover:text-indigo-600 truncate max-w-[170px]"
-                        title={v.email}
-                      >
-                        <Mail className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="truncate">{v.email}</span>
-                      </a>
-                    )}
-                  </div>
+                  {(phone || v.email) && (
+                    <div className="flex items-center gap-2 text-[11px] bg-slate-50/90 px-2 py-1.5 rounded-lg border border-slate-100 flex-wrap">
+                      {phone && (
+                        <a
+                          href={`tel:${String(phone).replace(/[^\d+]/g, '')}`}
+                          className="inline-flex items-center gap-1 font-mono text-slate-800 hover:text-indigo-600 active:text-indigo-700 hover:underline shrink-0 p-0.5 rounded transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                          title={`Call ${phone}`}
+                        >
+                          <Phone className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                          <span>{phone}</span>
+                        </a>
+                      )}
+                      {v.email && (
+                        <a
+                          href={`mailto:${v.email}`}
+                          className="inline-flex items-center gap-1 text-slate-600 hover:text-indigo-600 active:text-indigo-700 hover:underline truncate max-w-[180px] p-0.5 rounded transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                          title={`Email ${v.email}`}
+                        >
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{v.email}</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
 
                   {/* Card Footer: Status Switch + Actions */}
                   <div className="flex items-center justify-between pt-1 border-t border-slate-100/70">

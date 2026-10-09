@@ -167,8 +167,28 @@ export const ResidentListPage: React.FC = () => {
       header: 'Contact Details',
       render: (row) => (
         <div className="text-xs">
-          <span className="text-slate-900 font-medium block">{row.phone || '—'}</span>
-          <span className="text-slate-400">{row.email || ''}</span>
+          {row.phone ? (
+            <a
+              href={`tel:${String(row.phone).replace(/[^\d+]/g, '')}`}
+              className="text-slate-900 font-medium block hover:text-indigo-600 hover:underline transition-colors"
+              onClick={(e) => e.stopPropagation()}
+              title={`Call ${row.phone}`}
+            >
+              {row.phone}
+            </a>
+          ) : (
+            <span className="text-slate-400 block">—</span>
+          )}
+          {row.email ? (
+            <a
+              href={`mailto:${row.email}`}
+              className="text-slate-500 hover:text-indigo-600 hover:underline block truncate max-w-[180px] transition-colors"
+              onClick={(e) => e.stopPropagation()}
+              title={`Email ${row.email}`}
+            >
+              {row.email}
+            </a>
+          ) : null}
         </div>
       ),
     },
