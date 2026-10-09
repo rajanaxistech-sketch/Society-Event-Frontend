@@ -8,18 +8,47 @@ import { useToast } from '../../hooks/useToast';
 import { AppRoutes } from '../../constants/routes';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
-import Textarea from '../../components/ui/Textarea';
 import Switch from '../../components/ui/Switch';
 import Button from '../../components/ui/Button';
-import { ArrowLeft, Save, Store, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Store } from 'lucide-react';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 
+const phoneRegex = /^[+0-9\s-]{7,20}$/;
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 const vendorFormSchema = z.object({
-  vendorName: z.string().trim().min(1, 'Vendor Name is required').max(200, 'Vendor Name cannot exceed 200 characters'),
-  shortName: z.string().trim().min(1, 'Short Name is required').max(100, 'Short Name cannot exceed 100 characters'),
-  address: z.string().trim().min(1, 'Address is required'),
-  email: z.string().trim().min(1, 'Email address is required').email('Please enter a valid email address').toLowerCase(),
-  mobileNo: z.string().trim().min(1, 'Mobile Number is required').regex(/^[+0-9\s-]{7,20}$/, 'Please enter a valid phone number (7-20 digits)'),
+  vendorName: z
+    .string()
+    .trim()
+    .min(1, 'Vendor Name is required')
+    .max(200, 'Vendor Name cannot exceed 200 characters'),
+  shortName: z
+    .string()
+    .trim()
+    .max(100, 'Short Name cannot exceed 100 characters')
+    .optional()
+    .or(z.literal('')),
+  companyName: z
+    .string()
+    .trim()
+    .max(200, 'Company Name cannot exceed 200 characters')
+    .optional()
+    .or(z.literal('')),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || emailRegex.test(val), {
+      message: 'Invalid email address format (e.g. name@domain.com)',
+    }),
+  mobileNo: z
+    .string()
+    .trim()
+    .min(1, 'Contact Number is required')
+    .min(7, 'Contact Number must be at least 7 digits')
+    .max(20, 'Contact Number cannot exceed 20 digits')
+    .regex(phoneRegex, 'Invalid phone format (digits, +, - allowed)'),
   isActive: z.boolean(),
 });
 
@@ -38,10 +67,11 @@ export const CreateVendorPage: React.FC = () => {
     formState: { errors },
   } = useForm<VendorFormData>({
     resolver: zodResolver(vendorFormSchema),
+    mode: 'onChange',
     defaultValues: {
       vendorName: '',
       shortName: '',
-      address: '',
+      companyName: '',
       email: '',
       mobileNo: '',
       isActive: true,
@@ -55,15 +85,16 @@ export const CreateVendorPage: React.FC = () => {
       setIsSubmitting(true);
       const res = await vendorsService.create({
         vendorName: data.vendorName.trim(),
-        shortName: data.shortName.trim(),
-        address: data.address.trim(),
-        email: data.email.trim().toLowerCase(),
+        shortName: data.shortName?.trim() || null,
+        companyName: data.companyName?.trim() || null,
+        email: data.email?.trim().toLowerCase() || null,
         mobileNo: data.mobileNo.trim(),
         isActive: data.isActive,
+        status: data.isActive ? 'active' : 'inactive',
       });
 
       if (res.success) {
-        toast.success(`Vendor "${data.vendorName}" registered successfully.`);
+        toast.success(`Vendor "${data.vendorName}" added successfully.`);
         navigate(AppRoutes.VENDORS);
       } else {
         toast.error(res.message || 'Failed to create vendor');
@@ -76,27 +107,24 @@ export const CreateVendorPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-3.5">
+    <div className="max-w-2xl mx-auto space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-2.5">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(AppRoutes.VENDORS)}
-          leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
-        >
-          Cancel
-        </Button>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Create Vendor</h1>
-            <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-              Setting Master
-            </span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(AppRoutes.VENDORS)}
+            leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
+          >
+            Back
+          </Button>
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Add Vendor</h1>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Fill in the vendor details. Required fields are marked with a red asterisk (<span className="text-rose-500 font-bold">*</span>).
+            </p>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Register a new authorized agency, contractor, or supplier in Setting Master.
-          </p>
         </div>
       </div>
 
@@ -105,69 +133,68 @@ export const CreateVendorPage: React.FC = () => {
           title={
             <div className="flex items-center gap-2">
               <Store className="w-4 h-4 text-indigo-600" />
-              <span>Vendor Information</span>
+              <span className="font-semibold text-slate-900 text-sm">Vendor Details</span>
             </div>
           }
         >
           <div className="space-y-4">
-            {/* Row 1: Vendor Name & Short Name */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Row 1: Required Fields (Vendor Name & Contact Number) with red * indicator */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Vendor Name"
-                placeholder="e.g. ABC Metals Pvt Ltd"
-                requiredIndicator
+                requiredIndicator={true}
+                placeholder="e.g. Acme Event Decorators"
                 error={errors.vendorName?.message}
                 {...register('vendorName')}
               />
 
               <Input
-                label="Short Name"
-                placeholder="e.g. ABC"
-                requiredIndicator
-                error={errors.shortName?.message}
-                {...register('shortName')}
-              />
-            </div>
-
-            {/* Row 2: Address (Full Width Textarea) */}
-            <div>
-              <Textarea
-                label="Address"
-                placeholder="e.g. Plot 42, Industrial Area, Andheri East, Mumbai"
-                rows={3}
-                requiredIndicator
-                error={errors.address?.message}
-                {...register('address')}
-              />
-            </div>
-
-            {/* Row 3: Email & Mobile No */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Email"
-                type="email"
-                placeholder="e.g. contact@abcmetals.com"
-                requiredIndicator
-                error={errors.email?.message}
-                {...register('email')}
-              />
-
-              <Input
-                label="Mobile No"
+                label="Contact Number"
+                requiredIndicator={true}
                 type="tel"
-                placeholder="e.g. 9876543210"
-                requiredIndicator
+                placeholder="e.g. +91 9876543210"
                 error={errors.mobileNo?.message}
                 {...register('mobileNo')}
               />
             </div>
 
-            {/* Row 4: Is Active Toggle */}
-            <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/80 flex items-center justify-between">
+            {/* Row 2: Optional Info (Company Name & Short Name) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Company Name"
+                helperText="Optional"
+                placeholder="e.g. Acme Solutions Pvt Ltd"
+                error={errors.companyName?.message}
+                {...register('companyName')}
+              />
+
+              <Input
+                label="Vendor Short Name"
+                helperText="Optional"
+                placeholder="e.g. ACME"
+                error={errors.shortName?.message}
+                {...register('shortName')}
+              />
+            </div>
+
+            {/* Row 3: Optional Email Address */}
+            <div>
+              <Input
+                label="Email Address"
+                type="email"
+                helperText="Optional (valid email format)"
+                placeholder="e.g. info@acmedecorators.com"
+                error={errors.email?.message}
+                {...register('email')}
+              />
+            </div>
+
+            {/* Row 4: Active Status Toggle */}
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 flex items-center justify-between">
               <div>
-                <span className="font-semibold text-xs text-slate-900 block">Is Active</span>
+                <span className="font-semibold text-xs text-slate-900 block">Active Status</span>
                 <span className="text-[11px] text-slate-500">
-                  Enable vendor for event contracts, procurement, and payment operations
+                  Allow this vendor to be selected for event contracts and services
                 </span>
               </div>
               <Switch
@@ -176,7 +203,7 @@ export const CreateVendorPage: React.FC = () => {
               />
             </div>
 
-            {/* Footer Action Buttons */}
+            {/* Actions */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
               <Button
                 type="button"
@@ -194,7 +221,7 @@ export const CreateVendorPage: React.FC = () => {
                 isLoading={isSubmitting}
                 leftIcon={<Save className="w-3.5 h-3.5" />}
               >
-                Create Record
+                Save Vendor
               </Button>
             </div>
           </div>

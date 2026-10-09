@@ -16,6 +16,8 @@ import {
   Shirt,
   Coins,
   TrendingUp,
+  Store,
+  Receipt,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -154,6 +156,24 @@ export const SocietyAdminHomeScreen: React.FC = () => {
       badge: undefined,
       onClick: () => {
         navigate(AppRoutes.ADVERTISING);
+      },
+    },
+    {
+      title: 'Vendors',
+      icon: Store,
+      iconStyle: 'bg-blue-50 text-blue-600 border border-blue-100 shadow-blue-100/50',
+      badge: undefined,
+      onClick: () => {
+        navigate(AppRoutes.VENDORS);
+      },
+    },
+    {
+      title: 'Expense',
+      icon: Receipt,
+      iconStyle: 'bg-rose-50 text-rose-600 border border-rose-100 shadow-rose-100/50',
+      badge: undefined,
+      onClick: () => {
+        navigate(AppRoutes.EXPENSE);
       },
     },
   ];

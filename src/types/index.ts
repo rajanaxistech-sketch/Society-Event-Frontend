@@ -1033,12 +1033,16 @@ export interface VendorItem {
   id: string;
   vendorName: string;
   vendor_name?: string;
-  shortName: string;
-  short_name?: string;
-  address: string;
-  email: string;
+  shortName?: string | null;
+  short_name?: string | null;
+  companyName?: string | null;
+  company_name?: string | null;
+  address?: string | null;
+  email?: string | null;
   mobileNo: string;
   mobile_no?: string;
+  contactNumber?: string;
+  contact_number?: string;
   isActive: boolean;
   is_active?: boolean;
   status?: string;
@@ -1051,12 +1055,17 @@ export interface VendorItem {
 export interface CreateVendorInput {
   vendorName: string;
   vendor_name?: string;
-  shortName: string;
-  short_name?: string;
-  address: string;
-  email: string;
-  mobileNo: string;
+  shortName?: string | null;
+  short_name?: string | null;
+  companyName?: string | null;
+  company_name?: string | null;
+  address?: string | null;
+  email?: string | null;
+  emailAddress?: string | null;
+  mobileNo?: string;
   mobile_no?: string;
+  contactNumber?: string;
+  contact_number?: string;
   isActive?: boolean;
   is_active?: boolean;
   status?: string;
@@ -1065,12 +1074,17 @@ export interface CreateVendorInput {
 export interface UpdateVendorInput {
   vendorName?: string;
   vendor_name?: string;
-  shortName?: string;
-  short_name?: string;
-  address?: string;
-  email?: string;
+  shortName?: string | null;
+  short_name?: string | null;
+  companyName?: string | null;
+  company_name?: string | null;
+  address?: string | null;
+  email?: string | null;
+  emailAddress?: string | null;
   mobileNo?: string;
   mobile_no?: string;
+  contactNumber?: string;
+  contact_number?: string;
   isActive?: boolean;
   is_active?: boolean;
   status?: string;
@@ -1128,6 +1142,150 @@ export interface UpdateExpenseCategoryInput {
   isActive?: boolean;
   is_active?: boolean;
   status?: string;
+}
+
+// Expenses Module Types
+export type ExpensePaymentMode = 'CASH' | 'CHEQUE' | 'UPI' | 'ONLINE' | 'BANK_TRANSFER' | string;
+
+export interface ExpenseItem {
+  id: string;
+  societyId?: string | null;
+  society_id?: string | null;
+  society?: { id: string; name: string; code?: string | null } | null;
+  eventId?: string | null;
+  event_id?: string | null;
+  event?: { id: string; name: string; startDate?: string } | null;
+  expenseCategoryId: string;
+  expense_category_id: string;
+  expenseCategory?: ExpenseCategoryItem | null;
+  vendorId: string;
+  vendor_id: string;
+  vendor?: VendorItem | null;
+  expenseDate: string;
+  expense_date?: string;
+  amount: number;
+  modeOfPayment: ExpensePaymentMode;
+  mode_of_payment?: ExpensePaymentMode;
+  transactionReference?: string | null;
+  transaction_reference?: string | null;
+  chequeNumber?: string | null;
+  cheque_number?: string | null;
+  bankName?: string | null;
+  bank_name?: string | null;
+  chequeDate?: string | null;
+  cheque_date?: string | null;
+  attachmentUrl?: string | null;
+  attachment_url?: string | null;
+  fileName?: string | null;
+  file_name?: string | null;
+  fileType?: string | null;
+  file_type?: string | null;
+  fileSize?: number | null;
+  file_size?: number | null;
+  remarks?: string | null;
+  status: string;
+  createdBy?: string | null;
+  created_by?: string | null;
+  creator?: { id: string; fullName?: string; full_name?: string; email?: string } | null;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+}
+
+export interface CreateExpenseInput {
+  societyId?: string | null;
+  society_id?: string | null;
+  eventId?: string | null;
+  event_id?: string | null;
+  expenseCategoryId: string;
+  expense_category_id?: string;
+  vendorId: string;
+  vendor_id?: string;
+  expenseDate?: string | null;
+  expense_date?: string | null;
+  amount: number | string;
+  modeOfPayment?: ExpensePaymentMode;
+  mode_of_payment?: ExpensePaymentMode;
+  transactionReference?: string | null;
+  transaction_reference?: string | null;
+  chequeNumber?: string | null;
+  cheque_number?: string | null;
+  bankName?: string | null;
+  bank_name?: string | null;
+  chequeDate?: string | null;
+  cheque_date?: string | null;
+  attachmentUrl?: string | null;
+  attachment_url?: string | null;
+  fileName?: string | null;
+  file_name?: string | null;
+  fileType?: string | null;
+  file_type?: string | null;
+  fileSize?: number | null;
+  file_size?: number | null;
+  remarks?: string | null;
+  status?: string;
+}
+
+export interface UpdateExpenseInput {
+  societyId?: string | null;
+  society_id?: string | null;
+  eventId?: string | null;
+  event_id?: string | null;
+  expenseCategoryId?: string;
+  expense_category_id?: string;
+  vendorId?: string;
+  vendor_id?: string;
+  expenseDate?: string | null;
+  expense_date?: string | null;
+  amount?: number | string;
+  modeOfPayment?: ExpensePaymentMode;
+  mode_of_payment?: ExpensePaymentMode;
+  transactionReference?: string | null;
+  transaction_reference?: string | null;
+  chequeNumber?: string | null;
+  cheque_number?: string | null;
+  bankName?: string | null;
+  bank_name?: string | null;
+  chequeDate?: string | null;
+  cheque_date?: string | null;
+  attachmentUrl?: string | null;
+  attachment_url?: string | null;
+  fileName?: string | null;
+  file_name?: string | null;
+  fileType?: string | null;
+  file_type?: string | null;
+  fileSize?: number | null;
+  file_size?: number | null;
+  remarks?: string | null;
+  status?: string;
+}
+
+export interface ExpensesQueryParams extends QueryParams {
+  societyId?: string;
+  society_id?: string;
+  eventId?: string;
+  event_id?: string;
+  expenseCategoryId?: string;
+  expense_category_id?: string;
+  vendorId?: string;
+  vendor_id?: string;
+  modeOfPayment?: string;
+  mode_of_payment?: string;
+  startDate?: string;
+  start_date?: string;
+  endDate?: string;
+  end_date?: string;
+  status?: string;
+}
+
+export interface ExpenseSummaryMetrics {
+  totalCount: number;
+  totalAmount: number;
+  cashAmount: number;
+  chequeAmount: number;
+  upiAmount: number;
+  transferAmount?: number;
 }
 
 // Income Category Master Types (Setting Master)

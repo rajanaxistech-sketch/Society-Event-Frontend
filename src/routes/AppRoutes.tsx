@@ -106,6 +106,8 @@ import IncomeCategoryListPage from '../pages/income-categories/IncomeCategoryLis
 import AdvertisingMenuPage from '../pages/advertising/AdvertisingMenuPage';
 import AdvertisementsPage from '../pages/advertising/AdvertisementsPage';
 import AdvertisementCategoriesPage from '../pages/advertising/AdvertisementCategoriesPage';
+import ExpenseMenuPage from '../pages/expense/ExpenseMenuPage';
+import ExpensesPage from '../pages/expense/ExpensesPage';
 import AuditLogListPage from '../pages/audit-logs/AuditLogListPage';
 import AuditLogDetailsPage from '../pages/audit-logs/AuditLogDetailsPage';
 import ContractsListPage from '../pages/contracts/ContractsListPage';
@@ -556,6 +558,32 @@ export const AppRoutes: React.FC = () => {
             }
           />
 
+          {/* Expense Management Module (Submenus: Expense Category & Expenses) */}
+          <Route
+            path={Paths.EXPENSE}
+            element={
+              <PermissionRoute permission={Permissions.EXPENSE_READ}>
+                <ExpenseMenuPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.EXPENSES}
+            element={
+              <PermissionRoute permission={Permissions.EXPENSE_READ}>
+                <ExpensesPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.EXPENSE_CATEGORIES_MENU}
+            element={
+              <PermissionRoute permission={Permissions.EXPENSE_CATEGORY_READ}>
+                <ExpenseCategoryListPage />
+              </PermissionRoute>
+            }
+          />
+
           {/* Payment Methods */}
           <Route
             path={Paths.PAYMENT_METHODS}
@@ -708,7 +736,23 @@ export const AppRoutes: React.FC = () => {
             }
           />
           <Route
+            path="/vendors/create"
+            element={
+              <PermissionRoute permission={Permissions.VENDOR_CREATE}>
+                <CreateVendorPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
             path={Paths.VENDOR_EDIT}
+            element={
+              <PermissionRoute permission={Permissions.VENDOR_UPDATE}>
+                <EditVendorPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path="/vendors/:id/edit"
             element={
               <PermissionRoute permission={Permissions.VENDOR_UPDATE}>
                 <EditVendorPage />

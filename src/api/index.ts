@@ -30,4 +30,6 @@ export * from './contractsService';
 export * from './eventVendorsService';
 export * from './advertisementCategoriesService';
 export * from './advertisementsService';
+export * from './expensesService';
+
 

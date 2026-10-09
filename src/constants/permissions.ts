@@ -143,9 +143,12 @@ export const Permissions = {
   ADVERTISEMENT_MANAGE: 'advertisement.manage',
   ADVERTISEMENT_CATEGORY_READ: 'advertisement_category.read',
   ADVERTISEMENT_CATEGORY_CREATE: 'advertisement_category.create',
-  ADVERTISEMENT_CATEGORY_UPDATE: 'advertisement_category.update',
-  ADVERTISEMENT_CATEGORY_DELETE: 'advertisement_category.delete',
-  ADVERTISEMENT_CATEGORY_MANAGE: 'advertisement_category.manage',
+  // Expenses
+  EXPENSE_READ: 'expense.read',
+  EXPENSE_CREATE: 'expense.create',
+  EXPENSE_UPDATE: 'expense.update',
+  EXPENSE_DELETE: 'expense.delete',
+  EXPENSE_MANAGE: 'expense.manage',
 
   // Audit Logs
   AUDIT_READ: 'audit.read',

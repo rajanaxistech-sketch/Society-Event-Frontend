@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { vendorsService } from '../../api/vendorsService';
 import { VendorItem, PaginationMeta } from '../../types';
 import { useToast } from '../../hooks/useToast';
@@ -10,14 +13,13 @@ import { AppRoutes } from '../../constants/routes';
 import Card from '../../components/ui/Card';
 import Table, { Column } from '../../components/ui/Table';
 import Pagination from '../../components/ui/Pagination';
-import FilterBar from '../../components/common/FilterBar';
 import StatusBadge from '../../components/common/StatusBadge';
 import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 import Switch from '../../components/ui/Switch';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
-import PermissionGuard from '../../components/common/PermissionGuard';
+import ThemedSelect from '../../components/ui/ThemedSelect';
 import { extractErrorMessage } from '../../utils/errorExtractor';
-import MobileListCard from '../../components/mobile/MobileListCard';
 import {
   Store,
   Plus,
@@ -26,10 +28,53 @@ import {
   RefreshCw,
   Mail,
   Phone,
-  MapPin,
-  Tag,
   Building2,
+  Search,
+  X,
+  Save,
+  ArrowLeft,
 } from 'lucide-react';
+
+const phoneRegex = /^[+0-9\s-]{7,20}$/;
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+const vendorModalSchema = z.object({
+  vendorName: z
+    .string()
+    .trim()
+    .min(1, 'Vendor Name is required')
+    .max(200, 'Vendor Name cannot exceed 200 characters'),
+  shortName: z
+    .string()
+    .trim()
+    .max(100, 'Short Name cannot exceed 100 characters')
+    .optional()
+    .or(z.literal('')),
+  companyName: z
+    .string()
+    .trim()
+    .max(200, 'Company Name cannot exceed 200 characters')
+    .optional()
+    .or(z.literal('')),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || emailRegex.test(val), {
+      message: 'Invalid email address format (e.g. name@domain.com)',
+    }),
+  mobileNo: z
+    .string()
+    .trim()
+    .min(1, 'Contact Number is required')
+    .min(7, 'Contact Number must be at least 7 digits')
+    .max(20, 'Contact Number cannot exceed 20 digits')
+    .regex(phoneRegex, 'Invalid phone format (digits, +, - allowed)'),
+  isActive: z.boolean(),
+});
+
+type VendorModalFormData = z.infer<typeof vendorModalSchema>;
 
 export const VendorListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,9 +90,37 @@ export const VendorListPage: React.FC = () => {
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  // Modal State for Quick Add / Edit
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingVendor, setEditingVendor] = useState<VendorItem | null>(null);
+  const [isModalSubmitting, setIsModalSubmitting] = useState(false);
+
+  // Delete State
   const [deleteTarget, setDeleteTarget] = useState<VendorItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<VendorModalFormData>({
+    resolver: zodResolver(vendorModalSchema),
+    mode: 'onChange',
+    defaultValues: {
+      vendorName: '',
+      shortName: '',
+      companyName: '',
+      email: '',
+      mobileNo: '',
+      isActive: true,
+    },
+  });
+
+  const isActiveModalValue = watch('isActive');
 
   const fetchVendors = async () => {
     try {
@@ -78,10 +151,78 @@ export const VendorListPage: React.FC = () => {
     fetchVendors();
   }, [meta.page, meta.limit, debouncedSearch, statusFilter, sortBy, sortOrder]);
 
-  // Debounced or direct search trigger
-  const handleSearchSubmit = (query: string) => {
-    setSearch(query);
-    setMeta((prev) => ({ ...prev, page: 1 }));
+  const openCreateModal = () => {
+    setEditingVendor(null);
+    reset({
+      vendorName: '',
+      shortName: '',
+      companyName: '',
+      email: '',
+      mobileNo: '',
+      isActive: true,
+    });
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (vendor: VendorItem) => {
+    setEditingVendor(vendor);
+    const active = vendor.isActive ?? vendor.is_active ?? (vendor.status === 'active');
+    reset({
+      vendorName: vendor.vendorName || vendor.vendor_name || '',
+      shortName: vendor.shortName || vendor.short_name || '',
+      companyName: vendor.companyName || vendor.company_name || '',
+      email: vendor.email || '',
+      mobileNo: vendor.mobileNo || vendor.mobile_no || vendor.contactNumber || vendor.contact_number || '',
+      isActive: active,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleModalSubmit = async (data: VendorModalFormData) => {
+    try {
+      setIsModalSubmitting(true);
+      if (editingVendor) {
+        const res = await vendorsService.update(editingVendor.id, {
+          vendorName: data.vendorName.trim(),
+          shortName: data.shortName?.trim() || null,
+          companyName: data.companyName?.trim() || null,
+          email: data.email?.trim().toLowerCase() || null,
+          mobileNo: data.mobileNo.trim(),
+          isActive: data.isActive,
+          status: data.isActive ? 'active' : 'inactive',
+        });
+
+        if (res.success) {
+          toast.success(`Vendor "${data.vendorName}" updated successfully.`);
+          setIsModalOpen(false);
+          await fetchVendors();
+        } else {
+          toast.error(res.message || 'Failed to update vendor');
+        }
+      } else {
+        const res = await vendorsService.create({
+          vendorName: data.vendorName.trim(),
+          shortName: data.shortName?.trim() || null,
+          companyName: data.companyName?.trim() || null,
+          email: data.email?.trim().toLowerCase() || null,
+          mobileNo: data.mobileNo.trim(),
+          isActive: data.isActive,
+          status: data.isActive ? 'active' : 'inactive',
+        });
+
+        if (res.success) {
+          toast.success(`Vendor "${data.vendorName}" added successfully.`);
+          setIsModalOpen(false);
+          await fetchVendors();
+        } else {
+          toast.error(res.message || 'Failed to add vendor');
+        }
+      }
+    } catch (err: any) {
+      toast.error(extractErrorMessage(err, editingVendor ? 'Failed to update vendor' : 'Failed to create vendor'));
+    } finally {
+      setIsModalSubmitting(false);
+    }
   };
 
   const handleToggleStatus = async (v: VendorItem) => {
@@ -90,7 +231,6 @@ export const VendorListPage: React.FC = () => {
 
     try {
       setTogglingId(v.id);
-      // Optimistic update
       setVendors((prev) =>
         prev.map((item) =>
           item.id === v.id
@@ -111,7 +251,7 @@ export const VendorListPage: React.FC = () => {
       });
 
       if (res.success) {
-        toast.success(`Vendor "${v.vendorName || v.vendor_name}" ${nextStatus ? 'activated' : 'deactivated'}.`);
+        toast.success(`Vendor "${v.vendorName || v.vendor_name}" is now ${nextStatus ? 'active' : 'inactive'}.`);
       } else {
         toast.error(res.message || 'Failed to update vendor status');
         await fetchVendors();
@@ -130,7 +270,7 @@ export const VendorListPage: React.FC = () => {
       setIsDeleting(true);
       const res = await vendorsService.delete(deleteTarget.id);
       if (res.success) {
-        toast.success(`Vendor "${deleteTarget.vendorName || deleteTarget.vendor_name}" deleted successfully.`);
+        toast.success(`Vendor "${deleteTarget.vendorName || deleteTarget.vendor_name}" deleted.`);
         setDeleteTarget(null);
         await fetchVendors();
       } else {
@@ -143,88 +283,114 @@ export const VendorListPage: React.FC = () => {
     }
   };
 
-  const canManage = isSuperAdmin || can(Permissions.VENDOR_MANAGE) || can(Permissions.VENDOR_UPDATE) || can(Permissions.SETTING_UPDATE);
-  const canDelete = isSuperAdmin || can(Permissions.VENDOR_MANAGE) || can(Permissions.VENDOR_DELETE) || can(Permissions.SETTING_UPDATE);
-  const canCreate = isSuperAdmin || can(Permissions.VENDOR_MANAGE) || can(Permissions.VENDOR_CREATE) || can(Permissions.SETTING_UPDATE);
+  const canManage =
+    isSuperAdmin ||
+    can(Permissions.VENDOR_MANAGE) ||
+    can(Permissions.VENDOR_UPDATE) ||
+    can(Permissions.SETTING_UPDATE);
+  const canDelete =
+    isSuperAdmin ||
+    can(Permissions.VENDOR_MANAGE) ||
+    can(Permissions.VENDOR_DELETE) ||
+    can(Permissions.SETTING_UPDATE);
+  const canCreate =
+    isSuperAdmin ||
+    can(Permissions.VENDOR_MANAGE) ||
+    can(Permissions.VENDOR_CREATE) ||
+    can(Permissions.SETTING_UPDATE);
 
   const columns: Column<VendorItem>[] = [
     {
       key: 'vendorName',
       header: 'Vendor Name',
-      className: 'min-w-[180px]',
+      className: 'min-w-[170px]',
       render: (row) => {
         const name = row.vendorName || row.vendor_name;
+        const short = row.shortName || row.short_name;
         return (
           <div className="py-1">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 text-xs sm:text-[13px]">{name}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
-              <Tag className="w-3 h-3 text-indigo-500 shrink-0" />
-              <span className="font-medium font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100">
-                {row.shortName || row.short_name}
-              </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-semibold text-slate-900 text-xs sm:text-[13px]">{name}</span>
+              {short && (
+                <span className="text-[10px] font-mono font-medium text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
+                  {short}
+                </span>
+              )}
             </div>
           </div>
         );
       },
     },
     {
-      key: 'address',
-      header: 'Address',
-      className: 'whitespace-normal min-w-[220px] max-w-[320px]',
+      key: 'companyName',
+      header: 'Company Name',
+      className: 'min-w-[150px]',
+      render: (row) => {
+        const company = row.companyName || row.company_name;
+        return (
+          <div className="flex items-center gap-1.5 text-xs text-slate-700">
+            {company ? (
+              <>
+                <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="truncate max-w-[180px]">{company}</span>
+              </>
+            ) : (
+              <span className="text-slate-400">—</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'contactNumber',
+      header: 'Contact Number',
+      className: 'min-w-[140px]',
+      render: (row) => {
+        const phone = row.mobileNo || row.mobile_no || row.contactNumber || row.contact_number;
+        return (
+          <div className="text-xs">
+            {phone ? (
+              <a
+                href={`tel:${phone}`}
+                className="inline-flex items-center gap-1.5 text-slate-800 hover:text-indigo-600 font-mono text-[12px] hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Phone className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                <span>{phone}</span>
+              </a>
+            ) : (
+              <span className="text-slate-400">—</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'email',
+      header: 'Email Address',
+      className: 'min-w-[180px]',
       render: (row) => (
-        <div className="flex items-start gap-1.5 text-xs text-slate-600 whitespace-normal">
-          <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-          <span className="break-words line-clamp-2 leading-relaxed" title={row.address || undefined}>
-            {row.address || '—'}
-          </span>
+        <div className="text-xs">
+          {row.email ? (
+            <a
+              href={`mailto:${row.email}`}
+              className="inline-flex items-center gap-1.5 text-slate-600 hover:text-indigo-600 truncate max-w-[200px] hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{row.email}</span>
+            </a>
+          ) : (
+            <span className="text-slate-400">—</span>
+          )}
         </div>
       ),
     },
     {
-      key: 'contact',
-      header: 'Contact Details',
-      className: 'whitespace-normal min-w-[190px]',
-      render: (row) => {
-        const phone = row.mobileNo || row.mobile_no;
-        return (
-          <div className="space-y-1 text-xs whitespace-normal">
-            {row.email && (
-              <div className="flex items-center gap-1.5 text-slate-700">
-                <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <a
-                  href={`mailto:${row.email}`}
-                  className="hover:text-indigo-600 hover:underline truncate max-w-[180px] block"
-                  title={row.email}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {row.email}
-                </a>
-              </div>
-            )}
-            {phone && (
-              <div className="flex items-center gap-1.5 text-slate-600">
-                <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <a
-                  href={`tel:${phone}`}
-                  className="hover:text-indigo-600 hover:underline font-mono text-[11px]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {phone}
-                </a>
-              </div>
-            )}
-            {!row.email && !phone && <span className="text-slate-400">—</span>}
-          </div>
-        );
-      },
-    },
-    {
       key: 'status',
-      header: 'Status & Toggle',
+      header: 'Status',
       align: 'center',
-      className: 'min-w-[130px]',
+      className: 'min-w-[110px]',
       render: (row) => {
         const active = row.isActive ?? row.is_active ?? (row.status === 'active');
         return (
@@ -251,7 +417,7 @@ export const VendorListPage: React.FC = () => {
           {canManage && (
             <button
               type="button"
-              onClick={() => navigate(AppRoutes.VENDOR_EDIT.replace(':id', row.id))}
+              onClick={() => openEditModal(row)}
               className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
               title="Edit Vendor"
               aria-label={`Edit ${row.vendorName || row.vendor_name}`}
@@ -276,169 +442,229 @@ export const VendorListPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-3.5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
-            <Store className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Vendors</h1>
-              <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                Setting Master
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Master registry of approved service providers, event contractors, equipment suppliers, and agencies.
-            </p>
+    <div className="space-y-2.5 pb-2">
+      {/* Ultra-Compact & Clean Top Header */}
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 transition-colors"
+            title="Go Back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h1 className="text-base font-bold text-slate-900 tracking-tight truncate">Vendors</h1>
+            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-full border border-indigo-100 shrink-0">
+              {meta.total}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="outline"
-            size="sm"
+        {/* Compact Right Actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
             onClick={fetchVendors}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors shadow-2xs"
+            title="Refresh Vendors"
           >
-            Refresh
-          </Button>
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
+          </button>
+
           {canCreate && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate(AppRoutes.VENDOR_CREATE)}
-              leftIcon={<Plus className="w-3.5 h-3.5" />}
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all"
             >
-              Add Vendor
-            </Button>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Vendor</span>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <FilterBar
-        search={search}
-        onSearchChange={(val) => {
-          setSearch(val);
-          setMeta((prev) => ({ ...prev, page: 1 }));
-        }}
-        searchPlaceholder="Search vendors by name, code, email, mobile, or address..."
-        filters={
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+      {/* Ultra-Compact Single-Row Search & Filter Bar */}
+      <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        {/* Search Input Box */}
+        <div className="relative flex-1 min-w-0">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setMeta((prev) => ({ ...prev, page: 1 }));
+            }}
+            placeholder="Search vendor, company, phone..."
+            className="w-full pl-8 pr-7 py-1.5 text-xs text-slate-800 bg-slate-50/70 border border-slate-200 rounded-lg placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
                 setMeta((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-xs text-slate-700"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
             >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-        }
-      />
-
-      {/* Table Section */}
-      <Card>
-        {/* Desktop View */}
-        <div className="hidden md:block">
-          <Table
-            columns={columns}
-            data={vendors}
-            isLoading={isLoading}
-            emptyText="No vendors found matching your search or filters."
-          />
+              <X className="w-3 h-3" />
+            </button>
+          )}
         </div>
 
-        {/* Mobile / Tablet List View */}
-        <div className="md:hidden divide-y divide-slate-100">
+        {/* Compact Status Select */}
+        <div className="w-auto min-w-[115px] sm:min-w-[130px] shrink-0">
+          <ThemedSelect
+            value={statusFilter}
+            onChange={(val) => {
+              setStatusFilter(val);
+              setMeta((prev) => ({ ...prev, page: 1 }));
+            }}
+            options={[
+              { value: '', label: 'All Statuses' },
+              { value: 'active', label: 'Active', color: '#10B981' },
+              { value: 'inactive', label: 'Inactive', color: '#94A3B8' },
+            ]}
+            placeholder="All Statuses"
+            variant="indigo"
+            size="sm"
+            align="right"
+            menuWidth="w-36"
+            searchable={false}
+          />
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div>
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <Card>
+            <Table
+              columns={columns}
+              data={vendors}
+              isLoading={isLoading}
+              emptyText="No vendors found."
+            />
+            {meta.totalPages > 1 && (
+              <div className="p-3 border-t border-slate-100">
+                <Pagination
+                  meta={meta}
+                  onPageChange={(p) => setMeta((prev) => ({ ...prev, page: p }))}
+                  onLimitChange={(l) => setMeta((prev) => ({ ...prev, limit: l, page: 1 }))}
+                />
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Mobile Minimalist Cards */}
+        <div className="md:hidden space-y-2">
           {isLoading ? (
-            <div className="p-8 text-center text-xs text-slate-400">Loading vendors...</div>
+            <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-xs text-slate-400 shadow-2xs">
+              Loading vendors...
+            </div>
           ) : vendors.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-400">No vendors found.</div>
+            <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-xs text-slate-400 shadow-2xs">
+              No vendors found matching your criteria.
+            </div>
           ) : (
             vendors.map((v) => {
               const active = v.isActive ?? v.is_active ?? (v.status === 'active');
               const name = v.vendorName || v.vendor_name;
               const short = v.shortName || v.short_name;
-              const phone = v.mobileNo || v.mobile_no;
+              const company = v.companyName || v.company_name;
+              const phone = v.mobileNo || v.mobile_no || v.contactNumber || v.contact_number;
 
               return (
-                <div key={v.id} className="p-3.5 space-y-2.5">
+                <div
+                  key={v.id}
+                  className="bg-white rounded-xl border border-slate-200/80 p-3 space-y-2 shadow-2xs hover:border-indigo-200 transition-colors"
+                >
+                  {/* Card Header: Name + Badge */}
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm text-slate-900">{name}</span>
-                        <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100">
-                          {short}
-                        </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-xs text-slate-900 truncate">{name}</span>
+                        {short && (
+                          <span className="text-[9.5px] font-mono font-semibold text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">
+                            {short}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-1">
-                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="line-clamp-1">{v.address}</span>
-                      </div>
+                      {company && (
+                        <div className="flex items-center gap-1 text-[10.5px] text-slate-500 mt-0.5 truncate">
+                          <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{company}</span>
+                        </div>
+                      )}
                     </div>
                     <StatusBadge status={active ? 'active' : 'inactive'} size="sm" />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-600 bg-slate-50/80 p-2.5 rounded-lg border border-slate-100">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <a href={`mailto:${v.email}`} className="truncate text-[11px] text-slate-700 hover:underline">
-                        {v.email}
+                  {/* Compact Contact Pill */}
+                  <div className="flex items-center gap-2.5 text-[11px] bg-slate-50/90 px-2 py-1.5 rounded-lg border border-slate-100 flex-wrap">
+                    {phone && (
+                      <a
+                        href={`tel:${phone}`}
+                        className="inline-flex items-center gap-1 font-mono text-slate-800 hover:text-indigo-600 shrink-0"
+                      >
+                        <Phone className="w-3 h-3 text-indigo-600 shrink-0" />
+                        <span>{phone}</span>
                       </a>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <a href={`tel:${phone}`} className="text-[11px] font-mono text-slate-700 hover:underline">
-                        {phone}
+                    )}
+                    {v.email && (
+                      <a
+                        href={`mailto:${v.email}`}
+                        className="inline-flex items-center gap-1 text-slate-600 hover:text-indigo-600 truncate max-w-[170px]"
+                        title={v.email}
+                      >
+                        <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate">{v.email}</span>
                       </a>
-                    </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-50">
-                    <div className="flex items-center gap-2">
+                  {/* Card Footer: Status Switch + Actions */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100/70">
+                    <div className="flex items-center gap-1.5">
                       {canManage && (
-                        <div className="flex items-center gap-1.5">
+                        <>
                           <Switch
                             checked={active}
                             onChange={() => handleToggleStatus(v)}
-                            disabled={togglingId === v.id}
+                            disabled={togglingId === rowOrVId(v)}
                           />
-                          <span className="text-[11px] text-slate-500">
+                          <span className="text-[10px] text-slate-500 font-medium">
                             {active ? 'Active' : 'Inactive'}
                           </span>
-                        </div>
+                        </>
                       )}
                     </div>
 
                     <div className="flex items-center gap-1">
                       {canManage && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(AppRoutes.VENDOR_EDIT.replace(':id', v.id))}
-                          leftIcon={<Edit2 className="w-3.5 h-3.5" />}
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(v)}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                         >
-                          Edit
-                        </Button>
+                          <Edit2 className="w-3 h-3" />
+                          <span>Edit</span>
+                        </button>
                       )}
                       {canDelete && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => setDeleteTarget(v)}
-                          className="text-rose-600 hover:bg-rose-50"
-                          leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                         >
-                          Delete
-                        </Button>
+                          <Trash2 className="w-3 h-3" />
+                          <span>Delete</span>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -446,26 +672,147 @@ export const VendorListPage: React.FC = () => {
               );
             })
           )}
-        </div>
 
-        {/* Pagination */}
-        {meta.totalPages > 1 && (
-          <div className="p-3 border-t border-slate-100">
-            <Pagination
-              meta={meta}
-              onPageChange={(p) => setMeta((prev) => ({ ...prev, page: p }))}
-              onLimitChange={(l) => setMeta((prev) => ({ ...prev, limit: l, page: 1 }))}
-            />
+          {/* Mobile Pagination */}
+          {meta.totalPages > 1 && (
+            <div className="pt-1">
+              <Pagination
+                meta={meta}
+                onPageChange={(p) => setMeta((prev) => ({ ...prev, page: p }))}
+                onLimitChange={(l) => setMeta((prev) => ({ ...prev, limit: l, page: 1 }))}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Minimalist Quick Add/Edit Vendor Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
+                  <Store className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-xs">
+                  {editingVendor ? 'Edit Vendor' : 'Add New Vendor'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-md hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmit(handleModalSubmit)} noValidate className="flex flex-col flex-1 overflow-y-auto">
+              <div className="p-3.5 space-y-3">
+                {/* Row 1: Required Fields with bright red requiredIndicator asterisk */}
+                <div className="space-y-2.5">
+                  <Input
+                    label="Vendor Name"
+                    requiredIndicator={true}
+                    placeholder="e.g. Apex Sound & Lights"
+                    error={errors.vendorName?.message}
+                    {...register('vendorName')}
+                  />
+
+                  <Input
+                    label="Contact Number"
+                    requiredIndicator={true}
+                    type="tel"
+                    placeholder="e.g. +91 9876543210"
+                    error={errors.mobileNo?.message}
+                    {...register('mobileNo')}
+                  />
+                </div>
+
+                {/* Row 2: Optional Info */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Input
+                    label="Company Name"
+                    placeholder="e.g. Apex Pvt Ltd"
+                    helperText="Optional"
+                    error={errors.companyName?.message}
+                    {...register('companyName')}
+                  />
+
+                  <Input
+                    label="Vendor Short Name"
+                    placeholder="e.g. APEX"
+                    helperText="Optional"
+                    error={errors.shortName?.message}
+                    {...register('shortName')}
+                  />
+                </div>
+
+                {/* Row 3: Optional Email with validation */}
+                <div>
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    placeholder="e.g. contact@apex.com"
+                    helperText="Optional (valid email format)"
+                    error={errors.email?.message}
+                    {...register('email')}
+                  />
+                </div>
+
+                {/* Row 4: Status Toggle */}
+                <div className="p-2 bg-slate-50 rounded-lg border border-slate-200/80 flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold text-xs text-slate-800 block">Active Vendor</span>
+                    <span className="text-[10px] text-slate-500">
+                      Available for assignment and contracts
+                    </span>
+                  </div>
+                  <Switch
+                    checked={isActiveModalValue}
+                    onChange={(val) => setValue('isActive', val)}
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-3.5 py-2.5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsModalOpen(false)}
+                  disabled={isModalSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isModalSubmitting}
+                  leftIcon={<Save className="w-3.5 h-3.5" />}
+                >
+                  {editingVendor ? 'Update Vendor' : 'Save Vendor'}
+                </Button>
+              </div>
+            </form>
           </div>
-        )}
-      </Card>
+        </div>
+      )}
 
       {/* Delete Confirm Dialog */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
-        title="Delete Vendor Record"
-        message={`Are you sure you want to delete vendor "${deleteTarget?.vendorName || deleteTarget?.vendor_name}"? This action will remove the vendor from the master list.`}
-        confirmLabel="Yes, Delete Vendor"
+        title="Delete Vendor"
+        message={`Are you sure you want to delete vendor "${deleteTarget?.vendorName || deleteTarget?.vendor_name}"?`}
+        confirmLabel="Yes, Delete"
         cancelLabel="Cancel"
         variant="danger"
         isLoading={isDeleting}
@@ -475,5 +822,8 @@ export const VendorListPage: React.FC = () => {
     </div>
   );
 };
+
+// Helper
+const rowOrVId = (v: VendorItem) => v.id;
 
 export default VendorListPage;

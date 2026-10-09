@@ -22,6 +22,7 @@ import { usePermission } from '../../../hooks/usePermission';
 import { Permissions } from '../../../constants/permissions';
 import { formatDate, formatCurrency } from '../../../utils/formatters';
 import { extractErrorMessage } from '../../../utils/errorExtractor';
+import { getFileUrl } from '../../../utils/fileHelper';
 import { PrintableWorkOrder } from './PrintableWorkOrder';
 import { RecordContractPaymentModal } from './RecordContractPaymentModal';
 import {
@@ -730,7 +731,7 @@ export const ContractDetailsModal: React.FC<ContractDetailsModalProps> = ({
                           <td className="py-2 px-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
                               <a
-                                href={doc.file_url}
+                                href={getFileUrl(doc.file_url)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="p-1 text-indigo-600 hover:text-indigo-800"

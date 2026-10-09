@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { expenseCategoriesService } from '../../api/expenseCategoriesService';
 import { societiesService } from '../../api/societiesService';
 import { ExpenseCategoryItem, PaginationMeta, SocietyItem } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { usePermission } from '../../hooks/usePermission';
 import { Permissions } from '../../constants/permissions';
+import { AppRoutes } from '../../constants/routes';
 import Card from '../../components/ui/Card';
 import Table, { Column } from '../../components/ui/Table';
 import Pagination from '../../components/ui/Pagination';
@@ -18,6 +20,7 @@ import Switch from '../../components/ui/Switch';
 import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 import PermissionGuard from '../../components/common/PermissionGuard';
+import ThemedSelect from '../../components/ui/ThemedSelect';
 import { extractErrorMessage } from '../../utils/errorExtractor';
 import { useDebounce } from '../../hooks/useDebounce';
 import {
@@ -35,6 +38,9 @@ import {
   Sliders,
   Building2,
   Globe,
+  ArrowLeft,
+  Search,
+  X,
 } from 'lucide-react';
 
 const COLOR_PRESETS = [
@@ -52,6 +58,7 @@ const COLOR_PRESETS = [
 ];
 
 export const ExpenseCategoryListPage: React.FC = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const { can, isSuperAdmin, isAdmin } = usePermission();
 
@@ -394,99 +401,131 @@ export const ExpenseCategoryListPage: React.FC = () => {
 
   const canManage = isSuperAdmin || can(Permissions.EXPENSE_CATEGORY_UPDATE) || can(Permissions.SETTING_UPDATE);
   const canDelete = isSuperAdmin || can(Permissions.EXPENSE_CATEGORY_DELETE) || can(Permissions.SETTING_UPDATE);
+  const canCreate = isSuperAdmin || can(Permissions.EXPENSE_CATEGORY_CREATE) || can(Permissions.EXPENSE_CATEGORY_MANAGE) || can(Permissions.SETTING_UPDATE);
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-10">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-soft shrink-0">
-            <Tag className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2 flex-wrap">
-              Expense Categories Master
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100">
-                Setting Master
-              </span>
+    <div className="space-y-2.5 max-w-7xl mx-auto pb-6">
+      {/* Ultra-Compact & Clean Top Header */}
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate(AppRoutes.EXPENSE)}
+            className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 transition-colors"
+            title="Back to Expense Menu"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h1 className="text-base font-bold text-slate-900 tracking-tight truncate">
+              Expense Categories
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Define expense classification heads used when allocating vendor contracts and day-wise party items.
-            </p>
+            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-full border border-indigo-100 shrink-0">
+              {meta.total}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <Button
-            variant="outline"
-            size="sm"
+        {/* Compact Right Actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
             onClick={fetchCategories}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors shadow-2xs"
+            title="Refresh Categories"
           >
-            Refresh
-          </Button>
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
+          </button>
 
-          <PermissionGuard
-            permissions={[
-              Permissions.EXPENSE_CATEGORY_CREATE,
-              Permissions.EXPENSE_CATEGORY_MANAGE,
-              Permissions.SETTING_UPDATE,
-            ]}
-          >
-            <Button
-              variant="primary"
-              size="sm"
+          {canCreate && (
+            <button
+              type="button"
               onClick={handleOpenCreateModal}
-              leftIcon={<Plus className="w-3.5 h-3.5" />}
-              className="bg-indigo-600 hover:bg-indigo-700 shadow-2xs"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all"
             >
-              Add Expense Category
-            </Button>
-          </PermissionGuard>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Category</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <FilterBar
-        search={search}
-        onSearchChange={handleSearchSubmit}
-        searchPlaceholder="Search by category name or code..."
-        filters={
-          <div className="flex items-center gap-2 flex-wrap">
-            {isSuperAdmin && (
-              <select
-                value={societyFilter}
-                onChange={(e) => {
-                  setSocietyFilter(e.target.value);
-                  setMeta((prev) => ({ ...prev, page: 1 }));
-                }}
-                className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-700"
-              >
-                <option value="">All Societies & Global</option>
-                <option value="general">🌐 Global / General Purpose Only</option>
-                {societies.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    🏢 {s.name}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
+      {/* Ultra-Compact Single-Row Search & Filter Bar */}
+      <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200/90 shadow-2xs">
+        {/* Search Input Box */}
+        <div className="relative flex-1 min-w-0">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => handleSearchSubmit(e.target.value)}
+            placeholder="Search category name or code..."
+            className="w-full pl-8 pr-7 py-1.5 text-xs text-slate-800 bg-slate-50/70 border border-slate-200 rounded-lg placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
                 setMeta((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-700"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
             >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Compact Society Filter (SuperAdmin Only) */}
+        {isSuperAdmin && (
+          <div className="w-auto min-w-[125px] sm:min-w-[145px] shrink-0">
+            <ThemedSelect
+              value={societyFilter}
+              onChange={(val) => {
+                setSocietyFilter(val);
+                setMeta((prev) => ({ ...prev, page: 1 }));
+              }}
+              options={[
+                { value: '', label: 'All Scopes' },
+                { value: 'general', label: 'Global Scope', icon: <Globe className="w-3 h-3 text-emerald-600" /> },
+                ...societies.map((s) => ({
+                  value: s.id,
+                  label: s.name,
+                  icon: <Building2 className="w-3 h-3 text-blue-600" />,
+                })),
+              ]}
+              placeholder="All Scopes"
+              variant="indigo"
+              size="sm"
+              align="right"
+              menuWidth="w-52"
+              searchable={societies.length > 4}
+            />
           </div>
-        }
-      />
+        )}
+
+        {/* Compact Themed Status Select */}
+        <div className="w-auto min-w-[115px] sm:min-w-[130px] shrink-0">
+          <ThemedSelect
+            value={statusFilter}
+            onChange={(val) => {
+              setStatusFilter(val);
+              setMeta((prev) => ({ ...prev, page: 1 }));
+            }}
+            options={[
+              { value: '', label: 'All Statuses' },
+              { value: 'active', label: 'Active', color: '#10B981' },
+              { value: 'inactive', label: 'Inactive', color: '#94A3B8' },
+            ]}
+            placeholder="All Statuses"
+            variant="indigo"
+            size="sm"
+            align="right"
+            menuWidth="w-40"
+            searchable={false}
+          />
+        </div>
+      </div>
 
       {/* Main Table / Mobile Cards */}
       <Card noPadding className="border-slate-200/80 shadow-2xs overflow-hidden">
@@ -496,35 +535,35 @@ export const ExpenseCategoryListPage: React.FC = () => {
             columns={columns}
             data={categories}
             isLoading={isLoading}
-            emptyText="No expense categories found. Click 'Add Expense Category' to create standard heads."
+            emptyText="No expense categories found. Click 'Add Category' above to create standard heads."
             sortBy={sortBy}
             sortOrder={sortOrder}
             onSort={(key) => {
               if (sortBy === key) {
                 setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
               } else {
-                setSortBy(key);
                 setSortOrder('asc');
+                setSortBy(key);
               }
             }}
           />
         </div>
 
-        {/* Mobile / Tablet Responsive Card View */}
+        {/* Mobile Responsive Compact Card View */}
         <div className="md:hidden divide-y divide-slate-100 bg-white">
           {isLoading ? (
-            <div className="py-12 px-4 flex flex-col items-center justify-center text-center">
-              <RefreshCw className="w-6 h-6 text-indigo-500 animate-spin mb-2" />
-              <p className="text-xs font-medium text-slate-600">Loading expense categories...</p>
+            <div className="py-10 px-4 flex flex-col items-center justify-center text-center">
+              <RefreshCw className="w-5 h-5 text-indigo-500 animate-spin mb-2" />
+              <p className="text-xs font-medium text-slate-600">Loading categories...</p>
             </div>
           ) : categories.length === 0 ? (
-            <div className="py-12 px-4 flex flex-col items-center justify-center text-center">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500 mb-3">
-                <Tag className="w-6 h-6" />
+            <div className="py-10 px-4 flex flex-col items-center justify-center text-center">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 mb-2.5">
+                <Tag className="w-5 h-5" />
               </div>
-              <p className="text-sm font-semibold text-slate-800">No expense categories found</p>
-              <p className="text-xs text-slate-500 max-w-xs mt-1">
-                Try adjusting your search or filters, or tap "Add Expense Category" above to create one.
+              <p className="text-xs font-bold text-slate-800">No expense categories found</p>
+              <p className="text-[11px] text-slate-400 max-w-xs mt-0.5">
+                Tap "Add Category" above to create one.
               </p>
             </div>
           ) : (
@@ -534,117 +573,89 @@ export const ExpenseCategoryListPage: React.FC = () => {
               const isActive = cat.isActive ?? cat.is_active ?? (cat.status === 'active');
               const displayOrder = cat.displayOrder ?? cat.display_order ?? 0;
               const contractsCount = cat.contractsCount ?? 0;
-              const itemsCount = cat.itemsCount ?? 0;
 
               return (
-                <div key={cat.id} className="p-4 space-y-3 transition-colors hover:bg-slate-50/50">
-                  {/* Top Bar: Icon, Name, Scope, Status */}
-                  <div className="flex items-start gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs text-white text-sm font-bold ring-2 ring-white"
-                      style={{ backgroundColor: color }}
-                    >
-                      <Tag className="w-5 h-5" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-bold text-sm text-slate-900 leading-snug break-words">
-                          {cat.name}
-                        </h3>
-                        <StatusBadge status={isActive ? 'active' : 'inactive'} size="sm" />
-                      </div>
-
-                      <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                <div key={cat.id} className="p-3 space-y-2 transition-colors hover:bg-slate-50/50">
+                  {/* Top Bar: Color Dot, Name, Code, Status Switch & Actions */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: color }}
+                      />
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <h3 className="font-bold text-xs text-slate-900 truncate">{cat.name}</h3>
                         {cat.code && (
-                          <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-mono font-semibold">
+                          <span className="text-[9.5px] font-mono font-medium text-slate-600 bg-slate-100 px-1 py-0.2 rounded shrink-0">
                             {cat.code}
                           </span>
                         )}
-                        {isGeneral ? (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-medium">
-                            <Globe className="w-2.5 h-2.5 text-emerald-600" />
-                            Global
-                          </span>
-                        ) : (
-                          <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-medium truncate max-w-[150px]"
-                            title={cat.society?.name || 'Society'}
-                          >
-                            <Building2 className="w-2.5 h-2.5 text-blue-600 shrink-0" />
-                            <span className="truncate">{cat.society?.name || 'Society Specific'}</span>
-                          </span>
-                        )}
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <StatusBadge status={isActive ? 'active' : 'inactive'} size="sm" />
+                      {canManage && (
+                        <Switch
+                          checked={isActive}
+                          disabled={togglingId === cat.id}
+                          onChange={() => handleToggleStatus(cat)}
+                        />
+                      )}
                     </div>
                   </div>
 
                   {/* Description (if available) */}
                   {cat.description && (
-                    <p className="text-xs text-slate-600 bg-slate-50/80 p-2.5 rounded-lg border border-slate-100 leading-relaxed break-words">
+                    <p className="text-[11.5px] text-slate-600 leading-snug line-clamp-2">
                       {cat.description}
                     </p>
                   )}
 
-                  {/* Badges / Metrics */}
-                  <div className="flex items-center gap-2 flex-wrap text-xs">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/80 text-slate-700 text-[11px] font-mono font-medium">
-                      <Hash className="w-3 h-3 text-slate-400" />
-                      Order: {displayOrder}
-                    </span>
+                  {/* Badges and Actions Row */}
+                  <div className="flex items-center justify-between pt-1 text-[10.5px]">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {isGeneral ? (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 font-medium">
+                          <Globe className="w-2.5 h-2.5 text-emerald-600" />
+                          Global
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 font-medium truncate max-w-[130px]">
+                          <Building2 className="w-2.5 h-2.5 text-blue-600 shrink-0" />
+                          <span className="truncate">{cat.society?.name || 'Society'}</span>
+                        </span>
+                      )}
 
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
-                      <Briefcase className="w-3 h-3 text-indigo-500" />
-                      {contractsCount} Contracts
-                    </span>
+                      <span className="text-slate-400 font-mono">#{displayOrder}</span>
 
-                    {itemsCount > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">
-                        <Layers className="w-3 h-3 text-slate-400" />
-                        {itemsCount} Items
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Card Actions Footer */}
-                  <div className="flex items-center justify-between pt-2.5 border-t border-slate-100">
-                    <div className="flex items-center gap-2">
-                      {canManage && (
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={isActive}
-                            disabled={togglingId === cat.id}
-                            onChange={() => handleToggleStatus(cat)}
-                          />
-                          <span className="text-xs font-medium text-slate-600">
-                            {isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
+                      {contractsCount > 0 && (
+                        <span className="text-indigo-600 font-medium">
+                          {contractsCount} {contractsCount === 1 ? 'contract' : 'contracts'}
+                        </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1">
                       {canManage && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => handleOpenEditModal(cat)}
-                          className="text-slate-700 hover:text-indigo-600 hover:bg-indigo-50 text-xs px-2.5 py-1 h-7.5"
-                          leftIcon={<Edit2 className="w-3.5 h-3.5" />}
+                          className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                          title="Edit"
                         >
-                          Edit
-                        </Button>
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
                       )}
                       {canDelete && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => setDeleteTarget(cat)}
-                          className="text-slate-600 hover:text-rose-600 hover:bg-rose-50 text-xs px-2.5 py-1 h-7.5"
-                          leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                          title="Delete"
                         >
-                          Delete
-                        </Button>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -655,7 +666,7 @@ export const ExpenseCategoryListPage: React.FC = () => {
         </div>
 
         {/* Pagination Footer */}
-        <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+        <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/50">
           <Pagination meta={meta} onPageChange={(page) => setMeta((prev) => ({ ...prev, page }))} />
         </div>
       </Card>
@@ -677,19 +688,28 @@ export const ExpenseCategoryListPage: React.FC = () => {
       >
         <form onSubmit={handleSubmitForm} className="space-y-3.5">
           {isSuperAdmin && (
-            <Select
-              label="Society Assignment (Optional for Super Admin)"
+            <ThemedSelect
+              label="Society Assignment (Scope)"
               value={formData.societyId}
-              onChange={(e) => setFormData({ ...formData, societyId: e.target.value })}
+              onChange={(val) => setFormData({ ...formData, societyId: val })}
+              options={[
+                {
+                  value: '',
+                  label: 'General Purpose / Global (All Societies)',
+                  subLabel: 'Available across all societies',
+                  icon: <Globe className="w-3.5 h-3.5 text-emerald-600" />,
+                },
+                ...societies.map((s) => ({
+                  value: s.id,
+                  label: s.name,
+                  icon: <Building2 className="w-3.5 h-3.5 text-blue-600" />,
+                })),
+              ]}
+              placeholder="Select society scope..."
+              variant="indigo"
+              searchable={societies.length > 5}
               helperText="Select a specific society, or leave as General Purpose to make this category available to all societies."
-            >
-              <option value="">🌐 General Purpose / Global (All Societies)</option>
-              {societies.map((s) => (
-                <option key={s.id} value={s.id}>
-                  🏢 {s.name}
-                </option>
-              ))}
-            </Select>
+            />
           )}
 
           <Input

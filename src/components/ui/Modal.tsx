@@ -50,7 +50,7 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto overscroll-contain">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
@@ -63,7 +63,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal Dialog Box */}
       <div
         className={clsx(
-          'relative w-full bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-10 animate-in zoom-in-95 duration-200 flex flex-col my-auto max-h-[88vh]',
+          'relative w-full bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden z-10 animate-in zoom-in-95 duration-200 flex flex-col my-auto max-h-[90vh]',
           sizeClasses[size]
         )}
       >
@@ -76,10 +76,10 @@ export const Modal: React.FC<ModalProps> = ({
 
         {/* Header */}
         {(title || description) && (
-          <div className="px-4 py-3.5 sm:px-5 sm:py-4 bg-slate-50/80 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+          <div className="px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-50/80 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
             <div className="min-w-0 flex-1">
               {typeof title === 'string' ? (
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight truncate">{title}</h3>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate">{title}</h3>
               ) : (
                 title
               )}
@@ -91,7 +91,7 @@ export const Modal: React.FC<ModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="text-slate-400 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed p-1 rounded-lg hover:bg-slate-200/60 transition-colors shrink-0"
+              className="text-slate-400 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed p-1 rounded-lg hover:bg-slate-200/60 transition-colors shrink-0 cursor-pointer"
               aria-label="Close dialog"
             >
               <X className="w-4 h-4" />
@@ -100,11 +100,13 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content Body */}
-        <div className="px-4 py-3.5 sm:px-5 sm:py-4.5 overflow-y-auto flex-1">{children}</div>
+        <div className="px-3 py-3 sm:px-5 sm:py-4 overflow-y-auto flex-1 overscroll-contain">
+          {children}
+        </div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-4 py-2.5 sm:px-5 sm:py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0 flex-wrap">
+          <div className="px-3 py-2.5 sm:px-5 sm:py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0 flex-wrap">
             {footer}
           </div>
         )}

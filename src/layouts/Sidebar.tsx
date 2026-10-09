@@ -25,6 +25,7 @@ import {
   Sparkles,
   Wallet,
   Megaphone,
+  Receipt,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -106,10 +107,22 @@ export const Sidebar: React.FC = () => {
           permission: Permissions.CONTRACT_READ,
         },
         {
+          label: 'Vendors',
+          to: AppRoutes.VENDORS,
+          icon: <Store className="w-4 h-4" />,
+          permission: Permissions.VENDOR_READ,
+        },
+        {
           label: 'Advertising',
           to: AppRoutes.ADVERTISING,
           icon: <Megaphone className="w-4 h-4" />,
           permission: Permissions.ADVERTISEMENT_READ,
+        },
+        {
+          label: 'Expenses',
+          to: AppRoutes.EXPENSE,
+          icon: <Receipt className="w-4 h-4" />,
+          permission: Permissions.EXPENSE_READ,
         },
         {
           label: 'Payment Methods',
@@ -169,7 +182,7 @@ export const Sidebar: React.FC = () => {
       title: 'SETTING MASTER',
       items: [
         {
-          label: 'Vendor Master',
+          label: 'Vendors',
           to: AppRoutes.VENDORS,
           icon: <Store className="w-4 h-4" />,
           permission: Permissions.VENDOR_READ,
