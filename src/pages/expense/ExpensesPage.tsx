@@ -10,6 +10,7 @@ import {
   ExpenseSummaryMetrics,
   PaginationMeta,
   ExpensePaymentMode,
+  ExpensePaymentStatus,
 } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
@@ -56,6 +57,9 @@ import {
   Wallet,
   ExternalLink,
   Download,
+  Clock,
+  AlertCircle,
+  Calculator,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -125,14 +129,15 @@ export const ExpensesPage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [vendorFilter, setVendorFilter] = useState('');
   const [modeFilter, setModeFilter] = useState('');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [sortBy, setSortBy] = useState('expense_date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const hasActiveFilters = Boolean(categoryFilter || vendorFilter || modeFilter || startDateFilter || endDateFilter);
-  const activeFilterCount = [categoryFilter, vendorFilter, modeFilter, startDateFilter, endDateFilter].filter(Boolean).length;
+  const hasActiveFilters = Boolean(categoryFilter || vendorFilter || modeFilter || paymentStatusFilter || startDateFilter || endDateFilter);
+  const activeFilterCount = [categoryFilter, vendorFilter, modeFilter, paymentStatusFilter, startDateFilter, endDateFilter].filter(Boolean).length;
 
   // Master options
   const [categories, setCategories] = useState<ExpenseCategoryItem[]>([]);
@@ -146,7 +151,9 @@ export const ExpensesPage: React.FC = () => {
     expenseDate: new Date().toISOString().split('T')[0],
     expenseCategoryId: '',
     vendorId: '',
-    amount: '',
+    totalAmount: '',
+    amountPaid: '',
+    paymentStatus: 'completed' as ExpensePaymentStatus,
     modeOfPayment: 'CASH' as ExpensePaymentMode,
     transactionReference: '',
     chequeNumber: '',
@@ -212,6 +219,7 @@ export const ExpensesPage: React.FC = () => {
           expenseCategoryId: categoryFilter || undefined,
           vendorId: vendorFilter || undefined,
           modeOfPayment: modeFilter || undefined,
+          paymentStatus: paymentStatusFilter || undefined,
           startDate: startDateFilter || undefined,
           endDate: endDateFilter || undefined,
           sortBy,
@@ -251,12 +259,20 @@ export const ExpensesPage: React.FC = () => {
     categoryFilter,
     vendorFilter,
     modeFilter,
+    paymentStatusFilter,
     startDateFilter,
     endDateFilter,
     sortBy,
     sortOrder,
     selectedSocietyId,
   ]);
+
+  const getAutoPaymentStatus = (total: number, paid: number): ExpensePaymentStatus => {
+    if (paid <= 0 && total > 0) return 'pending';
+    if (paid >= total && total > 0) return 'completed';
+    if (paid > 0 && paid < total) return 'partial';
+    return 'completed';
+  };
 
   const handleOpenCreateModal = () => {
     setIsEditing(false);
@@ -265,7 +281,9 @@ export const ExpensesPage: React.FC = () => {
       expenseDate: new Date().toISOString().split('T')[0],
       expenseCategoryId: categories.length > 0 ? categories[0].id : '',
       vendorId: vendors.length > 0 ? vendors[0].id : '',
-      amount: '',
+      totalAmount: '',
+      amountPaid: '',
+      paymentStatus: 'completed',
       modeOfPayment: 'CASH',
       transactionReference: '',
       chequeNumber: '',
@@ -282,11 +300,26 @@ export const ExpensesPage: React.FC = () => {
   const handleOpenEditModal = (exp: ExpenseItem) => {
     setIsEditing(true);
     setCurrentId(exp.id);
+    const expTotal = exp.totalAmount != null
+      ? Number(exp.totalAmount)
+      : (exp.total_amount != null
+        ? Number(exp.total_amount)
+        : Number(exp.amount || 0));
+    const expPaid = exp.amountPaid != null
+      ? Number(exp.amountPaid)
+      : (exp.amount_paid != null
+        ? Number(exp.amount_paid)
+        : Number(exp.amount || 0));
+    const autoStatus = getAutoPaymentStatus(expTotal, expPaid);
+    const expStatus = (exp.paymentStatus || exp.payment_status || autoStatus) as ExpensePaymentStatus;
+
     setFormData({
       expenseDate: exp.expenseDate || (exp.expense_date ? exp.expense_date.split('T')[0] : new Date().toISOString().split('T')[0]),
       expenseCategoryId: exp.expenseCategoryId || exp.expense_category_id || '',
       vendorId: exp.vendorId || exp.vendor_id || '',
-      amount: exp.amount ? exp.amount.toString() : '',
+      totalAmount: expTotal > 0 ? String(expTotal) : (exp.amount ? String(exp.amount) : ''),
+      amountPaid: expPaid >= 0 ? String(expPaid) : '',
+      paymentStatus: expStatus,
       modeOfPayment: (exp.modeOfPayment || exp.mode_of_payment || 'CASH').toUpperCase() as ExpensePaymentMode,
       transactionReference: exp.transactionReference || exp.transaction_reference || '',
       chequeNumber: exp.chequeNumber || exp.cheque_number || '',
@@ -300,6 +333,80 @@ export const ExpensesPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleTotalAmountChange = (newTotal: string) => {
+    const totalNum = parseFloat(newTotal) || 0;
+    // Auto-sync amountPaid if it was empty or matched previous total
+    const wasFullOrEmpty = !formData.amountPaid || formData.amountPaid === formData.totalAmount;
+    const nextPaid = wasFullOrEmpty ? newTotal : formData.amountPaid;
+    const paidNum = parseFloat(nextPaid) || 0;
+    const nextStatus = getAutoPaymentStatus(totalNum, paidNum);
+
+    setFormData((prev) => ({
+      ...prev,
+      totalAmount: newTotal,
+      amountPaid: nextPaid,
+      paymentStatus: nextStatus,
+    }));
+    if (formErrors.totalAmount) {
+      setFormErrors((prev) => ({ ...prev, totalAmount: '' }));
+    }
+    if (formErrors.amountPaid && wasFullOrEmpty) {
+      setFormErrors((prev) => ({ ...prev, amountPaid: '' }));
+    }
+  };
+
+  const handleAmountPaidChange = (newPaid: string) => {
+    const totalNum = parseFloat(formData.totalAmount) || 0;
+    const paidNum = parseFloat(newPaid) || 0;
+    const nextStatus = getAutoPaymentStatus(totalNum, paidNum);
+    setFormData((prev) => ({
+      ...prev,
+      amountPaid: newPaid,
+      paymentStatus: nextStatus,
+    }));
+    if (formErrors.amountPaid) {
+      setFormErrors((prev) => ({ ...prev, amountPaid: '' }));
+    }
+  };
+
+  const handleSetFullPayment = () => {
+    const totalNum = parseFloat(formData.totalAmount) || 0;
+    setFormData((prev) => ({
+      ...prev,
+      amountPaid: prev.totalAmount,
+      paymentStatus: totalNum > 0 ? 'completed' : prev.paymentStatus,
+    }));
+    if (formErrors.amountPaid) {
+      setFormErrors((prev) => ({ ...prev, amountPaid: '' }));
+    }
+  };
+
+  const handleSetHalfPayment = () => {
+    const totalNum = parseFloat(formData.totalAmount) || 0;
+    if (totalNum > 0) {
+      const half = (totalNum / 2).toFixed(2).replace(/\.00$/, '');
+      setFormData((prev) => ({
+        ...prev,
+        amountPaid: half,
+        paymentStatus: 'partial',
+      }));
+      if (formErrors.amountPaid) {
+        setFormErrors((prev) => ({ ...prev, amountPaid: '' }));
+      }
+    }
+  };
+
+  const handleSetNoPayment = () => {
+    setFormData((prev) => ({
+      ...prev,
+      amountPaid: '0',
+      paymentStatus: 'pending',
+    }));
+    if (formErrors.amountPaid) {
+      setFormErrors((prev) => ({ ...prev, amountPaid: '' }));
+    }
+  };
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
     if (!formData.expenseCategoryId) {
@@ -308,9 +415,16 @@ export const ExpensesPage: React.FC = () => {
     if (!formData.vendorId) {
       errors.vendorId = 'Please select a vendor';
     }
-    const numAmount = Number(formData.amount);
-    if (!formData.amount || isNaN(numAmount) || numAmount <= 0) {
-      errors.amount = 'Amount must be a valid positive number greater than 0';
+    const numTotal = Number(formData.totalAmount);
+    if (!formData.totalAmount || isNaN(numTotal) || numTotal <= 0) {
+      errors.totalAmount = 'Total expense amount must be greater than 0';
+    }
+    const numPaid = Number(formData.amountPaid);
+    if (formData.amountPaid !== '' && (isNaN(numPaid) || numPaid < 0)) {
+      errors.amountPaid = 'Amount paid must be 0 or greater';
+    }
+    if (numPaid > numTotal && numTotal > 0) {
+      errors.amountPaid = 'Amount paid cannot exceed total expense amount';
     }
     if (!formData.expenseDate) {
       errors.expenseDate = 'Expense date is required';
@@ -342,7 +456,10 @@ export const ExpensesPage: React.FC = () => {
       payload.append('expenseCategoryId', formData.expenseCategoryId);
       payload.append('vendorId', formData.vendorId);
       payload.append('expenseDate', formData.expenseDate);
-      payload.append('amount', formData.amount);
+      payload.append('totalAmount', formData.totalAmount);
+      payload.append('amountPaid', formData.amountPaid || '0');
+      payload.append('amount', formData.amountPaid || formData.totalAmount);
+      payload.append('paymentStatus', formData.paymentStatus);
       payload.append('modeOfPayment', formData.modeOfPayment);
       if (formData.transactionReference.trim()) {
         payload.append('transactionReference', formData.transactionReference.trim());
@@ -412,6 +529,35 @@ export const ExpensesPage: React.FC = () => {
     }).format(val);
   };
 
+  const formatDisplayDate = (dateStr?: string) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const parts = dateStr.split('T')[0].split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          });
+        }
+      }
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   const getPaymentModeBadge = (mode: string) => {
     const upper = (mode || 'CASH').toUpperCase();
     if (upper === 'CASH') {
@@ -442,6 +588,35 @@ export const ExpensesPage: React.FC = () => {
       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
         <QrCode className="w-3 h-3" />
         UPI / QR
+      </span>
+    );
+  };
+
+  const getExpensePaymentStatusBadge = (status?: string, total?: number, paid?: number) => {
+    const s = (status || '').toLowerCase();
+    const isCompleted = s === 'completed' || (total !== undefined && paid !== undefined && paid >= total && total > 0);
+    const isPartial = !isCompleted && (s === 'partial' || (paid !== undefined && paid > 0));
+
+    if (isCompleted) {
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+          Totally Paid
+        </span>
+      );
+    }
+    if (isPartial) {
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+          <Clock className="w-3 h-3 text-blue-600" />
+          Advance Paid
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+        <AlertCircle className="w-3 h-3 text-amber-600" />
+        Pending / Due
       </span>
     );
   };
@@ -518,28 +693,54 @@ export const ExpensesPage: React.FC = () => {
     },
     {
       key: 'amount',
-      header: 'Amount & Mode',
+      header: 'Amounts & Status',
       sortable: true,
-      render: (exp) => (
-        <div className="flex flex-col gap-1">
-          <span className="font-extrabold text-sm text-rose-600 tracking-tight">
-            {formatCurrency(exp.amount)}
-          </span>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {getPaymentModeBadge(exp.modeOfPayment || exp.mode_of_payment || 'CASH')}
-            {exp.chequeNumber && (
-              <span className="text-[10px] font-mono text-slate-500">
-                #{exp.chequeNumber}
+      render: (exp) => {
+        const total = exp.totalAmount != null ? Number(exp.totalAmount) : (exp.total_amount != null ? Number(exp.total_amount) : Number(exp.amount || 0));
+        const paid = exp.amountPaid != null ? Number(exp.amountPaid) : (exp.amount_paid != null ? Number(exp.amount_paid) : Number(exp.amount || 0));
+        const remaining = Math.max(0, total - paid);
+        const status = exp.paymentStatus || exp.payment_status || (remaining === 0 ? 'completed' : paid > 0 ? 'partial' : 'pending');
+
+        return (
+          <div className="flex flex-col gap-1 min-w-[155px]">
+            <div className="flex items-center justify-between gap-1.5">
+              <span className="font-extrabold text-sm text-slate-900 tracking-tight">
+                {formatCurrency(total)}
               </span>
-            )}
-            {exp.transactionReference && (
-              <span className="text-[10px] font-mono text-slate-500">
-                Ref: {exp.transactionReference}
+              {getExpensePaymentStatusBadge(status, total, paid)}
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[10.5px]">
+              <span className="text-emerald-700 font-bold bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200/80">
+                Paid: {formatCurrency(paid)}
               </span>
-            )}
+              {remaining > 0 ? (
+                <span className="text-amber-700 font-bold bg-amber-50 px-1 py-0.5 rounded border border-amber-200/80">
+                  Due: {formatCurrency(remaining)}
+                </span>
+              ) : (
+                <span className="text-slate-400 font-medium italic">
+                  Full Settled
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              {getPaymentModeBadge(exp.modeOfPayment || exp.mode_of_payment || 'CASH')}
+              {exp.chequeNumber && (
+                <span className="text-[10px] font-mono text-slate-500">
+                  #{exp.chequeNumber}
+                </span>
+              )}
+              {exp.transactionReference && (
+                <span className="text-[10px] font-mono text-slate-500 truncate max-w-[90px]" title={exp.transactionReference}>
+                  Ref: {exp.transactionReference}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'attachment',
@@ -617,13 +818,13 @@ export const ExpensesPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(AppRoutes.EXPENSE)}
-            className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 transition-colors"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-600 flex items-center justify-center shrink-0 transition-colors"
             title="Back to Expense Menu"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-1.5 min-w-0">
-            <h1 className="text-base font-bold text-slate-900 tracking-tight truncate">Expenses</h1>
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight truncate">Expenses</h1>
             <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded-full border border-rose-100 shrink-0">
               {meta.total}
             </span>
@@ -635,7 +836,7 @@ export const ExpensesPage: React.FC = () => {
           <button
             type="button"
             onClick={fetchExpenses}
-            className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-colors shadow-2xs"
+            className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 text-slate-600 flex items-center justify-center transition-colors shadow-2xs shrink-0"
             title="Refresh Expenses"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-rose-600' : ''}`} />
@@ -645,7 +846,7 @@ export const ExpensesPage: React.FC = () => {
             <button
               type="button"
               onClick={handleOpenCreateModal}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all"
+              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs transition-all whitespace-nowrap shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Expense</span>
@@ -654,72 +855,203 @@ export const ExpensesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Ultra-Compact Single-Row Summary Ribbon (Total + 4 Payment Modes) */}
-      <div className="grid grid-cols-5 gap-1 sm:gap-1.5 bg-white p-2 sm:p-2.5 rounded-xl border border-slate-200/90 shadow-2xs text-center divide-x divide-slate-100">
-        <div className="px-0.5 sm:px-1">
-          <p className="text-[9.5px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tight truncate">Total</p>
-          <p className="text-xs sm:text-sm font-extrabold text-slate-900 truncate mt-0.5">
-            {formatCurrency(summary.totalAmount)}
-          </p>
+      {/* Optimized Executive Financial Summary Card */}
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        {/* Top 3 Core Financial KPIs */}
+        <div className="grid grid-cols-3 divide-x divide-slate-100 p-2 sm:p-3 bg-gradient-to-b from-white to-slate-50/40 text-center">
+          {/* Total Cost */}
+          <div className="px-1 sm:px-3">
+            <span className="text-[9.5px] sm:text-[10.5px] font-bold text-slate-400 uppercase tracking-tight block truncate">
+              Total Cost
+            </span>
+            <span className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight block truncate mt-0.5">
+              {formatCurrency(summary.totalAmount)}
+            </span>
+          </div>
+
+          {/* Total Paid */}
+          <div className="px-1 sm:px-3">
+            <span className="text-[9.5px] sm:text-[10.5px] font-bold text-emerald-600 uppercase tracking-tight block truncate">
+              Total Paid
+            </span>
+            <span className="text-xs sm:text-sm font-extrabold text-emerald-700 tracking-tight block truncate mt-0.5">
+              {formatCurrency(summary.paidAmount ?? summary.totalAmount)}
+            </span>
+          </div>
+
+          {/* Remaining Due */}
+          <div className="px-1 sm:px-3">
+            <span className="text-[9.5px] sm:text-[10.5px] font-bold text-amber-600 uppercase tracking-tight block truncate">
+              Remaining Due
+            </span>
+            <span
+              className={clsx(
+                'text-xs sm:text-sm font-extrabold tracking-tight block truncate mt-0.5',
+                (summary.remainingAmount ?? 0) > 0 ? 'text-amber-700' : 'text-emerald-700'
+              )}
+            >
+              {formatCurrency(summary.remainingAmount ?? 0)}
+            </span>
+          </div>
         </div>
-        <div className="px-0.5 sm:px-1">
-          <p className="text-[9.5px] sm:text-[10px] font-bold text-indigo-600 uppercase tracking-tight truncate">UPI / QR</p>
-          <p className="text-xs sm:text-sm font-extrabold text-indigo-700 truncate mt-0.5">
-            {formatCurrency(summary.upiAmount)}
-          </p>
-        </div>
-        <div className="px-0.5 sm:px-1">
-          <p className="text-[9.5px] sm:text-[10px] font-bold text-emerald-600 uppercase tracking-tight truncate">Cash</p>
-          <p className="text-xs sm:text-sm font-extrabold text-emerald-700 truncate mt-0.5">
-            {formatCurrency(summary.cashAmount)}
-          </p>
-        </div>
-        <div className="px-0.5 sm:px-1">
-          <p className="text-[9.5px] sm:text-[10px] font-bold text-amber-600 uppercase tracking-tight truncate">Cheque</p>
-          <p className="text-xs sm:text-sm font-extrabold text-amber-700 truncate mt-0.5">
-            {formatCurrency(summary.chequeAmount)}
-          </p>
-        </div>
-        <div className="px-0.5 sm:px-1">
-          <p className="text-[9.5px] sm:text-[10px] font-bold text-sky-600 uppercase tracking-tight truncate">Transfer</p>
-          <p className="text-xs sm:text-sm font-extrabold text-sky-700 truncate mt-0.5">
-            {formatCurrency(summary.transferAmount || 0)}
-          </p>
+
+        {/* Bottom Micro Strip: Payment Modes Breakdown */}
+        <div className="border-t border-slate-100 px-2 sm:px-3 py-1.5 bg-slate-50/70 overflow-x-auto no-scrollbar">
+          <div className="flex items-center justify-between sm:justify-center gap-2 sm:gap-6 min-w-max text-[10.5px]">
+            {/* UPI */}
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+              <span className="text-slate-500 font-medium">UPI:</span>
+              <span className="font-bold text-indigo-700">{formatCurrency(summary.upiAmount)}</span>
+            </div>
+
+            {/* Cash */}
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-slate-500 font-medium">Cash:</span>
+              <span className="font-bold text-emerald-700">{formatCurrency(summary.cashAmount)}</span>
+            </div>
+
+            {/* Cheque */}
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+              <span className="text-slate-500 font-medium">Cheque:</span>
+              <span className="font-bold text-amber-700">{formatCurrency(summary.chequeAmount)}</span>
+            </div>
+
+            {/* Transfer */}
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0" />
+              <span className="text-slate-500 font-medium">Transfer:</span>
+              <span className="font-bold text-sky-700">{formatCurrency(summary.transferAmount || 0)}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Minimalist Search & Filter Bar */}
+      {/* Minimalist Responsive Search & Filter Bar */}
       <div className="space-y-2">
-        <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200/90 shadow-2xs">
-          {/* Search Box */}
-          <div className="relative flex-1 min-w-0">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setMeta((prev) => ({ ...prev, page: 1 }));
-              }}
-              placeholder="Search vendor, category, remarks..."
-              className="w-full pl-8 pr-7 py-1.5 text-xs text-slate-800 bg-slate-50/70 border border-slate-200 rounded-lg placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-rose-500 focus:border-rose-500 transition-all"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch('');
+        <div className="bg-white p-1.5 sm:p-2 rounded-xl border border-slate-200/90 shadow-2xs space-y-1.5">
+          {/* Main Search Row with Desktop Dropdowns */}
+          <div className="flex items-center gap-1.5">
+            {/* Search Box - Wide and roomy */}
+            <div className="relative flex-1 min-w-0">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
                   setMeta((prev) => ({ ...prev, page: 1 }));
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
+                placeholder="Search vendor, category, remarks..."
+                className="w-full pl-8 pr-7 py-1.5 text-xs text-slate-800 bg-slate-50/70 border border-slate-200 rounded-lg placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-rose-500 focus:border-rose-500 transition-all"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch('');
+                    setMeta((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Desktop Quick Dropdowns (Hidden on mobile < sm) */}
+            <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+              <div className="w-[125px] shrink-0">
+                <ThemedSelect
+                  value={paymentStatusFilter}
+                  onChange={(val) => {
+                    setPaymentStatusFilter(val);
+                    setMeta((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  options={[
+                    { value: '', label: 'All Statuses' },
+                    { value: 'completed', label: 'Totally Paid', badge: 'PAID' },
+                    { value: 'partial', label: 'Advance Paid', badge: 'PARTIAL' },
+                    { value: 'pending', label: 'Pending / Due', badge: 'DUE' },
+                  ]}
+                  placeholder="All Statuses"
+                  variant="rose"
+                  size="sm"
+                  align="right"
+                  menuWidth="w-44"
+                  searchable={false}
+                />
+              </div>
+
+              <div className="w-[115px] shrink-0">
+                <ThemedSelect
+                  value={modeFilter}
+                  onChange={(val) => {
+                    setModeFilter(val);
+                    setMeta((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  options={[
+                    { value: '', label: 'All Modes' },
+                    { value: 'UPI', label: 'UPI / QR', badge: 'UPI' },
+                    { value: 'CASH', label: 'Cash', badge: 'CASH' },
+                    { value: 'CHEQUE', label: 'Cheque', badge: 'CHQ' },
+                    { value: 'BANK_TRANSFER', label: 'Bank Transfer', badge: 'NEFT' },
+                  ]}
+                  placeholder="All Modes"
+                  variant="rose"
+                  size="sm"
+                  align="right"
+                  menuWidth="w-44"
+                  searchable={false}
+                />
+              </div>
+            </div>
+
+            {/* Expandable Advanced Filter Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsFiltersOpen((prev) => !prev)}
+              className={clsx(
+                'h-8 px-2.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-all shrink-0',
+                hasActiveFilters || isFiltersOpen
+                  ? 'bg-rose-50 text-rose-700 border-rose-200'
+                  : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+              )}
+              title="Toggle Filters"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Quick Payment Mode Select */}
-          <div className="w-auto min-w-[110px] sm:min-w-[125px] shrink-0">
+          {/* Mobile Quick Dropdowns (< sm screens only) */}
+          <div className="grid grid-cols-2 gap-1.5 sm:hidden pt-0.5">
+            <ThemedSelect
+              value={paymentStatusFilter}
+              onChange={(val) => {
+                setPaymentStatusFilter(val);
+                setMeta((prev) => ({ ...prev, page: 1 }));
+              }}
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'completed', label: 'Totally Paid', badge: 'PAID' },
+                { value: 'partial', label: 'Advance Paid', badge: 'PARTIAL' },
+                { value: 'pending', label: 'Pending / Due', badge: 'DUE' },
+              ]}
+              placeholder="Status"
+              variant="rose"
+              size="sm"
+              menuWidth="w-44"
+              searchable={false}
+            />
+
             <ThemedSelect
               value={modeFilter}
               onChange={(val) => {
@@ -733,41 +1065,19 @@ export const ExpensesPage: React.FC = () => {
                 { value: 'CHEQUE', label: 'Cheque', badge: 'CHQ' },
                 { value: 'BANK_TRANSFER', label: 'Bank Transfer', badge: 'NEFT' },
               ]}
-              placeholder="All Modes"
+              placeholder="Mode"
               variant="rose"
               size="sm"
-              align="right"
               menuWidth="w-44"
               searchable={false}
             />
           </div>
-
-          {/* Expandable Advanced Filter Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsFiltersOpen((prev) => !prev)}
-            className={clsx(
-              'h-8 px-2.5 rounded-lg border text-xs font-semibold flex items-center gap-1 transition-all shrink-0',
-              hasActiveFilters || isFiltersOpen
-                ? 'bg-rose-50 text-rose-700 border-rose-200'
-                : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
-            )}
-            title="Toggle Filters"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline">Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
         </div>
 
         {/* Collapsible Filter Drawer */}
         {isFiltersOpen && (
           <div className="bg-white p-3 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
               {/* Category Filter */}
               <div>
                 <label className="text-[10.5px] font-bold text-slate-500 uppercase tracking-tight block mb-1">
@@ -812,6 +1122,26 @@ export const ExpensesPage: React.FC = () => {
                 </select>
               </div>
 
+              {/* Status Filter */}
+              <div>
+                <label className="text-[10.5px] font-bold text-slate-500 uppercase tracking-tight block mb-1">
+                  Payment Status
+                </label>
+                <select
+                  value={paymentStatusFilter}
+                  onChange={(e) => {
+                    setPaymentStatusFilter(e.target.value);
+                    setMeta((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  className="w-full text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:bg-white focus:ring-1 focus:ring-rose-500"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="completed">Totally Paid</option>
+                  <option value="partial">Advance Paid</option>
+                  <option value="pending">Pending / Due</option>
+                </select>
+              </div>
+
               {/* From Date */}
               <div>
                 <label className="text-[10.5px] font-bold text-slate-500 uppercase tracking-tight block mb-1">
@@ -853,6 +1183,7 @@ export const ExpensesPage: React.FC = () => {
                     setCategoryFilter('');
                     setVendorFilter('');
                     setModeFilter('');
+                    setPaymentStatusFilter('');
                     setStartDateFilter('');
                     setEndDateFilter('');
                     setMeta((prev) => ({ ...prev, page: 1 }));
@@ -891,19 +1222,19 @@ export const ExpensesPage: React.FC = () => {
         </div>
 
         {/* Mobile Responsive Minimalist List View */}
-        <div className="md:hidden divide-y divide-slate-100 bg-white">
+        <div className="md:hidden space-y-2.5 p-2 sm:p-3 bg-slate-50/50">
           {isLoading ? (
-            <div className="py-10 px-4 flex flex-col items-center justify-center text-center">
+            <div className="py-10 px-4 flex flex-col items-center justify-center text-center bg-white rounded-xl border border-slate-200/80 shadow-2xs">
               <RefreshCw className="w-5 h-5 text-rose-500 animate-spin mb-2" />
               <p className="text-xs font-medium text-slate-600">Loading expenses...</p>
             </div>
           ) : expenses.length === 0 ? (
-            <div className="py-10 px-4 flex flex-col items-center justify-center text-center">
-              <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 mb-2.5">
-                <Receipt className="w-5 h-5" />
+            <div className="py-12 px-4 flex flex-col items-center justify-center text-center bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 mb-2.5">
+                <Receipt className="w-6 h-6" />
               </div>
-              <p className="text-xs font-bold text-slate-800">No expense entries found</p>
-              <p className="text-[11px] text-slate-400 max-w-xs mt-0.5">
+              <p className="text-sm font-bold text-slate-800">No expense entries found</p>
+              <p className="text-xs text-slate-400 max-w-xs mt-1">
                 Tap "Add Expense" above to record an expenditure.
               </p>
             </div>
@@ -916,70 +1247,134 @@ export const ExpensesPage: React.FC = () => {
               const canManage = isSuperAdmin || can(Permissions.EXPENSE_UPDATE) || can(Permissions.EXPENSE_MANAGE);
               const canDelete = isSuperAdmin || can(Permissions.EXPENSE_DELETE) || can(Permissions.EXPENSE_MANAGE);
 
+              const total = exp.totalAmount != null ? Number(exp.totalAmount) : (exp.total_amount != null ? Number(exp.total_amount) : Number(exp.amount || 0));
+              const paid = exp.amountPaid != null ? Number(exp.amountPaid) : (exp.amount_paid != null ? Number(exp.amount_paid) : Number(exp.amount || 0));
+              const remaining = Math.max(0, total - paid);
+              const status = exp.paymentStatus || exp.payment_status || (remaining === 0 ? 'completed' : paid > 0 ? 'partial' : 'pending');
+              const percentPaid = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 100;
+
               return (
                 <div
                   key={exp.id}
-                  className="p-2.5 sm:p-3 transition-colors hover:bg-slate-50/80 flex items-center justify-between gap-2"
+                  className="bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-slate-300 transition-all p-3 space-y-2.5 overflow-hidden"
                 >
-                  {/* Left Column: Category Indicator Dot + Category + Vendor + Date */}
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-slate-100 shadow-2xs"
-                      style={{ backgroundColor: color }}
-                    />
+                  {/* Top Header: Category + Status Pill + Total Bill Amount */}
+                  <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-bold text-xs sm:text-sm text-slate-900 truncate leading-tight">
-                        {cat?.name || 'Uncategorized'}
-                      </h3>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-white shadow-2xs"
+                          style={{ backgroundColor: color }}
+                        />
+                        <h3 className="font-bold text-xs sm:text-sm text-slate-900 truncate">
+                          {cat?.name || 'Uncategorized'}
+                        </h3>
+                        {getExpensePaymentStatusBadge(status, total, paid)}
+                      </div>
 
-                      <div className="flex items-center gap-1.5 text-[10.5px] text-slate-500 truncate mt-0.5 leading-tight">
-                        <span className="font-semibold text-slate-700 truncate max-w-[120px]">
-                          {ven?.vendorName || ven?.vendor_name || 'Vendor'}
+                      {/* Vendor & Human Formatted Date Subtitle */}
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1 flex-wrap">
+                        <span className="font-semibold text-slate-700 flex items-center gap-1 truncate max-w-[130px]">
+                          <Store className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{ven?.vendorName || ven?.vendor_name || 'Vendor'}</span>
                         </span>
                         <span className="text-slate-300">•</span>
-                        <span className="text-slate-400 shrink-0">
-                          {exp.expenseDate || exp.expense_date}
+                        <span className="text-slate-500 font-medium shrink-0">
+                          {formatDisplayDate(exp.expenseDate || exp.expense_date)}
                         </span>
                         {(exp.chequeNumber || exp.transactionReference) && (
                           <>
                             <span className="text-slate-300">•</span>
-                            <span className="font-mono text-[10px] text-slate-400 truncate max-w-[80px]">
+                            <span className="font-mono text-[10px] text-slate-600 bg-slate-100 px-1 py-0.5 rounded truncate max-w-[90px]">
                               {exp.chequeNumber ? `#${exp.chequeNumber}` : exp.transactionReference}
                             </span>
                           </>
                         )}
                       </div>
+                    </div>
 
-                      {exp.remarks && (
-                        <p className="text-[10px] text-slate-400 truncate max-w-[210px] mt-0.5 italic">
-                          {exp.remarks}
-                        </p>
+                    {/* Total Bill Hero Display */}
+                    <div className="text-right shrink-0">
+                      <div className="text-[9.5px] font-bold text-slate-400 uppercase tracking-tight">Total Bill</div>
+                      <div className="font-black text-sm sm:text-base text-slate-900 tracking-tight leading-tight mt-0.5">
+                        {formatCurrency(total)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Breakdown Bar (Clear Financial Strip + Progress) */}
+                  <div className="p-2 rounded-lg bg-slate-50/90 border border-slate-100 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-500 font-medium">Paid:</span>
+                        <span className="font-extrabold text-emerald-700">{formatCurrency(paid)}</span>
+                        {total > 0 && (
+                          <span className="text-[9.5px] text-emerald-700 font-bold bg-emerald-100/80 px-1 py-0.2 rounded">
+                            {percentPaid}%
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        {remaining > 0 ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-slate-500 font-medium">Due:</span>
+                            <span className="font-extrabold text-amber-800 bg-amber-100/70 px-1.5 py-0.2 rounded border border-amber-200/60">
+                              {formatCurrency(remaining)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-bold text-[10.5px] text-emerald-700 flex items-center gap-0.5">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            Fully Settled
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Visual Progress Bar */}
+                    <div className="w-full h-1.5 bg-slate-200/70 rounded-full overflow-hidden flex">
+                      <div
+                        className="bg-emerald-500 h-full transition-all duration-300"
+                        style={{ width: `${percentPaid}%` }}
+                      />
+                      {remaining > 0 && (
+                        <div
+                          className="bg-amber-400 h-full transition-all duration-300"
+                          style={{ width: `${100 - percentPaid}%` }}
+                        />
                       )}
                     </div>
                   </div>
 
-                  {/* Right Column: Amount, Payment Mode Badge & Actions */}
-                  <div className="flex flex-col items-end justify-center gap-1 shrink-0">
-                    <span className="font-extrabold text-xs sm:text-sm text-rose-600 tracking-tight leading-tight">
-                      {formatCurrency(exp.amount)}
-                    </span>
+                  {/* Remarks (If Present) */}
+                  {exp.remarks && (
+                    <div className="text-[10.5px] text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-100 italic flex items-start gap-1">
+                      <span className="font-semibold not-italic text-slate-400 shrink-0">Note:</span>
+                      <span className="truncate">{exp.remarks}</span>
+                    </div>
+                  )}
 
-                    <div className="flex items-center gap-1">
+                  {/* Card Bottom: Mode Badge & Touch-Friendly Actions */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       {getPaymentModeBadge(exp.modeOfPayment || exp.mode_of_payment || 'CASH')}
+                    </div>
 
+                    <div className="flex items-center gap-1 shrink-0">
                       {attUrl && (
                         <button
                           type="button"
                           onClick={() =>
                             setViewingAttachment({
                               url: attUrl,
-                              title: `${cat?.name || 'Expense'} Receipt - ${formatCurrency(exp.amount)}`,
+                              title: `${cat?.name || 'Expense'} Receipt - ${formatCurrency(total)}`,
                             })
                           }
-                          className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition-colors"
+                          className="h-7 px-2 text-[11px] font-semibold text-indigo-600 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/60 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
                           title="View Receipt Document"
                         >
                           <Paperclip className="w-3.5 h-3.5" />
+                          <span>Receipt</span>
                         </button>
                       )}
 
@@ -987,7 +1382,7 @@ export const ExpensesPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleOpenEditModal(exp)}
-                          className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                          className="w-7 h-7 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/80 bg-white flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                           title="Edit Expense"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -998,7 +1393,7 @@ export const ExpensesPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(exp)}
-                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                          className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200/80 bg-white flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                           title="Delete Expense"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1068,40 +1463,185 @@ export const ExpensesPage: React.FC = () => {
             />
           </div>
 
-          {/* Vendor & Amount Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <ThemedSelect
-              label="Vendor"
-              value={formData.vendorId}
-              onChange={(val) => {
-                setFormData({ ...formData, vendorId: val });
-                if (formErrors.vendorId) {
-                  setFormErrors((prev) => ({ ...prev, vendorId: '' }));
-                }
-              }}
-              options={vendors.map((v) => ({
-                value: v.id,
-                label: v.vendorName || (v as any).vendor_name,
-                subLabel: v.companyName || v.mobileNo || (v as any).mobile_no || undefined,
-                badge: v.shortName || (v as any).short_name || undefined,
-                icon: <Store className="w-3.5 h-3.5" />,
-              }))}
-              placeholder="Select vendor..."
-              searchPlaceholder="Search vendor by name, company, phone..."
-              error={formErrors.vendorId}
-              required
-            />
+          {/* Vendor Selection (Full Width) */}
+          <ThemedSelect
+            label="Vendor"
+            value={formData.vendorId}
+            onChange={(val) => {
+              setFormData({ ...formData, vendorId: val });
+              if (formErrors.vendorId) {
+                setFormErrors((prev) => ({ ...prev, vendorId: '' }));
+              }
+            }}
+            options={vendors.map((v) => ({
+              value: v.id,
+              label: v.vendorName || (v as any).vendor_name,
+              subLabel: v.companyName || v.mobileNo || (v as any).mobile_no || undefined,
+              badge: v.shortName || (v as any).short_name || undefined,
+              icon: <Store className="w-3.5 h-3.5" />,
+            }))}
+            placeholder="Select vendor..."
+            searchPlaceholder="Search vendor by name, company, phone..."
+            error={formErrors.vendorId}
+            required
+          />
 
-            <Input
-              label="Expense Amount (₹)"
-              type="number"
-              step="any"
-              placeholder="e.g. 15000"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              error={formErrors.amount}
-              required
-            />
+          {/* Payment & Settlement Breakdown Section */}
+          <div className="bg-slate-50/90 rounded-2xl p-3 sm:p-4 border border-slate-200/90 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
+                  <Calculator className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Payment Breakdown & Settlement
+                </span>
+              </div>
+
+              {/* Quick Preset Buttons */}
+              {parseFloat(formData.totalAmount) > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleSetFullPayment}
+                    className="text-[10.5px] font-semibold text-emerald-700 bg-emerald-100/80 hover:bg-emerald-200 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                    title="Pay Total Bill in Full"
+                  >
+                    Paid in Full (100%)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSetHalfPayment}
+                    className="text-[10.5px] font-semibold text-sky-700 bg-sky-100/80 hover:bg-sky-200 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                    title="Pay 50% Advance"
+                  >
+                    50% Advance
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSetNoPayment}
+                    className="text-[10.5px] font-semibold text-slate-600 bg-slate-200/80 hover:bg-slate-300 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                    title="No Payment Now (Due Later)"
+                  >
+                    ₹0 (Pay Later)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Inputs: Total Expense Amount & Amount Paid / Advance */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Total Expense Amount (₹)"
+                type="number"
+                step="any"
+                placeholder="e.g. 50000"
+                value={formData.totalAmount}
+                onChange={(e) => handleTotalAmountChange(e.target.value)}
+                error={formErrors.totalAmount}
+                required
+              />
+
+              <Input
+                label="Amount Paid / Advance (₹)"
+                type="number"
+                step="any"
+                placeholder="e.g. 20000"
+                value={formData.amountPaid}
+                onChange={(e) => handleAmountPaidChange(e.target.value)}
+                error={formErrors.amountPaid}
+                required
+              />
+            </div>
+
+            {/* Real-time Calculation Cards: Total, Paid, Remaining Due */}
+            {(() => {
+              const totalNum = parseFloat(formData.totalAmount) || 0;
+              const paidNum = parseFloat(formData.amountPaid) || 0;
+              const remainingNum = Math.max(0, totalNum - paidNum);
+              const isSettled = totalNum > 0 && remainingNum === 0;
+
+              return (
+                <>
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Total Amount Box */}
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                        Total Amount
+                      </div>
+                      <div className="text-xs sm:text-sm font-extrabold text-slate-900 mt-0.5 truncate">
+                        {formatCurrency(totalNum)}
+                      </div>
+                    </div>
+
+                    {/* Paid / Advance Box */}
+                    <div className="bg-white p-2.5 rounded-xl border border-emerald-200/80 shadow-2xs">
+                      <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-tight flex items-center justify-between">
+                        <span>Paid / Advance</span>
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      </div>
+                      <div className="text-xs sm:text-sm font-extrabold text-emerald-700 mt-0.5 truncate">
+                        {formatCurrency(paidNum)}
+                      </div>
+                    </div>
+
+                    {/* Remaining Due Box */}
+                    <div
+                      className={clsx(
+                        'p-2.5 rounded-xl border shadow-2xs transition-colors',
+                        isSettled
+                          ? 'bg-emerald-50/60 border-emerald-200'
+                          : remainingNum > 0
+                          ? 'bg-amber-50/70 border-amber-200'
+                          : 'bg-white border-slate-200/80'
+                      )}
+                    >
+                      <div
+                        className={clsx(
+                          'text-[10px] font-bold uppercase tracking-tight flex items-center justify-between',
+                          isSettled
+                            ? 'text-emerald-700'
+                            : remainingNum > 0
+                            ? 'text-amber-700'
+                            : 'text-slate-400'
+                        )}
+                      >
+                        <span>Remaining Due</span>
+                        {remainingNum > 0 ? (
+                          <AlertCircle className="w-3 h-3 text-amber-500" />
+                        ) : (
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        )}
+                      </div>
+                      <div
+                        className={clsx(
+                          'text-xs sm:text-sm font-extrabold mt-0.5 truncate',
+                          isSettled
+                            ? 'text-emerald-700'
+                            : remainingNum > 0
+                            ? 'text-amber-800'
+                            : 'text-slate-700'
+                        )}
+                      >
+                        {formatCurrency(remainingNum)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Auto-calculated Payment Status Badge Banner */}
+                  {totalNum > 0 && (
+                    <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                        <span className="font-medium text-[11px] text-slate-500">Auto Payment Status:</span>
+                      </div>
+                      <div>
+                        {getExpensePaymentStatusBadge(formData.paymentStatus, totalNum, paidNum)}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           {/* Mode of Payment (All 4 Modes same to same as Flat Collections / Advertisements) */}

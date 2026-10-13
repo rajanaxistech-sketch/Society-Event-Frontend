@@ -1146,6 +1146,7 @@ export interface UpdateExpenseCategoryInput {
 
 // Expenses Module Types
 export type ExpensePaymentMode = 'CASH' | 'CHEQUE' | 'UPI' | 'ONLINE' | 'BANK_TRANSFER' | string;
+export type ExpensePaymentStatus = 'completed' | 'partial' | 'pending' | string;
 
 export interface ExpenseItem {
   id: string;
@@ -1164,6 +1165,14 @@ export interface ExpenseItem {
   expenseDate: string;
   expense_date?: string;
   amount: number;
+  totalAmount?: number | null;
+  total_amount?: number | null;
+  amountPaid?: number | null;
+  amount_paid?: number | null;
+  remainingAmount?: number | null;
+  remaining_amount?: number | null;
+  paymentStatus?: ExpensePaymentStatus;
+  payment_status?: ExpensePaymentStatus;
   modeOfPayment: ExpensePaymentMode;
   mode_of_payment?: ExpensePaymentMode;
   transactionReference?: string | null;
@@ -1204,7 +1213,13 @@ export interface CreateExpenseInput {
   vendor_id?: string;
   expenseDate?: string | null;
   expense_date?: string | null;
-  amount: number | string;
+  amount?: number | string | null;
+  totalAmount?: number | string | null;
+  total_amount?: number | string | null;
+  amountPaid?: number | string | null;
+  amount_paid?: number | string | null;
+  paymentStatus?: ExpensePaymentStatus;
+  payment_status?: ExpensePaymentStatus;
   modeOfPayment?: ExpensePaymentMode;
   mode_of_payment?: ExpensePaymentMode;
   transactionReference?: string | null;
@@ -1238,7 +1253,13 @@ export interface UpdateExpenseInput {
   vendor_id?: string;
   expenseDate?: string | null;
   expense_date?: string | null;
-  amount?: number | string;
+  amount?: number | string | null;
+  totalAmount?: number | string | null;
+  total_amount?: number | string | null;
+  amountPaid?: number | string | null;
+  amount_paid?: number | string | null;
+  paymentStatus?: ExpensePaymentStatus;
+  payment_status?: ExpensePaymentStatus;
   modeOfPayment?: ExpensePaymentMode;
   mode_of_payment?: ExpensePaymentMode;
   transactionReference?: string | null;
@@ -1272,6 +1293,8 @@ export interface ExpensesQueryParams extends QueryParams {
   vendor_id?: string;
   modeOfPayment?: string;
   mode_of_payment?: string;
+  paymentStatus?: string;
+  payment_status?: string;
   startDate?: string;
   start_date?: string;
   endDate?: string;
@@ -1282,6 +1305,8 @@ export interface ExpensesQueryParams extends QueryParams {
 export interface ExpenseSummaryMetrics {
   totalCount: number;
   totalAmount: number;
+  paidAmount?: number;
+  remainingAmount?: number;
   cashAmount: number;
   chequeAmount: number;
   upiAmount: number;

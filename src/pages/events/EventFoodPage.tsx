@@ -21,7 +21,7 @@ import {
   Camera,
   FolderOpen,
   X,
-  ChevronRight,
+  ChevronDown,
   Calendar,
   Tag,
   Sparkles,
@@ -126,7 +126,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   const [event, setEvent] = useState<EventItem | null>(null);
   const [foodItems, setFoodItems] = useState<FoodItemEntity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDayTab, setSelectedDayTab] = useState<number | null>(1);
+  const [openDayNumber, setOpenDayNumber] = useState<number | null>(1);
 
   // Day metadata overrides (local cache / state)
   const [dayMetaOverrides, setDayMetaOverrides] = useState<Record<number, Partial<FoodDayMetaInput>>>({});
@@ -165,9 +165,9 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
   const [batchPasteText, setBatchPasteText] = useState('');
   const [isSavingBatch, setIsSavingBatch] = useState(false);
 
-  // Inline Quick Add
-  const [inlineDishName, setInlineDishName] = useState('');
-  const [isAddingInline, setIsAddingInline] = useState(false);
+  // Inline Quick Add per day
+  const [inlineDishInputs, setInlineDishInputs] = useState<Record<number, string>>({});
+  const [addingInlineForDay, setAddingInlineForDay] = useState<number | null>(null);
 
   // Single Edit Dish Modal
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -286,32 +286,35 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     return Array.from(dayMap.values()).sort((a, b) => a.day - b.day);
   }, [event, isNavratri, foodItems, dayMetaOverrides]);
 
-  // Selected Day's active meta
-  const activeDayMeta = useMemo(() => {
-    if (selectedDayTab === null) return null;
-    return (
-      daysList.find((d) => d.day === selectedDayTab) || {
-        day: selectedDayTab,
-        title: `Day ${selectedDayTab}`,
-        subtitle: `Day ${selectedDayTab} Menu`,
-      }
-    );
-  }, [daysList, selectedDayTab]);
+  // Auto-open first or today's day if none is opened yet
+  useEffect(() => {
+    if (daysList.length > 0) {
+      setOpenDayNumber((prev) => {
+        if (prev !== null && daysList.some((d) => d.day === prev)) return prev;
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayDay = daysList.find((d) => d.date === todayStr);
+        return todayDay ? todayDay.day : daysList[0].day;
+      });
+    }
+  }, [daysList]);
 
-  // Filtered dishes for current selected tab
-  const filteredFoodItems = useMemo(() => {
-    if (selectedDayTab === null) return foodItems;
+  // Exclusive Accordion: opening a day closes all other days
+  const toggleDayAccordion = (dayNum: number) => {
+    setOpenDayNumber((prev) => (prev === dayNum ? null : dayNum));
+  };
+
+  const getDishesForDay = (dayNum: number) => {
     return foodItems.filter((item) => {
       if (item.day_number !== null && item.day_number !== undefined) {
-        return item.day_number === selectedDayTab;
+        return item.day_number === dayNum;
       }
       const nameL = item.name.toLowerCase();
       const descL = (item.description || '').toLowerCase();
-      const target = `day ${selectedDayTab}`;
-      const target2 = `day-${selectedDayTab}`;
+      const target = `day ${dayNum}`;
+      const target2 = `day-${dayNum}`;
       return nameL.includes(target) || nameL.includes(target2) || descL.includes(target) || descL.includes(target2);
     });
-  }, [foodItems, selectedDayTab]);
+  };
 
   // Photo handlers
   const handleProcessImageFile = async (file: File, targetDay: number) => {
@@ -449,7 +452,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
       toast.success(isEditingDay ? `Day ${dayForm.dayNumber} updated` : `Day ${dayForm.dayNumber} added successfully`);
       setDayModalOpen(false);
-      setSelectedDayTab(dayForm.dayNumber);
+      setOpenDayNumber(dayForm.dayNumber);
       await fetchFoodItems();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to save day'));
@@ -465,10 +468,15 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       setIsDeletingDay(true);
       await foodService.deleteDay(eventId, deleteDayTarget);
       toast.success(`Day ${deleteDayTarget} deleted`);
+      const removedDay = deleteDayTarget;
       setDeleteDayTarget(null);
-
-      const remaining = daysList.filter((d) => d.day !== deleteDayTarget);
-      setSelectedDayTab(remaining.length > 0 ? remaining[0].day : null);
+      setOpenDayNumber((prev) => {
+        if (prev === removedDay) {
+          const remaining = daysList.filter((d) => d.day !== removedDay);
+          return remaining.length > 0 ? remaining[0].day : null;
+        }
+        return prev;
+      });
       await fetchFoodItems();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to delete day'));
@@ -479,7 +487,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
   // Batch Multi-Add Modal
   const handleOpenBatchModal = (targetDay?: number) => {
-    const d = targetDay || (selectedDayTab !== null ? selectedDayTab : 1);
+    const d = targetDay || (daysList.length > 0 ? daysList[0].day : 1);
     setBatchDayNumber(d);
     setBatchItems([]);
     setCurrentBatchInput('');
@@ -546,6 +554,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
       toast.success(`${finalItems.length} dishes saved for Day ${batchDayNumber}`);
       setBatchModalOpen(false);
+      setOpenDayNumber(batchDayNumber);
       await fetchFoodItems();
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to save dishes'));
@@ -554,20 +563,19 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     }
   };
 
-  // Inline Quick Add
-  const handleInlineQuickAdd = async (e: React.FormEvent) => {
+  // Inline Quick Add for specific day
+  const handleInlineQuickAddForDay = async (dayNumber: number, e: React.FormEvent) => {
     e.preventDefault();
-    const name = inlineDishName.trim();
+    const name = (inlineDishInputs[dayNumber] || '').trim();
     if (!name || !eventId) return;
 
-    const targetDay = selectedDayTab !== null ? selectedDayTab : 1;
-    const targetMeta = daysList.find((d) => d.day === targetDay);
+    const targetMeta = daysList.find((d) => d.day === dayNumber);
 
     try {
-      setIsAddingInline(true);
+      setAddingInlineForDay(dayNumber);
       const res = await foodService.createForEvent(eventId, {
         name,
-        day_number: targetDay,
+        day_number: dayNumber,
         day_title: targetMeta?.title,
         day_subtitle: targetMeta?.subtitle,
         menu_date: targetMeta?.date,
@@ -577,7 +585,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
       });
 
       if (res.success) {
-        setInlineDishName('');
+        setInlineDishInputs((prev) => ({ ...prev, [dayNumber]: '' }));
         await fetchFoodItems();
       } else {
         toast.error(res.message || 'Failed to add dish');
@@ -585,7 +593,7 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'Failed to add dish'));
     } finally {
-      setIsAddingInline(false);
+      setAddingInlineForDay(null);
     }
   };
 
@@ -668,13 +676,16 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
 
       {/* Sleek Minimalist Page Header */}
       <div className="flex items-center justify-between gap-2 px-1 py-1">
-        {/* Title & Count */}
-        <div className="flex items-center gap-2 min-w-0">
+        {/* Title & Badges */}
+        <div className="flex items-center gap-1.5 min-w-0">
           <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate">
             Food Menu
           </h2>
           <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100/80 shrink-0">
             {daysList.length} {daysList.length === 1 ? 'Day' : 'Days'}
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[10.5px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 shrink-0">
+            {foodItems.length} {foodItems.length === 1 ? 'Dish' : 'Dishes'}
           </span>
         </div>
 
@@ -708,370 +719,274 @@ export const EventFoodPage: React.FC<EventFoodPageProps> = ({ eventId: propEvent
         </div>
       </div>
 
-      {/* 1. ULTRA-MINIMALIST CLEAN DAY SELECTOR WITH "+ ADD DAY" */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          type="button"
-          onClick={() => setSelectedDayTab(null)}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-            selectedDayTab === null
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-          }`}
-        >
-          All ({foodItems.length})
-        </button>
-
-        {daysList.map((d) => {
-          const isSelected = selectedDayTab === d.day;
-          const countForDay = foodItems.filter(
-            (item) =>
-              item.day_number === d.day ||
-              (!item.day_number && (item.name + ' ' + (item.description || '')).toLowerCase().includes(`day ${d.day}`))
-          ).length;
-
-          return (
-            <button
-              key={d.day}
-              type="button"
-              onClick={() => setSelectedDayTab(d.day)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                isSelected
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 shadow-2xs'
-              }`}
-            >
-              <span>Day {d.day}</span>
-              {countForDay > 0 && (
-                <span className={`text-[10px] font-bold ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
-                  {countForDay}
-                </span>
-              )}
-            </button>
-          );
-        })}
-
-        {/* Minimalist + Add Day Button for Admin */}
-        {!isResident && (
-          <PermissionGuard permission={Permissions.FOOD_MANAGE}>
-            <button
-              type="button"
-              onClick={handleOpenAddDayModal}
-              className="px-3 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 flex items-center gap-1 bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 shadow-2xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Day</span>
-            </button>
-          </PermissionGuard>
-        )}
-      </div>
-
-      {/* 2. SINGLE DAY VIEW */}
-      {selectedDayTab !== null && activeDayMeta && (
-        <div className="space-y-3">
-          {/* DAY HERO CARD (MINIMALIST WHITE DESIGN) */}
-          {activeDayMeta.photo ? (
-            <div className="relative h-40 sm:h-48 w-full rounded-2xl overflow-hidden bg-slate-900 shadow-2xs group">
-              <img
-                src={activeDayMeta.photo}
-                alt={activeDayMeta.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20" />
-
-              {/* Day Titles and Metadata on Banner */}
-              <div className="absolute bottom-2.5 left-3 right-3 text-white space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm sm:text-base font-extrabold tracking-tight">
-                    Day {activeDayMeta.day}
-                  </span>
-                  {activeDayMeta.subtitle && (
-                    <span className="text-xs sm:text-sm font-medium text-slate-200 truncate">
-                      • {activeDayMeta.subtitle}
-                    </span>
-                  )}
-                </div>
-
-                {/* Date and Price Chips */}
-                <div className="flex items-center flex-wrap gap-1.5 text-[11px]">
-                  {activeDayMeta.date && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/20 backdrop-blur-xs font-semibold text-slate-100">
-                      <Calendar className="w-3 h-3 text-indigo-300" />
-                      {formatDateDisplay(activeDayMeta.date)}
-                    </span>
-                  )}
-
-                  {activeDayMeta.price !== undefined && activeDayMeta.price !== null ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/90 backdrop-blur-xs font-bold text-white">
-                      <Tag className="w-3 h-3" />
-                      ₹{activeDayMeta.price} <span className="font-normal opacity-90">({activeDayMeta.priceUnit || 'per plate'})</span>
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Admin Action Buttons */}
-              {!isResident && (
-                <div className="absolute top-2 right-2 flex items-center gap-1">
-                  <PermissionGuard permission={Permissions.FOOD_MANAGE}>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditDayModal(activeDayMeta)}
-                      className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
-                      title="Edit Day Details & Price"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => triggerCamera(selectedDayTab)}
-                      className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
-                      title="Camera"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => triggerGallery(selectedDayTab)}
-                      className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-all"
-                      title="Gallery"
-                    >
-                      <FolderOpen className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveDayPhoto(selectedDayTab)}
-                      className="p-1.5 rounded-lg bg-black/50 hover:bg-rose-600 text-white backdrop-blur-xs text-[11px] font-medium cursor-pointer transition-all"
-                      title="Remove Photo"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </PermissionGuard>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* MINIMALIST CLEAN WHITE DAY CARD */
-            <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-2xs space-y-2.5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <span className="text-[15px] font-bold text-slate-800 tracking-tight">
-                      Day {activeDayMeta.day}
-                    </span>
-                    {activeDayMeta.subtitle && (
-                      <span className="text-xs font-semibold text-indigo-600">
-                        • {activeDayMeta.subtitle}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center flex-wrap gap-2 text-[11px]">
-                    {activeDayMeta.date ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-semibold">
-                        <Calendar className="w-3 h-3 text-slate-500" />
-                        {formatDateDisplay(activeDayMeta.date)}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-slate-400 text-[10.5px]">
-                        <Calendar className="w-3 h-3" /> No date
-                      </span>
-                    )}
-
-                    {activeDayMeta.price !== undefined && activeDayMeta.price !== null ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-bold">
-                        <Tag className="w-3 h-3 text-emerald-600" />
-                        ₹{activeDayMeta.price} <span className="font-normal opacity-90">({activeDayMeta.priceUnit || 'per plate'})</span>
-                      </span>
-                    ) : (
-                      !isResident && (
-                        <span className="inline-flex items-center gap-1 text-slate-400 text-[10.5px]">
-                          <Tag className="w-3 h-3" /> Price not set
-                        </span>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                {/* Right Action Buttons */}
-                {!isResident && (
-                  <PermissionGuard permission={Permissions.FOOD_MANAGE}>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditDayModal(activeDayMeta)}
-                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer transition-all"
-                        title="Edit Day & Price"
-                      >
-                        <Edit2 className="w-3 h-3 text-slate-600" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => triggerGallery(selectedDayTab)}
-                        className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs cursor-pointer transition-all"
-                        title="Upload Photo"
-                      >
-                        <Camera className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteDayTarget(selectedDayTab)}
-                        className="p-1.5 bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg text-xs cursor-pointer transition-all"
-                        title="Delete Day"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </PermissionGuard>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* DISHES HEADER & MULTI-ADD */}
-          <div className="flex items-center justify-between px-1 pt-0.5">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Day {activeDayMeta.day} Menu ({filteredFoodItems.length})
-            </span>
-            <button
-              type="button"
-              onClick={() => handleOpenBatchModal(selectedDayTab)}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer flex items-center gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{isResident ? 'Suggest' : 'Add Dishes'}</span>
-            </button>
+      {/* ACCORDION LIST: ALL DAYS EXPANDABLE / COLLAPSIBLE */}
+      <div className="space-y-2.5">
+        {daysList.length === 0 ? (
+          <div className="py-10 text-center bg-white rounded-2xl border border-slate-200/80 p-6 space-y-2 shadow-2xs">
+            <Sparkles className="w-6 h-6 text-indigo-400 mx-auto" />
+            <p className="text-sm font-semibold text-slate-700">No menu days configured yet</p>
+            <p className="text-xs text-slate-400">Click &ldquo;+ Add Day&rdquo; above to set up daily food menus.</p>
           </div>
-
-          {/* DISHES LIST */}
-          {filteredFoodItems.length === 0 ? (
-            <div className="py-7 text-center bg-white rounded-2xl border border-slate-200/70 p-4 space-y-1 shadow-2xs">
-              <Sparkles className="w-5 h-5 text-indigo-400 mx-auto" />
-              <p className="text-xs font-semibold text-slate-700">No dishes listed for Day {activeDayMeta.day}</p>
-              <p className="text-[11px] text-slate-400">Quick add dishes below or use Add Dishes.</p>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              {filteredFoodItems.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-xl border border-slate-200/80 p-2.5 flex items-center justify-between gap-2.5 transition-colors group hover:border-slate-300 shadow-2xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center shrink-0">
-                      {index + 1}
-                    </span>
-                    <span className="text-[13.5px] font-semibold text-slate-800 tracking-tight truncate">
-                      {item.name}
-                    </span>
-                  </div>
-
-                  {!isResident && (
-                    <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100">
-                      <PermissionGuard permission={Permissions.FOOD_MANAGE}>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditModal(item)}
-                          className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md transition-colors cursor-pointer"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(item)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded-md transition-colors cursor-pointer"
-                          title="Remove"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </PermissionGuard>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* INLINE QUICK ADD BAR */}
-          {!isResident && (
-            <form onSubmit={handleInlineQuickAdd} className="pt-0.5">
-              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200/80 focus-within:border-indigo-500 shadow-2xs transition-colors">
-                <input
-                  type="text"
-                  placeholder={`+ Quick add dish for Day ${activeDayMeta.day}...`}
-                  value={inlineDishName}
-                  onChange={(e) => setInlineDishName(e.target.value)}
-                  className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent border-0 focus:outline-hidden py-1"
-                />
-                <button
-                  type="submit"
-                  disabled={!inlineDishName.trim() || isAddingInline}
-                  className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-semibold rounded-lg shrink-0 transition-all cursor-pointer shadow-xs"
-                >
-                  {isAddingInline ? '...' : 'Add'}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      )}
-
-      {/* 3. ALL DAYS OVERVIEW TAB */}
-      {selectedDayTab === null && (
-        <div className="space-y-2">
-          {daysList.map((d) => {
-            const dayItems = foodItems.filter(
-              (item) =>
-                item.day_number === d.day ||
-                (!item.day_number && (item.name + ' ' + (item.description || '')).toLowerCase().includes(`day ${d.day}`))
-            );
+        ) : (
+          daysList.map((d) => {
+            const isOpen = openDayNumber === d.day;
+            const dayDishes = getDishesForDay(d.day);
 
             return (
               <div
                 key={d.day}
-                onClick={() => setSelectedDayTab(d.day)}
-                className="bg-white rounded-2xl border border-slate-200/80 p-3 hover:border-indigo-300 hover:shadow-xs transition-all cursor-pointer group shadow-2xs"
+                className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden shadow-2xs ${
+                  isOpen
+                    ? 'border-indigo-200 ring-2 ring-indigo-500/10 shadow-xs'
+                    : 'border-slate-200/80 hover:border-slate-300'
+                }`}
               >
-                <div className="flex items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {d.photo ? (
-                      <img src={d.photo} alt={d.title} className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 font-extrabold text-xs flex items-center justify-center shrink-0 border border-slate-200/60">
-                        {d.day}
+                {/* ACCORDION HEADER / TRIGGER */}
+                <div
+                  onClick={() => toggleDayAccordion(d.day)}
+                  className="w-full p-3 sm:p-3.5 flex items-center justify-between gap-2.5 cursor-pointer select-none transition-colors hover:bg-slate-50/70"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {/* Day Number Badge */}
+                    <div
+                      className={`w-9 h-9 rounded-xl font-black text-xs flex items-center justify-center shrink-0 transition-colors ${
+                        isOpen
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'bg-indigo-50 text-indigo-700 border border-indigo-100/80'
+                      }`}
+                    >
+                      {d.day}
+                    </div>
+
+                    {/* Titles and Metadata Chips */}
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[14px] sm:text-[15px] font-bold text-slate-900 tracking-tight">
+                          Day {d.day}
+                        </span>
+                        {d.subtitle && (
+                          <span className="text-xs font-semibold text-indigo-600 truncate">
+                            • {d.subtitle}
+                          </span>
+                        )}
                       </div>
-                    )}
-                    <div className="min-w-0 space-y-0.5">
-                      <h4 className="font-bold text-xs sm:text-sm text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
-                        Day {d.day} {d.subtitle && <span className="font-normal text-slate-400">• {d.subtitle}</span>}
-                      </h4>
-                      <div className="flex items-center flex-wrap gap-1.5 text-[10.5px]">
+
+                      <div className="flex items-center flex-wrap gap-1.5 text-[11px]">
                         {d.date && (
-                          <span className="text-slate-500 font-medium flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-slate-400" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold">
+                            <Calendar className="w-3 h-3 text-slate-500" />
                             {formatDateDisplay(d.date)}
                           </span>
                         )}
-                        {d.price !== undefined && d.price !== null && (
-                          <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                            ₹{d.price} ({d.priceUnit || 'per plate'})
+
+                        {d.price !== undefined && d.price !== null ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-bold">
+                            <Tag className="w-3 h-3 text-emerald-600" />
+                            ₹{d.price} <span className="font-normal opacity-85">({d.priceUnit || 'per plate'})</span>
                           </span>
-                        )}
-                        <span className="text-slate-400">
-                          {dayItems.length} {dayItems.length === 1 ? 'dish' : 'dishes'}
+                        ) : null}
+
+                        <span className="px-1.5 py-0.5 rounded-md bg-slate-100/80 text-slate-500 font-medium text-[10.5px]">
+                          {dayDishes.length} {dayDishes.length === 1 ? 'dish' : 'dishes'}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 shrink-0 transition-colors" />
+
+                  {/* Header Right: Admin quick actions + Accordion toggle chevron */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {!isResident && (
+                      <PermissionGuard permission={Permissions.FOOD_MANAGE}>
+                        <div
+                          className="flex items-center gap-0.5 sm:gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditDayModal(d)}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                            title="Edit Day Details & Price"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => triggerGallery(d.day)}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                            title="Upload Day Photo"
+                          >
+                            <Camera className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteDayTarget(d.day)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete Day"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </PermissionGuard>
+                    )}
+
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-transform duration-200 ${
+                        isOpen ? 'rotate-180 text-indigo-600' : ''
+                      }`}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
                 </div>
+
+                {/* ACCORDION BODY (WHEN OPEN) */}
+                {isOpen && (
+                  <div className="border-t border-slate-100 bg-slate-50/50 p-3 sm:p-3.5 space-y-3">
+                    {/* Day Photo Banner if uploaded */}
+                    {d.photo && (
+                      <div className="relative h-36 sm:h-44 w-full rounded-xl overflow-hidden bg-slate-900 shadow-2xs group">
+                        <img
+                          src={d.photo}
+                          alt={d.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                        <div className="absolute bottom-2.5 left-3 right-3 text-white flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-bold">{d.title}</p>
+                            {d.subtitle && <p className="text-[11px] text-slate-200">{d.subtitle}</p>}
+                          </div>
+                        </div>
+
+                        {!isResident && (
+                          <div className="absolute top-2 right-2 flex items-center gap-1">
+                            <PermissionGuard permission={Permissions.FOOD_MANAGE}>
+                              <button
+                                type="button"
+                                onClick={() => triggerCamera(d.day)}
+                                className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] cursor-pointer"
+                                title="Camera"
+                              >
+                                <Camera className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => triggerGallery(d.day)}
+                                className="p-1.5 rounded-lg bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs text-[11px] cursor-pointer"
+                                title="Gallery"
+                              >
+                                <FolderOpen className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveDayPhoto(d.day)}
+                                className="p-1.5 rounded-lg bg-black/50 hover:bg-rose-600 text-white backdrop-blur-xs text-[11px] cursor-pointer"
+                                title="Remove Photo"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </PermissionGuard>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Subheader: Day X Menu & + Add Dishes */}
+                    <div className="flex items-center justify-between px-0.5">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Day {d.day} Menu ({dayDishes.length})
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenBatchModal(d.day)}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{isResident ? 'Suggest' : 'Add Dishes'}</span>
+                      </button>
+                    </div>
+
+                    {/* Dishes List */}
+                    {dayDishes.length === 0 ? (
+                      <div className="py-5 text-center bg-white rounded-xl border border-dashed border-slate-200/90 p-3 space-y-1">
+                        <Sparkles className="w-4 h-4 text-indigo-400 mx-auto" />
+                        <p className="text-xs font-semibold text-slate-700">No dishes listed for Day {d.day}</p>
+                        <p className="text-[11px] text-slate-400">Quick add dishes below or use Add Dishes above.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {dayDishes.map((item, index) => (
+                          <div
+                            key={item.id}
+                            className="bg-white rounded-xl border border-slate-200/80 p-2.5 flex items-center justify-between gap-2.5 transition-colors group hover:border-slate-300 shadow-2xs"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px] flex items-center justify-center shrink-0">
+                                {index + 1}
+                              </span>
+                              <span className="text-[13px] sm:text-[13.5px] font-semibold text-slate-800 tracking-tight truncate">
+                                {item.name}
+                              </span>
+                            </div>
+
+                            {!isResident && (
+                              <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100">
+                                <PermissionGuard permission={Permissions.FOOD_MANAGE}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditModal(item)}
+                                    className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md transition-colors cursor-pointer"
+                                    title="Edit"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteTarget(item)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-md transition-colors cursor-pointer"
+                                    title="Remove"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </PermissionGuard>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Inline Quick Add Bar for this Day */}
+                    {!isResident && (
+                      <form onSubmit={(e) => handleInlineQuickAddForDay(d.day, e)} className="pt-0.5">
+                        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200/80 focus-within:border-indigo-500 shadow-2xs transition-colors">
+                          <input
+                            type="text"
+                            placeholder={`+ Quick add dish for Day ${d.day}...`}
+                            value={inlineDishInputs[d.day] || ''}
+                            onChange={(e) =>
+                              setInlineDishInputs((prev) => ({ ...prev, [d.day]: e.target.value }))
+                            }
+                            className="w-full text-xs text-slate-800 placeholder-slate-400 bg-transparent border-0 focus:outline-hidden py-1"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!(inlineDishInputs[d.day] || '').trim() || addingInlineForDay === d.day}
+                            className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-semibold rounded-lg shrink-0 transition-all cursor-pointer shadow-xs"
+                          >
+                            {addingInlineForDay === d.day ? '...' : 'Add'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
               </div>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
 
       {/* ADD / EDIT DAY MODAL */}
       <Modal
