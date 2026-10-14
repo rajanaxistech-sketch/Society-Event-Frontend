@@ -1,5 +1,13 @@
 import axiosClient from './axiosClient';
-import { ApiResponse, PaginatedResponse, QueryParams, ReportExportRequest, ReportExportResponse } from '../types';
+import {
+  ApiResponse,
+  PaginatedResponse,
+  QueryParams,
+  ReportExportRequest,
+  ReportExportResponse,
+  CollectionExpenseSummaryData,
+  CollectionExpenseSummaryFilters,
+} from '../types';
 
 export const reportsService = {
   getSocietiesReport: async (params?: QueryParams): Promise<PaginatedResponse<any>> => {
@@ -80,6 +88,27 @@ export const reportsService = {
 
   exportReport: async (payload: ReportExportRequest): Promise<ApiResponse<ReportExportResponse>> => {
     const response = await axiosClient.post<ApiResponse<ReportExportResponse>>('/reports/export', payload);
+    return response.data;
+  },
+
+  getCollectionExpenseSummary: async (
+    params?: CollectionExpenseSummaryFilters
+  ): Promise<ApiResponse<CollectionExpenseSummaryData>> => {
+    const response = await axiosClient.get<ApiResponse<CollectionExpenseSummaryData>>(
+      '/reports/collection-expense-summary',
+      { params }
+    );
+    return response.data;
+  },
+
+  downloadCollectionExpenseSummary: async (
+    params?: CollectionExpenseSummaryFilters,
+    format = 'csv'
+  ): Promise<Blob> => {
+    const response = await axiosClient.get('/reports/collection-expense-summary/export', {
+      params: { ...params, format },
+      responseType: 'blob',
+    });
     return response.data;
   },
 };

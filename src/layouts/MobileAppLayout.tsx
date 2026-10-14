@@ -24,6 +24,7 @@ import {
   LogOut,
   CheckCircle2,
   KeyRound,
+  Scale,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -363,6 +364,26 @@ export const MobileAppLayout: React.FC = () => {
                 })}
               </div>
             </div>
+          )}
+
+          {/* Quick Access to Financial Summary for Admins */}
+          {!isResident && (
+            <button
+              type="button"
+              onClick={() => {
+                setProfileDrawerOpen(false);
+                navigate(AppRoutes.COLLECTION_EXPENSE_SUMMARY);
+              }}
+              className="w-full p-2.5 rounded-xl border border-slate-200/80 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs flex items-center justify-between transition-colors shadow-2xs group"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Scale className="w-3.5 h-3.5" />
+                </div>
+                <span>Collection & Expense Summary</span>
+              </div>
+              <span className="text-[10px] text-slate-400 group-hover:text-emerald-600 font-medium">View &rarr;</span>
+            </button>
           )}
 
           {/* Security / Change Password Button */}

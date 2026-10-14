@@ -85,6 +85,7 @@ import SponsorDetailsPage from '../pages/sponsorships/SponsorDetailsPage';
 
 // Reports & Imports
 import ReportsHubPage from '../pages/reports/ReportsHubPage';
+import CollectionExpenseSummaryPage from '../pages/reports/CollectionExpenseSummaryPage';
 import ImportListPage from '../pages/imports/ImportListPage';
 import ImportUploadPage from '../pages/imports/ImportUploadPage';
 import ImportPreviewPage from '../pages/imports/ImportPreviewPage';
@@ -435,6 +436,22 @@ export const AppRoutes: React.FC = () => {
             element={
               <PermissionRoute permission={Permissions.COLLECTION_READ}>
                 <CollectionSummaryPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.COLLECTION_EXPENSE_SUMMARY}
+            element={
+              <PermissionRoute permission={Permissions.REPORT_READ}>
+                <CollectionExpenseSummaryPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.EVENT_COLLECTION_EXPENSE_SUMMARY}
+            element={
+              <PermissionRoute permission={Permissions.REPORT_READ}>
+                <CollectionExpenseSummaryPage />
               </PermissionRoute>
             }
           />

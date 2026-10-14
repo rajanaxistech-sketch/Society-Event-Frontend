@@ -68,6 +68,8 @@ export const AppRoutes = {
   FLAT_COLLECTION_DETAILS: '/flat-collections/:id',
   COLLECTION_SUMMARY: '/collection-summary',
   EVENT_COLLECTION_SUMMARY: '/events/:id/collection-summary',
+  COLLECTION_EXPENSE_SUMMARY: '/collection-expense-summary',
+  EVENT_COLLECTION_EXPENSE_SUMMARY: '/events/:id/collection-expense-summary',
 
   // Contracts
   CONTRACTS: '/contracts',

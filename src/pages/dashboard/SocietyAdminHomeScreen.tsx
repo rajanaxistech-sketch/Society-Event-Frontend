@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Store,
   Receipt,
+  Scale,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -174,6 +175,15 @@ export const SocietyAdminHomeScreen: React.FC = () => {
       badge: undefined,
       onClick: () => {
         navigate(AppRoutes.EXPENSE);
+      },
+    },
+    {
+      title: 'Collection & Expense Summary',
+      icon: Scale,
+      iconStyle: 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-indigo-100/50',
+      badge: undefined,
+      onClick: () => {
+        navigate(AppRoutes.COLLECTION_EXPENSE_SUMMARY);
       },
     },
   ];

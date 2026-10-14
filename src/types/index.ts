@@ -1887,5 +1887,106 @@ export interface EventCollectionOverallSummary {
   };
 }
 
+export interface CollectionExpenseSummaryFilters {
+  societyId?: string;
+  eventId?: string;
+  startDate?: string;
+  endDate?: string;
+  source?: string;
+  expenseCategory?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CollectionBreakdownItem {
+  source: string;
+  sourceKey: string;
+  transactionCount: number;
+  amountReceived: number;
+  pendingAmount: number;
+  totalExpected: number;
+  contributionPercentage: number;
+}
+
+export interface ExpenseBreakdownItem {
+  categoryId: string;
+  categoryName: string;
+  colorCode: string | null;
+  transactionCount: number;
+  amountPaid: number;
+  pendingAmount: number;
+  totalAmount: number;
+  contributionPercentage: number;
+}
+
+export interface FinancialTrendItem {
+  monthKey: string;
+  month: string;
+  collections: number;
+  expenses: number;
+  net: number;
+  status: 'surplus' | 'deficit' | 'breakeven';
+}
+
+export interface UnifiedTransactionItem {
+  id: string;
+  date: string;
+  timestamp: number;
+  type: 'income' | 'expense';
+  sourceKey: 'flat' | 'advertising' | 'sponsorship' | 'expense';
+  sourceCategory: string;
+  party: string;
+  reference: string;
+  description: string | null;
+  incomeAmount: number;
+  expenseAmount: number;
+  paymentMode: string;
+  paymentStatus: string;
+  rawStatus: string;
+}
+
+export interface CollectionExpenseSummaryMetrics {
+  totalCollections: number;
+  flatCollectionsReceived: number;
+  flatCollectionsPending: number;
+  flatCollectionsExpected: number;
+  advertisingCollectionsReceived: number;
+  advertisingCollectionsPending: number;
+  advertisingCollectionsExpected: number;
+  otherCollectionsReceived: number;
+  otherCollectionsPending: number;
+  otherCollectionsExpected: number;
+  totalExpensesPaid: number;
+  totalExpensesPending: number;
+  totalExpensesExpected: number;
+  netSurplusDeficit: number;
+  financialStatus: 'surplus' | 'deficit' | 'breakeven';
+  financialStatusLabel: string;
+  collectionRate: number;
+  totalTransactionsCount: number;
+}
+
+export interface CollectionExpenseSummaryData {
+  summary: CollectionExpenseSummaryMetrics;
+  collectionBreakdown: CollectionBreakdownItem[];
+  expenseBreakdown: ExpenseBreakdownItem[];
+  financialTrend: FinancialTrendItem[];
+  transactions: UnifiedTransactionItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  filtersApplied: {
+    societyId: string | null;
+    eventId: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    source: string;
+    expenseCategory: string;
+  };
+}
+
 export * from './eventGrid';
 
