@@ -1039,7 +1039,7 @@ export interface VendorItem {
   company_name?: string | null;
   address?: string | null;
   email?: string | null;
-  mobileNo: string;
+  mobileNo?: string | null;
   mobile_no?: string;
   contactNumber?: string;
   contact_number?: string;

@@ -47,10 +47,11 @@ const vendorEditSchema = z.object({
   mobileNo: z
     .string()
     .trim()
-    .min(1, 'Contact Number is required')
-    .min(7, 'Contact Number must be at least 7 digits')
-    .max(20, 'Contact Number cannot exceed 20 digits')
-    .regex(phoneRegex, 'Invalid phone format (digits, +, - allowed)'),
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || (val.length >= 7 && val.length <= 20 && phoneRegex.test(val)), {
+      message: 'Invalid contact number format (must be 7-20 digits)',
+    }),
   isActive: z.boolean(),
 });
 
@@ -127,7 +128,7 @@ export const EditVendorPage: React.FC = () => {
         shortName: data.shortName?.trim() || null,
         companyName: data.companyName?.trim() || null,
         email: data.email?.trim().toLowerCase() || null,
-        mobileNo: data.mobileNo.trim(),
+        mobileNo: data.mobileNo?.trim() || '',
         isActive: data.isActive,
         status: data.isActive ? 'active' : 'inactive',
       });
@@ -201,7 +202,7 @@ export const EditVendorPage: React.FC = () => {
 
               <Input
                 label="Contact Number"
-                requiredIndicator={true}
+                helperText="Optional"
                 type="tel"
                 placeholder="e.g. +91 9876543210"
                 error={errors.mobileNo?.message}
