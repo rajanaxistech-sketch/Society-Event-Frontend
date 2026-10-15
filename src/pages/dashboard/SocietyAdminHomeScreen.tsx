@@ -19,6 +19,7 @@ import {
   Store,
   Receipt,
   Scale,
+  HeartHandshake,
 } from 'lucide-react';
 
 export const SocietyAdminHomeScreen: React.FC = () => {
@@ -184,6 +185,15 @@ export const SocietyAdminHomeScreen: React.FC = () => {
       badge: undefined,
       onClick: () => {
         navigate(AppRoutes.COLLECTION_EXPENSE_SUMMARY);
+      },
+    },
+    {
+      title: 'Sombha Welfare',
+      icon: HeartHandshake,
+      iconStyle: 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-emerald-100/50',
+      badge: undefined,
+      onClick: () => {
+        navigate(AppRoutes.SOMBHA_WELFARE);
       },
     },
   ];

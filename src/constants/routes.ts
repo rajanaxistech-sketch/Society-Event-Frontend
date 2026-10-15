@@ -70,6 +70,7 @@ export const AppRoutes = {
   EVENT_COLLECTION_SUMMARY: '/events/:id/collection-summary',
   COLLECTION_EXPENSE_SUMMARY: '/collection-expense-summary',
   EVENT_COLLECTION_EXPENSE_SUMMARY: '/events/:id/collection-expense-summary',
+  SOMBHA_WELFARE: '/sombha-welfare',
 
   // Contracts
   CONTRACTS: '/contracts',

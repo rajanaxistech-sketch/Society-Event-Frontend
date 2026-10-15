@@ -33,6 +33,7 @@ import {
   SlidersHorizontal,
   X,
   FileSpreadsheet,
+  HeartHandshake,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -405,6 +406,7 @@ export const CollectionExpenseSummaryPage: React.FC = () => {
                 <option value="ALL">All Sources</option>
                 <option value="FLAT">Flats Only</option>
                 <option value="ADVERTISING">Ads Only</option>
+                <option value="SOMBHA_WELFARE">Sombha Welfare</option>
                 <option value="EXPENSE">Expenses Only</option>
               </select>
             </div>
@@ -631,6 +633,8 @@ export const CollectionExpenseSummaryPage: React.FC = () => {
                         <div className="col-span-5 flex items-center gap-1.5 min-w-0">
                           {item.sourceKey === 'flat' ? (
                             <Building2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                          ) : item.sourceKey === 'sombha_welfare' ? (
+                            <HeartHandshake className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                           ) : (
                             <Megaphone className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                           )}
@@ -714,7 +718,13 @@ export const CollectionExpenseSummaryPage: React.FC = () => {
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                          {item.sourceKey === 'flat' ? <Building2 className="w-3.5 h-3.5" /> : <Megaphone className="w-3.5 h-3.5" />}
+                          {item.sourceKey === 'flat' ? (
+                            <Building2 className="w-3.5 h-3.5" />
+                          ) : item.sourceKey === 'sombha_welfare' ? (
+                            <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Megaphone className="w-3.5 h-3.5" />
+                          )}
                         </div>
                         <div>
                           <h4 className="text-xs font-bold text-slate-900">{item.source}</h4>

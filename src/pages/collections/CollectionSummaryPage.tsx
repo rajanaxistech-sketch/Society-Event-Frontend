@@ -19,6 +19,7 @@ import {
   Landmark,
   CreditCard,
   ArrowRightLeft,
+  HeartHandshake,
 } from 'lucide-react';
 
 export const CollectionSummaryPage: React.FC = () => {
@@ -242,6 +243,7 @@ export const CollectionSummaryPage: React.FC = () => {
   const grandTotal = summary?.grandTotal;
   const flatSubtotal = summary?.flatCollectionsSubtotal;
   const adSummary = summary?.advertisementCollections;
+  const welfareSummary = summary?.sombhaWelfareCollections;
   const blocks = summary?.blocks || [];
   const paymentModes: PaymentModeSummaryItem[] = summary?.paymentModes || [];
 
@@ -461,7 +463,39 @@ export const CollectionSummaryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. CARD 3: Overall Total Collection of Both (Flats + Ads) */}
+      {/* 3b. Sombha Welfare Collection (Separated White Card) */}
+      {welfareSummary && welfareSummary.totalCollectedAmount > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-3">
+          <div className="grid grid-cols-12 items-center">
+            <div className="col-span-4 flex items-center gap-2 min-w-0">
+              <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                <HeartHandshake className="w-3 h-3" />
+              </span>
+              <span className="font-bold text-slate-800 text-[12px] truncate">
+                Sombha Welfare
+              </span>
+            </div>
+
+            <div className="col-span-3 text-center">
+              <span className="font-bold text-slate-800 text-[12px]">
+                {welfareSummary.totalContributors} Contributor{welfareSummary.totalContributors === 1 ? '' : 's'}
+              </span>
+            </div>
+
+            <div className="col-span-5 text-right font-mono">
+              <span className="font-bold text-slate-500 text-[11px]">
+                {formatAmount(welfareSummary.totalCollectedAmount)}
+              </span>
+              <span className="text-slate-300 font-light text-[10px] mx-1">/</span>
+              <span className="font-black text-[12px] text-emerald-600">
+                {formatAmount(welfareSummary.totalCollectedAmount)}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. CARD 3: Overall Total Collection of Both (Flats + Ads + Welfare) */}
       <div className="bg-white rounded-2xl border border-emerald-200/90 shadow-2xs p-3.5 bg-gradient-to-r from-emerald-50/40 via-white to-indigo-50/30">
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-2">
@@ -479,7 +513,7 @@ export const CollectionSummaryPage: React.FC = () => {
 
         <div className="flex items-baseline justify-between pt-1">
           <span className="text-[11px] font-medium text-slate-500">
-            Flats + Advertising Total
+            Flats + Ads + Sombha Welfare
           </span>
           <div className="flex items-baseline gap-1 font-mono text-right">
             <span className="font-bold text-slate-500 text-xs">

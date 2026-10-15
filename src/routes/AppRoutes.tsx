@@ -72,6 +72,7 @@ import EventFoodPage from '../pages/events/EventFoodPage';
 import EventDressCodesPage from '../pages/events/EventDressCodesPage';
 import EventActivitiesPage from '../pages/events/EventActivitiesPage';
 import EventCircularsPage from '../pages/events/EventCircularsPage';
+import SombhaWelfarePage from '../pages/sombhaWelfare/SombhaWelfarePage';
 
 // Circulars
 import CircularListPage from '../pages/circulars/CircularListPage';
@@ -452,6 +453,14 @@ export const AppRoutes: React.FC = () => {
             element={
               <PermissionRoute permission={Permissions.REPORT_READ}>
                 <CollectionExpenseSummaryPage />
+              </PermissionRoute>
+            }
+          />
+          <Route
+            path={Paths.SOMBHA_WELFARE}
+            element={
+              <PermissionRoute permission={Permissions.COLLECTION_READ}>
+                <SombhaWelfarePage />
               </PermissionRoute>
             }
           />

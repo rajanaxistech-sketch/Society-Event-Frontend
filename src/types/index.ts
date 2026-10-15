@@ -1876,6 +1876,11 @@ export interface EventCollectionOverallSummary {
     paymentModes?: BlockPaymentModeItem[];
   };
   advertisementCollections: AdvertisementCollectionSummary;
+  sombhaWelfareCollections?: {
+    totalContributors: number;
+    totalCollectedAmount: number;
+    paymentModes?: Array<{ code: string; name: string; count: number; amount: number }>;
+  };
   paymentModes?: PaymentModeSummaryItem[];
   grandTotal: {
     totalTarget: number;
@@ -1884,6 +1889,7 @@ export interface EventCollectionOverallSummary {
     collectionPercentage: number;
     flatSharePercentage: number;
     adSharePercentage: number;
+    welfareSharePercentage?: number;
   };
 }
 
@@ -1956,6 +1962,8 @@ export interface CollectionExpenseSummaryMetrics {
   otherCollectionsReceived: number;
   otherCollectionsPending: number;
   otherCollectionsExpected: number;
+  sombhaWelfareCollectionsReceived?: number;
+  sombhaWelfareCollectionsExpected?: number;
   totalExpensesPaid: number;
   totalExpensesPending: number;
   totalExpensesExpected: number;
@@ -1988,5 +1996,75 @@ export interface CollectionExpenseSummaryData {
   };
 }
 
+export interface SombhaWelfareItem {
+  id: string;
+  societyId?: string | null;
+  society_id?: string | null;
+  society?: { id: string; name: string; code?: string | null } | null;
+  eventId?: string | null;
+  event_id?: string | null;
+  event?: { id: string; name: string; startDate?: string } | null;
+  flatId?: string | null;
+  flat_id?: string | null;
+  flat?: { id: string; flatNumber: string } | null;
+  personName: string;
+  person_name?: string;
+  block?: string | null;
+  flatNumber: string;
+  flat_number?: string;
+  amount: number;
+  modeOfPayment: ExpensePaymentMode | string;
+  mode_of_payment?: string;
+  transactionReference?: string | null;
+  transaction_reference?: string | null;
+  paymentDate?: string | null;
+  payment_date?: string | null;
+  collectorName?: string | null;
+  collector_name?: string | null;
+  remarks?: string | null;
+  status?: string;
+  createdBy?: string | null;
+  creator?: { id: string; fullName: string; email: string } | null;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+}
+
+export interface CreateSombhaWelfareInput {
+  societyId?: string | null;
+  society_id?: string | null;
+  eventId?: string | null;
+  event_id?: string | null;
+  flatId?: string | null;
+  flat_id?: string | null;
+  personName: string;
+  person_name?: string;
+  block?: string | null;
+  flatNumber: string;
+  flat_number?: string;
+  amount: number | string;
+  modeOfPayment: string;
+  mode_of_payment?: string;
+  transactionReference?: string | null;
+  transaction_reference?: string | null;
+  paymentDate?: string | null;
+  payment_date?: string | null;
+  collectorName?: string | null;
+  collector_name?: string | null;
+  remarks?: string | null;
+}
+
+export interface UpdateSombhaWelfareInput extends Partial<CreateSombhaWelfareInput> {
+  status?: string;
+}
+
+export interface SombhaWelfareSummary {
+  totalAmount: number;
+  totalContributors: number;
+  modeCounts: Record<string, { count: number; amount: number }>;
+}
+
 export * from './eventGrid';
+
 
